@@ -23,12 +23,20 @@ mod conn_params;
 mod connection;
 mod errmsgs;
 mod error;
+mod resultset;
 mod srp;
+mod statement;
 mod utils;
 mod value;
 mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;
+
+pub use crate::connection::Connection;
+pub use crate::error::Error;
+pub use crate::resultset::ResultSet;
+pub use crate::statement::Statement;
+pub use crate::value::Value;
 
 #[cfg(test)]
 mod tests {
