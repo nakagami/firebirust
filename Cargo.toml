@@ -2,8 +2,23 @@
 name = "firebirust"
 version = "0.1.0"
 authors = ["Hajime Nakagami <nakagami@gmail.com>"]
+description = "Firebird client library"
+license = "MIT"
+repository = "https://github.com/nakagami/firebirust"
+keywords = ["database", "sql"]
+categories = ["database"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+bigdecimal = "0.1"
+num-bigint = "0.2"
+num-traits = "0.2"
+rust_decimal = "1.0"
+time = "0.1"
+maplit = "1.0"
+rust-crypto = "0.2"
+hex = "0.3"
+rand = "0.7"
+url = "2.1"
+percent-encoding = "2.1"
+byteorder = "1.3"
