@@ -25,6 +25,29 @@ use super::utils::*;
 use super::*;
 use maplit::hashmap;
 
+const SQL_TYPE_TEXT: u32 = 452;
+const SQL_TYPE_VARYING: u32 = 448;
+const SQL_TYPE_SHORT: u32 = 500;
+const SQL_TYPE_LONG: u32 = 496;
+const SQL_TYPE_FLOAT: u32 = 482;
+const SQL_TYPE_DOUBLE: u32 = 480;
+const SQL_TYPE_D_FLOAT: u32 = 530;
+const SQL_TYPE_TIMESTAMP: u32 = 510;
+const SQL_TYPE_BLOB: u32 = 520;
+const SQL_TYPE_ARRAY: u32 = 540;
+const SQL_TYPE_QUAD: u32 = 550;
+const SQL_TYPE_TIME: u32 = 560;
+const SQL_TYPE_DATE: u32 = 570;
+const SQL_TYPE_INT64: u32 = 580;
+const SQL_TYPE_INT128: u32 = 32752;
+const SQL_TYPE_TIMESTAMP_TZ: u32 = 32754;
+const SQL_TYPE_TIME_TZ: u32 = 32756;
+const SQL_TYPE_DEC_FIXED: u32 = 32758;
+const SQL_TYPE_DEC64: u32 = 32760;
+const SQL_TYPE_DEC128: u32 = 32762;
+const SQL_TYPE_BOOLEAN: u32 = 32764;
+const SQL_TYPE_NULL: u32 = 32766;
+
 pub struct XSQLVar {
     pub sqltype: u32,
     pub sqlscale: i32,
