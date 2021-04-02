@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 // The contents of this file are subject to the Interbase Public\n\
 // License Version 1.0 (the \"License\"); you may not use this file\n\
 // except in compliance with the License. You may obtain a copy\n\
-// of the License at http://www.Inprise.com/IPL.html\n\
+// of the License at https://www.firebirdsql.org/en/interbase-public-license/\n\
 //\n\
 // Software distributed under the License is distributed on an\n\
 // \"AS IS\" basis, WITHOUT WARRANTY OF ANY KIND, either express\n\
