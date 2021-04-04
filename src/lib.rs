@@ -38,10 +38,18 @@ pub use crate::resultset::ResultSet;
 pub use crate::statement::Statement;
 pub use crate::value::Value;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+#[macro_export]
+macro_rules! params {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = Vec::new();
+            $(
+                temp_vec.push(Value::from($x));
+            )*
+            temp_vec
+        }
+    };
 }
+
+#[cfg(test)]
+mod tests;
