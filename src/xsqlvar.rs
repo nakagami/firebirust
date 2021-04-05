@@ -105,7 +105,7 @@ impl XSQLVar {
     }
 
     pub fn value(&self, raw_value: &[u8]) -> Result<Value, ValueError> {
-        match (self.sqltype) {
+        match self.sqltype {
             SQL_TYPE_TEXT => Ok(Value::Text(bytes_to_str(raw_value))),
             SQL_TYPE_VARYING => Ok(Value::Varying(bytes_to_str(raw_value))),
             SQL_TYPE_SHORT => Ok(Value::Short(bytes_to_int16(raw_value))),

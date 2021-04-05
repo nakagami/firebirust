@@ -1444,7 +1444,7 @@ impl WireProtocol {
         let mut null_indicator: u128 = 0;
         for (i, p) in params.iter().enumerate() {
             if *p == Value::Null {
-                null_indicator |= (1 << i);
+                null_indicator |= 1 << i;
             }
         }
 

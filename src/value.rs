@@ -47,14 +47,14 @@ pub enum Value {
 
 impl Value {
     pub fn get_i8(&self) -> Result<Option<i8>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i8()"))),
         }
     }
 
     pub fn get_i16(&self) -> Result<Option<i16>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             Value::Short(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i16()"))),
@@ -62,7 +62,7 @@ impl Value {
     }
 
     pub fn get_i32(&self) -> Result<Option<i32>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             Value::Long(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i32()"))),
@@ -70,7 +70,7 @@ impl Value {
     }
 
     pub fn get_i64(&self) -> Result<Option<i64>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             Value::Int64(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i64()"))),
@@ -78,7 +78,7 @@ impl Value {
     }
 
     pub fn get_f32(&self) -> Result<Option<f32>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             Value::Float(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_f32()"))),
@@ -86,7 +86,7 @@ impl Value {
     }
 
     pub fn get_f64(&self) -> Result<Option<f64>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             Value::Double(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_f64()"))),
@@ -94,7 +94,7 @@ impl Value {
     }
 
     pub fn get_string(&self) -> Result<Option<String>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             Value::Text(v) | Value::Varying(v) => Ok(Some(v.to_string())),
             _ => Err(Error::ValueError(ValueError::new("Can't get_string()"))),
@@ -102,7 +102,7 @@ impl Value {
     }
 
     pub fn get_bytes(&self) -> Result<Option<Vec<u8>>, Error> {
-        match (self) {
+        match self {
             Value::Null => Ok(None),
             Value::Blob(v) => {
                 let mut blob: Vec<u8> = Vec::new();
