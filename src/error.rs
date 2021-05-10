@@ -28,6 +28,7 @@ pub enum Error {
     IoError(io::Error),
     FirebirdError(FirebirdError),
     ValueError(ValueError),
+    ParamError(ParamError),
     UrlError(UrlError),
 }
 
@@ -76,6 +77,19 @@ pub struct ValueError {
 impl ValueError {
     pub fn new(message: &str) -> ValueError {
         ValueError {
+            message: message.to_string(),
+        }
+    }
+}
+
+#[derive(Eq, PartialEq, Clone, Debug)]
+pub struct ParamError {
+    pub message: String,
+}
+
+impl ParamError {
+    pub fn new(message: &str) -> ParamError {
+        ParamError {
             message: message.to_string(),
         }
     }
