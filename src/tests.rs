@@ -67,11 +67,3 @@ fn test_connnect() {
     let mut stmt = conn.prepare("select * from foo").unwrap();
 }
 
-#[test]
-fn test_params() {
-    let params = vec![Param::from(1i32), Param::from("foo"), Param::Null];
-    assert_eq!(params, params![1i32, "foo", Param::Null]);
-    assert_eq!(params[0].get_i32().unwrap(), Some(1));
-    assert_eq!(params[1].get_string().unwrap(), Some("foo".to_string()));
-    assert_eq!(params[2].get_string().unwrap(), None);
-}
