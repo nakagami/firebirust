@@ -28,6 +28,7 @@ mod srp;
 mod statement;
 mod utils;
 mod value;
+mod param;
 mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;
@@ -36,8 +37,8 @@ pub use crate::connection::Connection;
 pub use crate::error::Error;
 pub use crate::resultset::ResultSet;
 pub use crate::statement::Statement;
-pub use crate::value::Value;
 pub use crate::param::Param;
+pub use crate::value::Value;
 
 #[macro_export]
 macro_rules! params {
@@ -45,7 +46,7 @@ macro_rules! params {
         {
             let mut temp_vec = Vec::new();
             $(
-                temp_vec.push(Value::from($x));
+                temp_vec.push(Param::from($x));
             )*
             temp_vec
         }
