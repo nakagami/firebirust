@@ -37,6 +37,7 @@ pub use crate::error::Error;
 pub use crate::resultset::ResultSet;
 pub use crate::statement::Statement;
 pub use crate::value::Value;
+pub use crate::param::Param;
 
 #[macro_export]
 macro_rules! params {

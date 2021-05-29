@@ -21,7 +21,7 @@
 // SOFTWARE.
 use super::params;
 use super::Connection;
-use super::Value;
+use super::Param;
 
 #[test]
 fn test_connnect() {
@@ -69,8 +69,8 @@ fn test_connnect() {
 
 #[test]
 fn test_params() {
-    let params = vec![Value::from(1i32), Value::from("foo"), Value::Null];
-    assert_eq!(params, params![1i32, "foo", Value::Null]);
+    let params = vec![Param::from(1i32), Param::from("foo"), Param::Null];
+    assert_eq!(params, params![1i32, "foo", Param::Null]);
     assert_eq!(params[0].get_i32().unwrap(), Some(1));
     assert_eq!(params[1].get_string().unwrap(), Some("foo".to_string()));
     assert_eq!(params[2].get_string().unwrap(), None);
