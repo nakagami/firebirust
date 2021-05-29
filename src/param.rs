@@ -125,7 +125,6 @@ impl From<&str> for Param {
     }
 }
 
-
 #[test]
 fn test_params() {
     let params = vec![Param::from(1i32), Param::from("foo"), Param::Null];
