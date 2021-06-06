@@ -47,7 +47,7 @@ fn test_connnect() {
         }
     }
 
-    conn.execute(
+    conn.execute_immediate(
         r#"
         CREATE TABLE foo (
             a INTEGER NOT NULL,
@@ -63,9 +63,7 @@ fn test_connnect() {
             PRIMARY KEY (a),
             CONSTRAINT CHECK_A CHECK (a <> 0)
         )
-    "#, params![]
-    )
-    .unwrap();
+    "#).unwrap();
 
     //conn.execute(
     //    "insert into foo(a, b, c, h) values (?, ?, ?, ?')",
