@@ -59,4 +59,9 @@ impl Statement<'_> {
         // TODO:
         Ok(0)
     }
+
+    pub fn query_map(&mut self, param: &[Value]) -> Result<u64, Error> {
+        // TODO:
+        Ok(0)
+    }
 }
