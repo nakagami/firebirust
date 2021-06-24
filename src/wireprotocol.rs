@@ -1485,7 +1485,7 @@ impl WireProtocol {
 
 impl Drop for WireProtocol {
     fn drop(&mut self) {
-        self.op_drop_database().unwrap();
+        self.op_detach().unwrap();
         let _ = self.op_response();
     }
 }
