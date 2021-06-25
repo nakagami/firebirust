@@ -22,9 +22,9 @@
 use super::xsqlvar::XSQLVar;
 use super::Connection;
 use super::Error;
+use super::Param;
 use super::ResultSet;
 use super::Value;
-use super::Param;
 
 pub struct Statement<'conn> {
     conn: &'conn Connection,

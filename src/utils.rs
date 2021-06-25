@@ -28,8 +28,6 @@ use crypto::sha1::Sha1;
 use hex;
 use num_bigint::{BigInt, BigUint, Sign};
 
-use super::*;
-
 pub fn int32_to_bytes(i: u32) -> [u8; 4] {
     // little endian u32 to Vec<u8>
     unsafe { transmute(i.to_le()) }
