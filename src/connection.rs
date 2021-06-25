@@ -126,8 +126,8 @@ impl Connection {
 
     pub fn execute(&self, query: &str, params: Vec<Param>) -> Result<(), Error> {
         let mut wp = self.wp.borrow_mut();
-        // TODO: create statement and execute
-        wp.op_exec_immediate(self.trans_handle, query)?;
+        let mut stmt = self.prepare(query)?;
+        wp.op_execute(stmt.stmt_handle, self.trans_handle, &params)?;
         wp.op_response()?;
         Ok(())
     }

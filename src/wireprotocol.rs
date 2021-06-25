@@ -1131,7 +1131,7 @@ impl WireProtocol {
         &mut self,
         stmt_handle: i32,
         trans_handle: i32,
-        params: &[Value],
+        params: &Vec<Param>,
     ) -> Result<(), Error> {
         self.pack_u32(OP_EXECUTE);
         self.pack_u32(stmt_handle as u32);
@@ -1156,7 +1156,7 @@ impl WireProtocol {
         &mut self,
         stmt_handle: i32,
         trans_handle: i32,
-        params: &[Value],
+        params: &Vec<Param>,
         output_blr: &[u8],
     ) -> Result<(), Error> {
         self.pack_u32(OP_EXECUTE2);
@@ -1432,7 +1432,7 @@ impl WireProtocol {
     pub fn params_to_blr(
         &mut self,
         trans_handle: i32,
-        params: &[Value],
+        params: &Vec<Param>,
     ) -> Result<(Vec<u8>, Vec<u8>), Error> {
         // Convert parameter array to BLR and values format.
         let mut values_list: Vec<u8> = Vec::new();
@@ -1443,7 +1443,7 @@ impl WireProtocol {
 
         let mut null_indicator: u128 = 0;
         for (i, p) in params.iter().enumerate() {
-            if *p == Value::Null {
+            if *p == Param::Null {
                 null_indicator |= 1 << i;
             }
         }
@@ -1465,10 +1465,10 @@ impl WireProtocol {
         for p in params.iter() {
             let mut v: Vec<u8> = Vec::new();
             match p {
-                Value::Null => {
+                Param::Null => {
                     values_list.write(&[14, 0, 0])?;
                 }
-                Value::Text(s) => {
+                Param::Text(s) => {
                     let b = s.as_bytes();
                     // TODO:
                 }

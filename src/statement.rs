@@ -24,6 +24,7 @@ use super::Connection;
 use super::Error;
 use super::ResultSet;
 use super::Value;
+use super::Param;
 
 pub struct Statement<'conn> {
     conn: &'conn Connection,
@@ -47,7 +48,7 @@ impl Statement<'_> {
         }
     }
 
-    pub fn execute_query(&mut self, params: &[Value]) -> Result<ResultSet, Error> {
+    pub fn execute_query(&mut self, params: &Vec<Param>) -> Result<ResultSet, Error> {
         let mut wp = self.conn.wp.borrow_mut();
         wp.op_execute(self.stmt_handle, self.conn.trans_handle, params)?;
         wp.parse_op_response()?;
