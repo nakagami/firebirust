@@ -22,6 +22,7 @@
 
 use super::error::{Error, ValueError};
 use std::result::Result;
+use super::params;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Param {
