@@ -27,7 +27,7 @@ use super::ResultSet;
 use super::Value;
 
 pub struct Statement<'conn> {
-    conn: &'conn Connection,
+    conn: &'conn mut Connection,
     pub(crate) stmt_handle: i32,
     stmt_type: u32,
     xsqlda: Vec<XSQLVar>,
@@ -35,7 +35,7 @@ pub struct Statement<'conn> {
 
 impl Statement<'_> {
     pub(super) fn new(
-        conn: &Connection,
+        conn: &mut Connection,
         stmt_handle: i32,
         stmt_type: u32,
         xsqlda: Vec<XSQLVar>,
@@ -48,10 +48,18 @@ impl Statement<'_> {
         }
     }
 
+    pub fn execute(&mut self, params: &Vec<Param>) -> Result<(), Error> {
+        self.conn.wp
+            .op_execute(self.stmt_handle, self.conn.trans_handle, &params)?;
+        self.conn.wp.op_response()?;
+        Ok(())
+    }
+
     pub fn execute_query(&mut self, params: &Vec<Param>) -> Result<ResultSet, Error> {
-        let mut wp = self.conn.wp.borrow_mut();
-        wp.op_execute(self.stmt_handle, self.conn.trans_handle, params)?;
-        wp.parse_op_response()?;
+        self.conn
+            .wp
+            .op_execute(self.stmt_handle, self.conn.trans_handle, params)?;
+        self.conn.wp.parse_op_response()?;
         // TODO: add new parameter
         Ok(ResultSet::new(self))
     }

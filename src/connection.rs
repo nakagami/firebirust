@@ -19,9 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use super::conn_params::ConnParams;
 use super::error::Error;
@@ -29,7 +27,7 @@ use super::wireprotocol::*;
 use super::*;
 
 pub struct Connection {
-    pub(crate) wp: Rc<RefCell<WireProtocol>>,
+    pub(crate) wp: WireProtocol,
     pub(crate) trans_handle: i32,
     conn_params: ConnParams,
     conn_options: HashMap<String, String>,
@@ -68,7 +66,7 @@ impl Connection {
         let (trans_handle, _, _) = wp.op_response()?;
 
         Ok(Connection {
-            wp: Rc::new(RefCell::new(wp)),
+            wp,
             trans_handle,
             conn_params,
             conn_options,
@@ -110,61 +108,75 @@ impl Connection {
         let (trans_handle, _, _) = wp.op_response()?;
 
         Ok(Connection {
-            wp: Rc::new(RefCell::new(wp)),
+            wp,
             trans_handle,
             conn_params,
             conn_options,
         })
     }
 
-    pub fn execute_immediate(&self, query: &str) -> Result<(), Error> {
-        let mut wp = self.wp.borrow_mut();
-        wp.op_exec_immediate(self.trans_handle, query)?;
-        wp.op_response()?;
+    pub fn execute_immediate(&mut self, query: &str) -> Result<(), Error> {
+        self.wp.op_exec_immediate(self.trans_handle, query)?;
+        self.wp.op_response()?;
         Ok(())
     }
 
-    pub fn execute(&self, query: &str, params: Vec<Param>) -> Result<(), Error> {
-        let mut wp = self.wp.borrow_mut();
-        let mut stmt = self.prepare(query)?;
-        wp.op_execute(stmt.stmt_handle, self.trans_handle, &params)?;
-        wp.op_response()?;
-        Ok(())
-    }
+    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+        self.wp.op_allocate_statement()?;
 
-    pub fn commit(&self) -> Result<(), Error> {
-        let mut wp = self.wp.borrow_mut();
-        wp.op_commit_retaining(self.trans_handle)?;
-        wp.op_response()?;
-        Ok(())
-    }
-
-    pub fn rollback(&self) -> Result<(), Error> {
-        let mut wp = self.wp.borrow_mut();
-        wp.op_rollback_retaining(self.trans_handle)?;
-        wp.op_response()?;
-        Ok(())
-    }
-
-    pub fn prepare(&self, query: &str) -> Result<Statement, Error> {
-        let mut wp = self.wp.borrow_mut();
-        wp.op_allocate_statement()?;
-
-        let mut stmt_handle = if wp.accept_type == PTYPE_LAZY_SEND {
+        let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
+            self.wp.lazy_response_count += 1;
             -1
         } else {
-            let (stmt_handle, _, _) = wp.op_response()?;
+            let (stmt_handle, _, _) = self.wp.op_response()?;
             stmt_handle
         };
 
-        wp.op_prepare_statement(stmt_handle, self.trans_handle, query)?;
-        if wp.accept_type == PTYPE_LAZY_SEND && wp.lazy_response_count > 0 {
-            wp.lazy_response_count -= 1;
-            let (h, _, _) = wp.op_response()?;
+        self.wp
+            .op_prepare_statement(stmt_handle, self.trans_handle, query)?;
+        if self.wp.accept_type == PTYPE_LAZY_SEND && self.wp.lazy_response_count > 0 {
+            self.wp.lazy_response_count -= 1;
+            let (h, _, _) = self.wp.op_response()?;
             stmt_handle = h;
         }
-        let (_, buf, _) = wp.op_response()?;
-        let (stmt_type, xsqlda) = wp.parse_xsqlda(&buf, stmt_handle)?;
+        let (_, buf, _) = self.wp.op_response()?;
+        let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
+        let mut stmt = Statement::new(self, stmt_handle, stmt_type, xsqlda);
+
+        stmt.execute(&params)
+    }
+
+    pub fn commit(&mut self) -> Result<(), Error> {
+        self.wp.op_commit_retaining(self.trans_handle)?;
+        self.wp.op_response()?;
+        Ok(())
+    }
+
+    pub fn rollback(&mut self) -> Result<(), Error> {
+        self.wp.op_rollback_retaining(self.trans_handle)?;
+        self.wp.op_response()?;
+        Ok(())
+    }
+
+    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+        self.wp.op_allocate_statement()?;
+
+        let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
+            -1
+        } else {
+            let (stmt_handle, _, _) = self.wp.op_response()?;
+            stmt_handle
+        };
+
+        self.wp
+            .op_prepare_statement(stmt_handle, self.trans_handle, query)?;
+        if self.wp.accept_type == PTYPE_LAZY_SEND && self.wp.lazy_response_count > 0 {
+            self.wp.lazy_response_count -= 1;
+            let (h, _, _) = self.wp.op_response()?;
+            stmt_handle = h;
+        }
+        let (_, buf, _) = self.wp.op_response()?;
+        let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
 
         Ok(Statement::new(self, stmt_handle, stmt_type, xsqlda))
     }
