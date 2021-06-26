@@ -22,6 +22,8 @@
 
 // See http://srp.stanford.edu/design.html
 
+#![allow(dead_code)]
+
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use crypto::sha2::Sha256;

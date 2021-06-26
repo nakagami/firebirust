@@ -49,7 +49,8 @@ impl Statement<'_> {
     }
 
     pub fn execute(&mut self, params: &Vec<Param>) -> Result<(), Error> {
-        self.conn.wp
+        self.conn
+            .wp
             .op_execute(self.stmt_handle, self.conn.trans_handle, &params)?;
         self.conn.wp.op_response()?;
         Ok(())
