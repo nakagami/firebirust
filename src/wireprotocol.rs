@@ -899,7 +899,7 @@ impl WireProtocol {
         dpb.write(&[4, 1, 0, 0, 0])?;
         dpb.push(ISC_DPB_PAGE_SIZE);
         dpb.push(4);
-        dpb.write(&utils::int32_to_bytes(page_size))?;
+        dpb.write(&utils::uint32_to_bytes(page_size))?;
 
         if let Some(data) = &self.auth_data {
             let specific_auth_data = hex::encode(data);
@@ -1474,10 +1474,14 @@ impl WireProtocol {
                 }
                 Param::Text(s) => {
                     let b = s.as_bytes();
-                    // TODO:
-                    panic!("text to parameter");
+                    let (blr, v) = utils::bytes_to_blr(b);
+                    values_list.write(&v)?;
+                    blr_list.write(&blr)?;
                 }
-                Param::Long(s) => {}
+                Param::Long(n) => {
+                    values_list.write(&utils::bint32_to_bytes(*n))?;
+                    blr_list.write(&[8, 0])?;
+                }
                 _ => {
                     // TODO:
                     panic!("another to parameter");

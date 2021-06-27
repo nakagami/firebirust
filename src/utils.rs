@@ -31,12 +31,22 @@ use crypto::sha1::Sha1;
 use hex;
 use num_bigint::{BigInt, BigUint, Sign};
 
-pub fn int32_to_bytes(i: u32) -> [u8; 4] {
+pub fn int32_to_bytes(i: i32) -> [u8; 4] {
     // little endian u32 to Vec<u8>
     unsafe { transmute(i.to_le()) }
 }
 
-pub fn bint32_to_bytes(i: u32) -> [u8; 4] {
+pub fn uint32_to_bytes(i: u32) -> [u8; 4] {
+    // little endian u32 to Vec<u8>
+    unsafe { transmute(i.to_le()) }
+}
+
+pub fn bint32_to_bytes(i: i32) -> [u8; 4] {
+    // big endian u32 to Vec<u8>
+    unsafe { transmute(i.to_be()) }
+}
+
+pub fn ubint32_to_bytes(i: u32) -> [u8; 4] {
     // big endian u32 to Vec<u8>
     unsafe { transmute(i.to_be()) }
 }
@@ -175,7 +185,10 @@ pub fn xdr_bytes(b: &[u8]) -> Vec<u8> {
 
 pub fn bytes_to_blr(b: &[u8]) -> (Vec<u8>, Vec<u8>) {
     // TODO:
+    panic!("bytes_to_blr()");
     let mut blr: Vec<u8> = Vec::new();
     let mut v: Vec<u8> = Vec::new();
+    let nbytes = b.len();
+    let pad_length = ((4 - nbytes) & 3usize);
     (blr, v)
 }
