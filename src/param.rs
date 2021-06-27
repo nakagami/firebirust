@@ -28,7 +28,6 @@ use std::result::Result;
 pub enum Param {
     Null,
     Text(String),
-    Varying(String),
     Short(i16),
     Long(i32),
     Float(f32),
@@ -96,7 +95,7 @@ impl Param {
     pub fn get_string(&self) -> Result<Option<String>, Error> {
         match self {
             Param::Null => Ok(None),
-            Param::Text(v) | Param::Varying(v) => Ok(Some(v.to_string())),
+            Param::Text(v) => Ok(Some(v.to_string())),
             _ => Err(Error::ValueError(ValueError::new("Can't get_string()"))),
         }
     }

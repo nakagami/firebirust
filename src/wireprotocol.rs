@@ -1145,6 +1145,8 @@ impl WireProtocol {
             self.pack_u32(0);
         } else {
             let (blr, values) = self.params_to_blr(trans_handle, params)?;
+            // println!("blr={:?}", &blr);
+            // println!("values={:?}", &values);
             self.pack_bytes(&blr);
             self.pack_u32(0);
             self.pack_u32(1);
@@ -1473,8 +1475,13 @@ impl WireProtocol {
                 Param::Text(s) => {
                     let b = s.as_bytes();
                     // TODO:
+                    panic!("text to parameter");
                 }
-                _ => {} // TODO:
+                Param::Long(s) => {}
+                _ => {
+                    // TODO:
+                    panic!("another to parameter");
+                }
             }
             blr_list.write(&[7, 0])?;
             values_list.write(&v)?;
