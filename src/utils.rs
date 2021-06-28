@@ -184,11 +184,16 @@ pub fn xdr_bytes(b: &[u8]) -> Vec<u8> {
 }
 
 pub fn bytes_to_blr(b: &[u8]) -> (Vec<u8>, Vec<u8>) {
-    // TODO:
-    panic!("bytes_to_blr()");
-    let mut blr: Vec<u8> = Vec::new();
+    let n = b.len();
     let mut v: Vec<u8> = Vec::new();
-    let nbytes = b.len();
-    let pad_length = ((4 - nbytes) & 3usize);
+    v.write(b).unwrap();
+    let mut padding: usize = 0;
+    if n % 4 != 0 {
+        padding = 4 - n % 4;
+    }
+    for _ in 0..padding {
+        v.push(0u8);
+    }
+    let blr: Vec<u8> = vec![14, (n & 255) as u8, (n >> 8) as u8];
     (blr, v)
 }
