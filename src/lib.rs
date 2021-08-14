@@ -24,7 +24,7 @@ mod connection;
 mod errmsgs;
 mod error;
 mod param;
-mod resultset;
+mod row;
 mod srp;
 mod statement;
 mod utils;
@@ -36,7 +36,7 @@ mod xsqlvar;
 pub use crate::connection::Connection;
 pub use crate::error::Error;
 pub use crate::param::Param;
-pub use crate::resultset::ResultSet;
+pub use crate::row::ResultSet;
 pub use crate::statement::Statement;
 pub use crate::value::Value;
 
