@@ -23,7 +23,7 @@ use super::xsqlvar::XSQLVar;
 use super::Connection;
 use super::Error;
 use super::Param;
-use super::ResultSet;
+use super::Rows;
 use super::Value;
 
 pub struct Statement<'conn> {
@@ -56,13 +56,13 @@ impl Statement<'_> {
         Ok(())
     }
 
-    pub fn execute_query(&mut self, params: &Vec<Param>) -> Result<ResultSet, Error> {
+    pub fn execute_query(&mut self, params: &Vec<Param>) -> Result<Rows, Error> {
         self.conn
             .wp
             .op_execute(self.stmt_handle, self.conn.trans_handle, params)?;
         self.conn.wp.parse_op_response()?;
         // TODO: add new parameter
-        Ok(ResultSet::new(self))
+        Ok(Rows::new(self))
     }
 
     pub fn execute_update(&mut self, params: &[Value]) -> Result<u64, Error> {

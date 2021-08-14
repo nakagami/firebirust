@@ -36,7 +36,7 @@ mod xsqlvar;
 pub use crate::connection::Connection;
 pub use crate::error::Error;
 pub use crate::param::Param;
-pub use crate::row::ResultSet;
+pub use crate::row::Rows;
 pub use crate::statement::Statement;
 pub use crate::value::Value;
 

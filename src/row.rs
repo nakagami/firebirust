@@ -26,15 +26,15 @@ use std::result::Result;
 #[derive(PartialEq)]
 pub struct ResultSetMetaData {}
 
-pub struct ResultSet<'stmt> {
+pub struct Rows<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
     rows_chunk: Vec<Vec<Value>>,
     more_data: bool,
 }
 
-impl ResultSet<'_> {
-    pub(crate) fn new<'a>(stmt: &'a Statement) -> ResultSet<'a> {
-        ResultSet {
+impl Rows<'_> {
+    pub(crate) fn new<'a>(stmt: &'a Statement) -> Rows<'a> {
+        Rows {
             stmt,
             rows_chunk: Vec::new(),
             more_data: true,
