@@ -30,6 +30,7 @@ pub struct Rows<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
     rows_chunk: Vec<Vec<Value>>,
     more_data: bool,
+    row: Option<Row<'stmt>>,
 }
 
 impl Rows<'_> {
@@ -38,6 +39,7 @@ impl Rows<'_> {
             stmt,
             rows_chunk: Vec::new(),
             more_data: true,
+            row: None,
         }
     }
 
@@ -85,4 +87,8 @@ impl Rows<'_> {
     }
 
     // TODO: get other types
+}
+
+pub struct Row<'stmt> {
+    pub(crate) stmt: &'stmt Statement<'stmt>,
 }
