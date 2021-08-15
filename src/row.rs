@@ -27,8 +27,7 @@ pub struct ResultSetMetaData {}
 
 pub struct Rows<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
-    rows_chunk: Vec<Vec<Value>>,
-    more_data: bool,
+    rows: Vec<Vec<Value>>,
     row: Option<Row<'stmt>>,
 }
 
@@ -36,8 +35,7 @@ impl Rows<'_> {
     pub(crate) fn new<'a>(stmt: &'a Statement) -> Rows<'a> {
         Rows {
             stmt,
-            rows_chunk: Vec::new(),
-            more_data: true,
+            rows: Vec::new(),
             row: None,
         }
     }
@@ -49,35 +47,35 @@ impl Rows<'_> {
     */
 
     pub fn get_i8(&self, i: u64) -> Result<Option<i8>, Error> {
-        self.rows_chunk[0][i as usize].get_i8()
+        self.rows[0][i as usize].get_i8()
     }
 
     pub fn get_i16(&self, i: u64) -> Result<Option<i16>, Error> {
-        self.rows_chunk[0][i as usize].get_i16()
+        self.rows[0][i as usize].get_i16()
     }
 
     pub fn get_i32(&self, i: u64) -> Result<Option<i32>, Error> {
-        self.rows_chunk[0][i as usize].get_i32()
+        self.rows[0][i as usize].get_i32()
     }
 
     pub fn get_i64(&self, i: u64) -> Result<Option<i64>, Error> {
-        self.rows_chunk[0][i as usize].get_i64()
+        self.rows[0][i as usize].get_i64()
     }
 
     pub fn get_f32(&self, i: u64) -> Result<Option<f32>, Error> {
-        self.rows_chunk[0][i as usize].get_f32()
+        self.rows[0][i as usize].get_f32()
     }
 
     pub fn get_f64(&self, i: u64) -> Result<Option<f64>, Error> {
-        self.rows_chunk[0][i as usize].get_f64()
+        self.rows[0][i as usize].get_f64()
     }
 
     pub fn get_string(&self, i: u64) -> Result<Option<String>, Error> {
-        self.rows_chunk[0][i as usize].get_string()
+        self.rows[0][i as usize].get_string()
     }
 
     pub fn get_bytes(&self, i: u64) -> Result<Option<Vec<u8>>, Error> {
-        self.rows_chunk[0][i as usize].get_bytes()
+        self.rows[0][i as usize].get_bytes()
     }
 
     // TODO: get other types
