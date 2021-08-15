@@ -76,8 +76,36 @@ impl Statement<'_> {
     }
 
     fn calc_blr(&mut self) -> Vec<u8> {
-        let mut blr: Vec<u8> = vec![5, 2, 4, 0];
-        // TODO:
+        let ln = self.xsqlda.len();
+        let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
+
+        for x in &self.xsqlda {
+            match x.sqltype {
+                SQL_TYPE_VARYING => vec![37, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
+                SQL_TYPE_TEXT => vec![14, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
+                SQL_TYPE_LONG => vec![8, x.sqlscale as u8],
+                SQL_TYPE_SHORT => vec![7, x.sqlscale as u8],
+                SQL_TYPE_INT64 => vec![16, x.sqlscale as u8],
+                SQL_TYPE_INT128 => vec![26, x.sqlscale as u8],
+                SQL_TYPE_QUAD => vec![9, x.sqlscale as u8],
+                SQL_TYPE_DEC_FIXED => vec![26, x.sqlscale as u8],
+                SQL_TYPE_DOUBLE => vec![27],
+                SQL_TYPE_FLOAT => vec![10],
+                SQL_TYPE_D_FLOAT => vec![11],
+                SQL_TYPE_DATE => vec![12],
+                SQL_TYPE_TIME => vec![13],
+                SQL_TYPE_TIMESTAMP => vec![35],
+                SQL_TYPE_BLOB => vec![9, 0],
+                SQL_TYPE_ARRAY => vec![9, 0],
+                SQL_TYPE_BOOLEAN => vec![23],
+                SQL_TYPE_DEC64 => vec![24],
+                SQL_TYPE_DEC128 => vec![25],
+                SQL_TYPE_TIME_TZ => vec![28],
+                SQL_TYPE_TIMESTAMP_TZ => vec![29],
+            };
+            blr.extend(vec![7, 0]);
+        }
+        blr.extend(vec![255, 76])
 
         blr
     }
