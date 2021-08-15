@@ -19,7 +19,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
 use super::{Error, Statement, Value};
 use std::result::Result;
 
@@ -48,11 +47,6 @@ impl Rows<'_> {
           // TODO:
         }
     */
-
-    pub fn next(&mut self) -> bool {
-        // TODO:
-        true
-    }
 
     pub fn get_i8(&self, i: u64) -> Result<Option<i8>, Error> {
         self.rows_chunk[0][i as usize].get_i8()
@@ -87,6 +81,15 @@ impl Rows<'_> {
     }
 
     // TODO: get other types
+}
+
+impl<'stmt> Iterator for Rows<'stmt> {
+    type Item = Row<'stmt>;
+
+    fn next(&mut self) -> Option<Row<'stmt>> {
+        // TODO:
+        None
+    }
 }
 
 pub struct Row<'stmt> {
