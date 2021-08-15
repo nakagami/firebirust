@@ -28,7 +28,6 @@ pub struct ResultSetMetaData {}
 pub struct Rows<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
     rows: Vec<Vec<Value>>,
-    row: Option<Row<'stmt>>,
 }
 
 impl Rows<'_> {
@@ -36,7 +35,6 @@ impl Rows<'_> {
         Rows {
             stmt,
             rows: Vec::new(),
-            row: None,
         }
     }
 
