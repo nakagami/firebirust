@@ -69,7 +69,7 @@ pub fn bytes_to_str(b: &[u8]) -> String {
 }
 
 pub fn bytes_to_int32(b: &[u8]) -> i32 {
-    let mut tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
+    let tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
     let v: i32 = unsafe { transmute::<[u8; 4], i32>(tmp) };
     v
 }
@@ -85,7 +85,7 @@ pub fn bytes_to_buint32(b: &[u8]) -> u32 {
 }
 
 pub fn bytes_to_int16(b: &[u8]) -> i16 {
-    let mut tmp: [u8; 2] = [b[0], b[1]];
+    let tmp: [u8; 2] = [b[0], b[1]];
     let v: i16 = unsafe { transmute::<[u8; 2], i16>(tmp) };
     v
 }
@@ -125,13 +125,13 @@ pub fn bytes_to_buint64(b: &[u8]) -> u64 {
 }
 
 pub fn bytes_to_f32(b: &[u8]) -> f32 {
-    let mut tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
+    let tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
     let v: f32 = unsafe { transmute::<[u8; 4], f32>(tmp) };
     v
 }
 
 pub fn bytes_to_f64(b: &[u8]) -> f64 {
-    let mut tmp: [u8; 8] = [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]];
+    let tmp: [u8; 8] = [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]];
     let v: f64 = unsafe { transmute::<[u8; 8], f64>(tmp) };
     v
 }

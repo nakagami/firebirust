@@ -698,7 +698,7 @@ impl WireProtocol {
                 ISC_INFO_SQL_SUB_TYPE => {
                     let ln: usize = utils::bytes_to_uint16(&buf[i..i + 2]) as usize;
                     i += 2;
-                    let mut sqlsubtype = utils::bytes_to_uint32(&buf[i..i + ln]);
+                    let sqlsubtype = utils::bytes_to_uint32(&buf[i..i + ln]);
                     i += ln;
                 }
                 ISC_INFO_SQL_SCALE => {
@@ -1467,7 +1467,7 @@ impl WireProtocol {
         }
 
         for p in params.iter() {
-            let mut v: Vec<u8> = Vec::new();
+            let v: Vec<u8> = Vec::new();
             match p {
                 Param::Null => {
                     values_list.write(&[14, 0, 0])?;
