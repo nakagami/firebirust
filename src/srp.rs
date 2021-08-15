@@ -109,7 +109,7 @@ pub fn get_salt() -> Vec<u8> {
 }
 
 pub fn get_verifier(user: &str, password: &str, salt: &Vec<u8>) -> BigInt {
-    let (prime, g, k) = get_prime();
+    let (prime, g, _k) = get_prime();
     let x = get_user_hash(salt, user, password);
     g.modpow(&x, &prime)
 }
