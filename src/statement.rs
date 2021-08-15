@@ -117,6 +117,8 @@ impl Statement<'_> {
 
     fn fetch_segment(&mut self) -> Result<(Vec<Vec<Value>>, bool), Error> {
         let blr = self.calc_blr();
-        self.conn.wp.op_fetch_response(self.stmt_handle, self.conn.trans_handle, &self.xsqlda)
+        self.conn
+            .wp
+            .op_fetch_response(self.stmt_handle, self.conn.trans_handle, &self.xsqlda)
     }
 }

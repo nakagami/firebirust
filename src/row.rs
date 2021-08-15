@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 use super::{Error, Statement, Value};
+use std::collections::VecDeque;
 use std::result::Result;
 
 #[derive(PartialEq)]
@@ -27,14 +28,14 @@ pub struct ResultSetMetaData {}
 
 pub struct Rows<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
-    rows: Vec<Vec<Value>>,
+    rows: VecDeque<Vec<Value>>,
 }
 
 impl Rows<'_> {
     pub(crate) fn new<'a>(stmt: &'a Statement) -> Rows<'a> {
         Rows {
             stmt,
-            rows: Vec::new(),
+            rows: VecDeque::new(),
         }
     }
 
@@ -83,11 +84,17 @@ impl<'stmt> Iterator for Rows<'stmt> {
     type Item = Row<'stmt>;
 
     fn next(&mut self) -> Option<Row<'stmt>> {
-        // TODO:
-        None
+        match self.rows.pop_front() {
+            Some(row) => Some(Row {
+                stmt: self.stmt,
+                row: row,
+            }),
+            None => None,
+        }
     }
 }
 
 pub struct Row<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
+    row: Vec<Value>,
 }
