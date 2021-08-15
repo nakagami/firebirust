@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::params;
 use super::error::{Error, ValueError};
+use super::params;
 use std::result::Result;
 
 #[derive(PartialEq, Debug, Clone)]
