@@ -105,7 +105,7 @@ impl Statement<'_> {
             };
             blr.extend(vec![7, 0]);
         }
-        blr.extend(vec![255, 76])
+        blr.extend(vec![255, 76]);
 
         blr
     }
