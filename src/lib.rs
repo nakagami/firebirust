@@ -39,6 +39,7 @@ pub use crate::param::Param;
 pub use crate::row::Rows;
 pub use crate::statement::Statement;
 pub use crate::value::Value;
+pub use crate::xsqlvar::XSQLVar;
 
 #[macro_export]
 macro_rules! params {

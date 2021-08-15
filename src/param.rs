@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 use super::error::{Error, ValueError};
-use super::*;
 use std::result::Result;
 
 #[derive(PartialEq, Debug, Clone)]

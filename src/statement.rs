@@ -30,7 +30,7 @@ pub struct Statement<'conn> {
     conn: &'conn mut Connection,
     pub(crate) stmt_handle: i32,
     stmt_type: u32,
-    xsqlda: Vec<XSQLVar>,
+    pub(crate) xsqlda: Vec<XSQLVar>,
 }
 
 impl Statement<'_> {
@@ -73,5 +73,21 @@ impl Statement<'_> {
     pub fn query_map(&mut self, param: &[Value]) -> Result<u64, Error> {
         // TODO:
         Ok(0)
+    }
+
+    fn calc_blr(&mut self) -> Vec<u8> {
+        let mut blr: Vec<u8> = vec![5, 2, 4, 0];
+        // TODO:
+
+        blr
+    }
+
+    fn fetch_segment(&mut self) -> Result<(), Error> {
+        let blr = self.calc_blr();
+        self.conn.wp.op_fetch(self.stmt_handle, &blr)?;
+        // TODO:
+        // (results, more_data) = self.stmt.conn.wp.op_fetch(
+
+        Ok(())
     }
 }
