@@ -1122,7 +1122,7 @@ impl WireProtocol {
         trans_handle: i32,
         query: &str,
     ) -> Result<(), Error> {
-        debug_print!("op_prepare_statement()");
+        debug_print!("op_prepare_statement():{}", query);
         let mut bs: Vec<u8> = Vec::new();
         bs.push(ISC_INFO_SQL_STMT_TYPE);
         bs.write(&info_sql_select_describe_vars())?;
