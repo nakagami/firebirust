@@ -335,6 +335,11 @@ const ISC_INFO_SQL_STMT_SELECT_FOR_UPD: u32 = 12;
 const ISC_INFO_SQL_STMT_SET_GENERATOR: u32 = 13;
 const ISC_INFO_SQL_STMT_SAVEPOINT: u32 = 14;
 
+macro_rules! debug_print {
+    ($( $args:expr ),*) => { println!( $( $args ),* ); }
+//    ($( $args:expr ),*) => {}
+}
+
 fn info_sql_select_describe_vars() -> [u8; 13] {
     [
         ISC_INFO_SQL_SELECT,
@@ -842,6 +847,7 @@ impl WireProtocol {
         options: &HashMap<String, String>,
         client_public: &BigInt,
     ) -> Result<(), Error> {
+        debug_print!("op_connect()");
         self.pack_u32(OP_CONNECT);
         self.pack_u32(OP_ATTACH);
         self.pack_u32(3); // CONNECT_VERSION3
@@ -870,6 +876,7 @@ impl WireProtocol {
         role: &str,
         page_size: u32,
     ) -> Result<(), Error> {
+        debug_print!("op_create()");
         let encode = b"UTF8";
 
         let mut dpb: Vec<u8> = Vec::new();
@@ -929,6 +936,7 @@ impl WireProtocol {
         password: &str,
         role: &str,
     ) -> Result<(), Error> {
+        debug_print!("op_attach()");
         let encode = b"UTF8";
 
         let mut dpb: Vec<u8> = Vec::new();
@@ -972,6 +980,7 @@ impl WireProtocol {
     }
 
     pub fn op_cont_auth(&mut self, auth_data: &Vec<u8>) -> Result<(), Error> {
+        debug_print!("op_cont_auth()");
         self.pack_u32(OP_CONT_AUTH);
         self.pack_bytes(&hex::encode(auth_data).as_bytes());
         self.pack_str(&self.accept_plugin_name.to_string());
@@ -983,6 +992,7 @@ impl WireProtocol {
     }
 
     pub fn op_crypt(&mut self) -> Result<(), Error> {
+        debug_print!("op_crypt()");
         self.pack_u32(OP_CRYPT);
         self.pack_str("Arc4");
         self.pack_str("Symmetric");
@@ -992,6 +1002,7 @@ impl WireProtocol {
     }
 
     pub fn op_drop_database(&mut self) -> Result<(), Error> {
+        debug_print!("op_drop_database()");
         self.pack_u32(OP_DROP_DATABASE);
         self.pack_u32(self.db_handle as u32);
         self.send_packets()?;
@@ -1000,6 +1011,7 @@ impl WireProtocol {
     }
 
     pub fn op_transaction(&mut self, is_autocommit: bool) -> Result<(), Error> {
+        debug_print!("op_transaction()");
         let tpb: Vec<u8> = if is_autocommit {
             vec![
                 ISC_TPB_VERSION3,
@@ -1026,6 +1038,7 @@ impl WireProtocol {
     }
 
     pub fn op_commit(&mut self, trans_handle: i32) -> Result<(), Error> {
+        debug_print!("op_commit()");
         self.pack_u32(OP_COMMIT);
         self.pack_u32(trans_handle as u32);
         self.send_packets()?;
@@ -1034,6 +1047,7 @@ impl WireProtocol {
     }
 
     pub fn op_commit_retaining(&mut self, trans_handle: i32) -> Result<(), Error> {
+        debug_print!("op_commit_retaining()");
         self.pack_u32(OP_COMMIT_RETAINING);
         self.pack_u32(trans_handle as u32);
         self.send_packets()?;
@@ -1042,6 +1056,7 @@ impl WireProtocol {
     }
 
     pub fn op_rollback(&mut self, trans_handle: i32) -> Result<(), Error> {
+        debug_print!("op_rollback()");
         self.pack_u32(OP_ROLLBACK);
         self.pack_u32(trans_handle as u32);
         self.send_packets()?;
@@ -1050,6 +1065,7 @@ impl WireProtocol {
     }
 
     pub fn op_rollback_retaining(&mut self, trans_handle: i32) -> Result<(), Error> {
+        debug_print!("op_rollback_retaining()");
         self.pack_u32(OP_ROLLBACK_RETAINING);
         self.pack_u32(trans_handle as u32);
         self.send_packets()?;
@@ -1058,6 +1074,7 @@ impl WireProtocol {
     }
 
     pub fn op_allocate_statement(&mut self) -> Result<(), Error> {
+        debug_print!("op_allocate_statement()");
         self.pack_u32(OP_ALLOCATE_STATEMENT);
         self.pack_u32(self.db_handle as u32);
         self.send_packets()?;
@@ -1066,6 +1083,7 @@ impl WireProtocol {
     }
 
     pub fn op_info_transaction(&mut self, trans_handle: i32, b: &[u8]) -> Result<(), Error> {
+        debug_print!("op_info_transaction()");
         self.pack_u32(OP_INFO_TRANSACTION);
         self.pack_u32(trans_handle as u32);
         self.pack_u32(0);
@@ -1077,6 +1095,7 @@ impl WireProtocol {
     }
 
     pub fn op_info_database(&mut self, bs: &[u8]) -> Result<(), Error> {
+        debug_print!("op_info_database()");
         self.pack_u32(OP_INFO_DATABASE);
         self.pack_u32(self.db_handle as u32);
         self.pack_u32(0);
@@ -1088,6 +1107,7 @@ impl WireProtocol {
     }
 
     pub fn op_free_statement(&mut self, stmt_handle: i32, mode: i32) -> Result<(), Error> {
+        debug_print!("op_free_statement()");
         self.pack_u32(OP_FREE_STATEMENT);
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(mode as u32);
@@ -1102,6 +1122,7 @@ impl WireProtocol {
         trans_handle: i32,
         query: &str,
     ) -> Result<(), Error> {
+        debug_print!("op_prepare_statement()");
         let mut bs: Vec<u8> = Vec::new();
         bs.push(ISC_INFO_SQL_STMT_TYPE);
         bs.write(&info_sql_select_describe_vars())?;
@@ -1119,6 +1140,7 @@ impl WireProtocol {
     }
 
     pub fn op_info_sql(&mut self, stmt_handle: i32, vars: &[u8]) -> Result<(), Error> {
+        debug_print!("op_info_sql()");
         self.pack_u32(OP_INFO_SQL);
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(0);
@@ -1135,6 +1157,7 @@ impl WireProtocol {
         trans_handle: i32,
         params: &Vec<Param>,
     ) -> Result<(), Error> {
+        debug_print!("op_execute()");
         self.pack_u32(OP_EXECUTE);
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(trans_handle as u32);
@@ -1163,6 +1186,7 @@ impl WireProtocol {
         params: &Vec<Param>,
         output_blr: &[u8],
     ) -> Result<(), Error> {
+        debug_print!("op_execute2()");
         self.pack_u32(OP_EXECUTE2);
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(trans_handle as u32);
@@ -1183,6 +1207,7 @@ impl WireProtocol {
     }
 
     pub fn op_exec_immediate(&mut self, trans_handle: i32, query: &str) -> Result<(), Error> {
+        debug_print!("op_exec_immediate()");
         let desc_items: Vec<u8> = vec![];
 
         self.pack_u32(OP_EXEC_IMMEDIATE);
@@ -1197,6 +1222,7 @@ impl WireProtocol {
     }
 
     pub fn op_fetch(&mut self, stmt_handle: i32, blr: &Vec<u8>) -> Result<(), Error> {
+        debug_print!("op_fetch()");
         self.pack_u32(OP_FETCH);
         self.pack_u32(stmt_handle as u32);
         self.pack_bytes(blr);
@@ -1212,6 +1238,7 @@ impl WireProtocol {
         trans_handle: i32,
         xsqlda: &[XSQLVar],
     ) -> Result<(Vec<Vec<Value>>, bool), Error> {
+        debug_print!("op_fetch_response()");
         let mut opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);
         while opcode == OP_DUMMY {
             opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);
@@ -1268,6 +1295,7 @@ impl WireProtocol {
     }
 
     pub fn op_detach(&mut self) -> Result<(), Error> {
+        debug_print!("op_detatch()");
         self.pack_u32(OP_DETACH);
         self.pack_u32(self.db_handle as u32);
         self.send_packets()?;
@@ -1275,6 +1303,7 @@ impl WireProtocol {
     }
 
     pub fn op_open_blob(&mut self, blob_id: &Vec<u8>, trans_handle: i32) -> Result<(), Error> {
+        debug_print!("op_open_blob()");
         self.pack_u32(OP_OPEN_BLOB);
         self.pack_u32(trans_handle as u32);
         self.append_bytes(blob_id);
@@ -1283,6 +1312,7 @@ impl WireProtocol {
     }
 
     pub fn op_create_blob2(&mut self, trans_handle: i32) -> Result<(), Error> {
+        debug_print!("op_create_blob2()");
         self.pack_u32(OP_CREATE_BLOB2);
         self.pack_u32(0);
         self.pack_u32(trans_handle as u32);
@@ -1293,6 +1323,7 @@ impl WireProtocol {
     }
 
     pub fn op_get_segment(&mut self, blob_handle: i32) -> Result<(), Error> {
+        debug_print!("op_get_segment()");
         self.pack_u32(OP_GET_SEGMENT);
         self.pack_u32(blob_handle as u32);
         self.pack_u32(BUFFER_LEN);
@@ -1303,6 +1334,7 @@ impl WireProtocol {
     }
 
     pub fn op_put_segment(&mut self, blob_handle: i32, seg_data: &[u8]) -> Result<(), Error> {
+        debug_print!("op_put_segment()");
         let ln = seg_data.len();
         self.pack_u32(OP_PUT_SEGMENT);
         self.pack_u32(blob_handle as u32);
@@ -1317,6 +1349,7 @@ impl WireProtocol {
     }
 
     pub fn op_batch_segments(&mut self, blob_handle: i32, seg_data: &Vec<u8>) -> Result<(), Error> {
+        debug_print!("op_batch_segments()");
         let ln = seg_data.len();
         self.pack_u32(OP_BATCH_SEGMENTS);
         self.pack_u32(blob_handle as u32);
@@ -1332,6 +1365,7 @@ impl WireProtocol {
     }
 
     pub fn op_close_blob(&mut self, blob_handle: i32) -> Result<(), Error> {
+        debug_print!("op_close_blob()");
         self.pack_u32(OP_CLOSE_BLOB);
         self.pack_u32(blob_handle as u32);
         self.send_packets()?;
@@ -1339,6 +1373,7 @@ impl WireProtocol {
     }
 
     pub fn op_response(&mut self) -> Result<(i32, Vec<u8>, Vec<u8>), Error> {
+        debug_print!("op_response()");
         let mut opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);
         while opcode == OP_DUMMY {
             opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);
@@ -1360,6 +1395,7 @@ impl WireProtocol {
     }
 
     pub fn op_sql_response(&mut self, xsqlda: &[XSQLVar]) -> Result<Vec<Value>, Error> {
+        debug_print!("op_sql_response()");
         let xsqlda_len = xsqlda.len();
         let mut row: Vec<Value> = Vec::with_capacity(xsqlda_len);
         let mut opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);

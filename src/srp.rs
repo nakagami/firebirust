@@ -228,16 +228,11 @@ fn test_srp() {
 
     // Client send A to Server
     let (key_public_a, key_private_a) = get_client_seed();
-    println!("a={}", &key_private_a);
-    println!("A={}", &key_public_a);
 
     // Server send B, salt to Client
     let salt = get_salt();
-    println!("salt={}", utils::bytes_to_big_int(&salt));
     let v = get_verifier(&user, &password, &salt);
     let (key_public_b, key_private_b) = get_server_seed(&v);
-    println!("b={}", &key_private_b);
-    println!("B={}", &key_public_b);
 
     let server_key = get_server_session(
         &user,
@@ -247,7 +242,6 @@ fn test_srp() {
         &key_public_b,
         &key_private_b,
     );
-    println!("server_key={}", utils::bytes_to_big_int(&server_key));
 
     let (_, client_key) = get_client_proof(
         &user,
@@ -258,7 +252,6 @@ fn test_srp() {
         &key_private_a,
         "Srp",
     );
-    println!("Srp client_key={}", utils::bytes_to_big_int(&client_key));
     assert_eq!(&server_key, &client_key);
 
     let (_, client_key) = get_client_proof(
@@ -270,6 +263,5 @@ fn test_srp() {
         &key_private_a,
         "Srp256",
     );
-    println!("Srp256 client_key={}", utils::bytes_to_big_int(&client_key));
     assert_eq!(&server_key, &client_key);
 }
