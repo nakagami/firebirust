@@ -70,7 +70,6 @@ impl Statement<'_> {
             .wp
             .op_execute(self.stmt_handle, self.conn.trans_handle, &params)?;
         self.conn.wp.op_response()?;
-        println!("stmt_type:{}", self.stmt_type);
 
         Ok(Rows::new(self))
     }
