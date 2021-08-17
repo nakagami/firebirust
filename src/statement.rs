@@ -25,6 +25,23 @@ use super::Error;
 use super::Param;
 use super::Rows;
 use super::Value;
+use super::wireprotocol::*;
+
+const ISC_INFO_SQL_STMT_SELECT: u32 = 1;
+const ISC_INFO_SQL_STMT_INSERT: u32 = 2;
+const ISC_INFO_SQL_STMT_UPDATE: u32 = 3;
+const ISC_INFO_SQL_STMT_DELETE: u32 = 4;
+const ISC_INFO_SQL_STMT_DDL: u32 = 5;
+const ISC_INFO_SQL_STMT_GET_SEGMENT: u32 = 6;
+const ISC_INFO_SQL_STMT_PUT_SEGMENT: u32 = 7;
+const ISC_INFO_SQL_STMT_EXEC_PROCEDURE: u32 = 8;
+const ISC_INFO_SQL_STMT_START_TRANS: u32 = 9;
+const ISC_INFO_SQL_STMT_COMMIT: u32 = 10;
+const ISC_INFO_SQL_STMT_ROLLBACK: u32 = 11;
+const ISC_INFO_SQL_STMT_SELECT_FOR_UPD: u32 = 12;
+const ISC_INFO_SQL_STMT_SET_GENERATOR: u32 = 13;
+const ISC_INFO_SQL_STMT_SAVEPOINT: u32 = 14;
+
 
 pub struct Statement<'conn> {
     conn: &'conn mut Connection,
@@ -53,6 +70,8 @@ impl Statement<'_> {
             .wp
             .op_execute(self.stmt_handle, self.conn.trans_handle, &params)?;
         self.conn.wp.op_response()?;
+        println!("stmt_type:{}", self.stmt_type);
+
         Ok(Rows::new(self))
     }
 
