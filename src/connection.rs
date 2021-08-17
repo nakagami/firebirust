@@ -165,6 +165,7 @@ impl Connection {
         self.wp.op_allocate_statement()?;
 
         let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
+            self.wp.lazy_response_count += 1;
             -1
         } else {
             let (stmt_handle, _, _) = self.wp.op_response()?;
@@ -178,7 +179,7 @@ impl Connection {
             let (h, _, _) = self.wp.op_response()?;
             stmt_handle = h;
         }
-        let (_, buf, _) = self.wp.op_response()?;
+        let (_, _, buf) = self.wp.op_response()?;
         let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
 
         Ok(Statement::new(self, stmt_handle, stmt_type, xsqlda))

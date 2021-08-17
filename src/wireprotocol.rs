@@ -754,7 +754,7 @@ impl WireProtocol {
 
         let mut i: usize = 0;
         while i < buf.len() {
-            if buf[i] == ISC_INFO_SQL_STMT_TYPE && buf[i + 1] == 4 && buf[i + 1] == 0 {
+            if buf[i] == ISC_INFO_SQL_STMT_TYPE && buf[i + 1] == 4 && buf[i + 2] == 0 {
                 i += 1;
                 let ln: usize = utils::bytes_to_uint16(&buf[i..i + 2]) as usize;
                 i += 2;
