@@ -121,7 +121,7 @@ impl Statement<'_> {
     }
 
     fn calc_blr(&mut self) -> Vec<u8> {
-        let ln = self.xsqlda.len();
+        let ln = self.xsqlda.len() * 2;
         let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
 
         for x in &self.xsqlda {
