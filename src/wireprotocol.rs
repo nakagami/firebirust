@@ -1207,7 +1207,7 @@ impl WireProtocol {
     }
 
     pub fn op_fetch(&mut self, stmt_handle: i32, blr: &Vec<u8>) -> Result<(), Error> {
-        debug_print!("op_fetch()");
+        debug_print!("op_fetch() blr={:?}", &hex::encode(blr));
         self.pack_u32(OP_FETCH);
         self.pack_u32(stmt_handle as u32);
         self.pack_bytes(blr);
