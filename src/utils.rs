@@ -30,6 +30,7 @@ use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use hex;
 use num_bigint::{BigInt, BigUint, Sign};
+use chrono::{NaiveDateTime, NaiveDate, NaiveTime};
 
 pub fn int32_to_bytes(i: i32) -> [u8; 4] {
     // little endian u32 to Vec<u8>
@@ -141,6 +142,16 @@ pub fn bytes_to_f64(b: &[u8]) -> f64 {
     let v: f64 = unsafe { transmute::<[u8; 8], f64>(tmp) };
     v
 }
+
+// TODO:
+// chrono::{NaiveDateTime, NaiveDate, NaiveTime}
+// bytes_to_naive_datetime
+// bytes_to_naive_date
+// bytes_to_naive_time
+
+// TODO:
+// chrono::{DateTime, Date}
+
 
 pub fn big_int_from_hex_string(s: &[u8]) -> BigInt {
     BigInt::parse_bytes(s, 16).unwrap()
