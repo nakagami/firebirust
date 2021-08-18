@@ -20,13 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 use super::wireprotocol::*;
-use super::xsqlvar::XSQLVar;
+use super::xsqlvar::*;
 use super::Connection;
 use super::Error;
 use super::Param;
 use super::Rows;
 use super::Value;
 use std::collections::VecDeque;
+use maplit::hashmap;
+
 
 const ISC_INFO_SQL_STMT_SELECT: u32 = 1;
 const ISC_INFO_SQL_STMT_INSERT: u32 = 2;
@@ -125,7 +127,7 @@ impl Statement<'_> {
         let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
 
         for x in &self.xsqlda {
-            blr.extend(match x.sqltype {
+            let map = hashmap! {
                 SQL_TYPE_VARYING => vec![37, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
                 SQL_TYPE_TEXT => vec![14, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
                 SQL_TYPE_LONG => vec![8, x.sqlscale as u8],
@@ -147,7 +149,8 @@ impl Statement<'_> {
                 SQL_TYPE_DEC128 => vec![25],
                 SQL_TYPE_TIME_TZ => vec![28],
                 SQL_TYPE_TIMESTAMP_TZ => vec![29],
-            });
+            };
+            blr.extend(&map[&x.sqltype]);
             blr.extend(vec![7, 0]);
         }
         blr.extend(vec![255, 76]);
