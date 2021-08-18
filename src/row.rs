@@ -32,10 +32,10 @@ pub struct Rows<'stmt> {
 }
 
 impl Rows<'_> {
-    pub(crate) fn new<'a>(stmt: &'a Statement) -> Rows<'a> {
+    pub(crate) fn new<'a>(stmt: &'a Statement, rows: VecDeque<Vec<Value>>) -> Rows<'a> {
         Rows {
             stmt,
-            rows: VecDeque::new(),
+            rows,
         }
     }
 

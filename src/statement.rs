@@ -19,13 +19,14 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+use super::wireprotocol::*;
 use super::xsqlvar::XSQLVar;
 use super::Connection;
 use super::Error;
 use super::Param;
 use super::Rows;
 use super::Value;
-use super::wireprotocol::*;
+use std::collections::VecDeque;
 
 const ISC_INFO_SQL_STMT_SELECT: u32 = 1;
 const ISC_INFO_SQL_STMT_INSERT: u32 = 2;
@@ -41,7 +42,6 @@ const ISC_INFO_SQL_STMT_ROLLBACK: u32 = 11;
 const ISC_INFO_SQL_STMT_SELECT_FOR_UPD: u32 = 12;
 const ISC_INFO_SQL_STMT_SET_GENERATOR: u32 = 13;
 const ISC_INFO_SQL_STMT_SAVEPOINT: u32 = 14;
-
 
 pub struct Statement<'conn> {
     conn: &'conn mut Connection,
@@ -65,13 +65,24 @@ impl Statement<'_> {
         }
     }
 
+    fn fetch_records(&mut self) -> Result<VecDeque<Vec<Value>>, Error> {
+        let mut rows = VecDeque::new();
+        // TODO: fetch all records
+
+        Ok(rows)
+    }
+
     pub fn query(&mut self, params: &Vec<Param>) -> Result<Rows<'_>, Error> {
         self.conn
             .wp
             .op_execute(self.stmt_handle, self.conn.trans_handle, &params)?;
         self.conn.wp.op_response()?;
+        let mut rows: VecDeque<Vec<Value>> = VecDeque::new();
+        if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
+            rows = self.fetch_records()?
+        }
 
-        Ok(Rows::new(self))
+        Ok(Rows::new(self, rows))
     }
 
     pub fn execute(&mut self, params: &Vec<Param>) -> Result<(), Error> {
@@ -85,7 +96,7 @@ impl Statement<'_> {
             .op_execute(self.stmt_handle, self.conn.trans_handle, params)?;
         self.conn.wp.parse_op_response()?;
         // TODO: add new parameter
-        Ok(Rows::new(self))
+        Ok(Rows::new(self, VecDeque::new()))
     }
 
     pub fn execute_update(&mut self, params: &[Value]) -> Result<u64, Error> {
