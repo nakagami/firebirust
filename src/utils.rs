@@ -100,6 +100,12 @@ pub fn bytes_to_buint16(b: &[u8]) -> u16 {
     ((b[2] as u16) << 8) + ((b[3] as u16) << 0)
 }
 
+pub fn bytes_to_int64(b: &[u8]) -> i64 {
+    let tmp: [u8; 8] = [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]];
+    let v: i64 = unsafe { transmute::<[u8; 8], i64>(tmp) };
+    v
+}
+
 pub fn bytes_to_uint64(b: &[u8]) -> u64 {
     // little endian u64
     ((b[0] as u64) << 0)
