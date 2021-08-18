@@ -102,7 +102,7 @@ impl XSQLVar {
                 SQL_TYPE_DEC_FIXED=>    34,
                 SQL_TYPE_BOOLEAN=>      5,
             };
-            map[&(self.sqllen as u32)]
+            map[&self.sqltype]
         }
     }
 
@@ -115,7 +115,7 @@ impl XSQLVar {
             SQL_TYPE_FLOAT => Ok(Value::Float(bytes_to_f32(raw_value))),
             SQL_TYPE_DOUBLE => Ok(Value::Double(bytes_to_f64(raw_value))),
             // TODO:
-            _ => Err(ValueError::new("can't parse result value")),
+            _ => Err(ValueError::new(&format!("can't parse result value:{}", self.sqltype))),
         }
     }
 }
