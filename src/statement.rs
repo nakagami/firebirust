@@ -67,7 +67,18 @@ impl Statement<'_> {
 
     fn fetch_records(&mut self) -> Result<VecDeque<Vec<Value>>, Error> {
         let mut rows = VecDeque::new();
-        // TODO: fetch all records
+        let blr = self.calc_blr();
+
+        let mut more_data = true;
+        while more_data {
+            self.conn.wp.op_fetch(self.stmt_handle, &blr)?;
+            let (rows_segment, more_data) = self.conn.wp.op_fetch_response(
+                self.stmt_handle,
+                self.conn.trans_handle,
+                &self.xsqlda,
+            )?;
+            rows.extend(rows_segment);
+        }
 
         Ok(rows)
     }
