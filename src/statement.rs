@@ -26,9 +26,8 @@ use super::Error;
 use super::Param;
 use super::Rows;
 use super::Value;
-use std::collections::VecDeque;
 use maplit::hashmap;
-
+use std::collections::VecDeque;
 
 const ISC_INFO_SQL_STMT_SELECT: u32 = 1;
 const ISC_INFO_SQL_STMT_INSERT: u32 = 2;
@@ -72,15 +71,17 @@ impl Statement<'_> {
         let blr = self.calc_blr();
 
         let mut more_data = true;
-        while more_data {
+        loop {
             self.conn.wp.op_fetch(self.stmt_handle, &blr)?;
-            let (rows_segment, more) = self.conn.wp.op_fetch_response(
+            let (rows_segment, more_data) = self.conn.wp.op_fetch_response(
                 self.stmt_handle,
                 self.conn.trans_handle,
                 &self.xsqlda,
             )?;
             rows.extend(rows_segment);
-            more_data = more
+            if !more_data {
+                break;
+            }
         }
 
         Ok(rows)

@@ -122,7 +122,10 @@ impl XSQLVar {
 
             SQL_TYPE_BOOLEAN => Ok(Value::Boolean(raw_value[0] != 0)),
 
-            _ => Err(ValueError::new(&format!("can't parse result value:{}", self.sqltype))),
+            _ => Err(ValueError::new(&format!(
+                "can't parse result value:{}",
+                self.sqltype
+            ))),
         }
     }
 }

@@ -26,10 +26,10 @@ use std::io::prelude::*;
 use std::mem::transmute;
 use std::str;
 
-use hex;
 use chrono;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
+use hex;
 use num_bigint::{BigInt, BigUint, Sign};
 //use chrono::{NaiveDateTime, NaiveDate, NaiveTime};
 
@@ -150,18 +150,18 @@ pub fn bytes_to_f64(b: &[u8]) -> f64 {
 
 pub fn bytes_to_naive_date(b: &[u8]) -> chrono::NaiveDate {
     let mut nday = bytes_to_buint32(b);
-    let century = (4*nday - 1) / 146097;
-    nday = 4*nday - 1 - 146097*century;
+    let century = (4 * nday - 1) / 146097;
+    nday = 4 * nday - 1 - 146097 * century;
     let mut day = nday / 4;
 
-    nday = (4*day + 3) / 1461;
-    day = 4*day + 3 - 1461*nday;
+    nday = (4 * day + 3) / 1461;
+    day = 4 * day + 3 - 1461 * nday;
     day = (day + 4) / 4;
 
-    let mut month = (5*day - 3) / 153;
-    day = 5*day - 3 - 153*month;
+    let mut month = (5 * day - 3) / 153;
+    day = 5 * day - 3 - 153 * month;
     day = (day + 5) / 5;
-    let mut year = (100*century + nday) as i32;
+    let mut year = (100 * century + nday) as i32;
     if month < 10 {
         month += 3;
     } else {
@@ -191,7 +191,6 @@ pub fn bytes_to_naive_date_time(b: &[u8]) -> chrono::NaiveDateTime {
 
 // TODO:
 // chrono::{DateTime, Date}
-
 
 pub fn big_int_from_hex_string(s: &[u8]) -> BigInt {
     BigInt::parse_bytes(s, 16).unwrap()

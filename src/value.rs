@@ -21,8 +21,8 @@
 // SOFTWARE.
 
 use super::error::{Error, ValueError};
-use std::result::Result;
 use chrono;
+use std::result::Result;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Value {
