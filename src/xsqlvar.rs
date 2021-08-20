@@ -115,6 +115,7 @@ impl XSQLVar {
             SQL_TYPE_FLOAT => Ok(Value::Float(bytes_to_f32(raw_value))),
             SQL_TYPE_DOUBLE => Ok(Value::Double(bytes_to_f64(raw_value))),
             SQL_TYPE_INT64 => Ok(Value::Int64(bytes_to_int64(raw_value))),
+            SQL_TYPE_DATE => Ok(Value::Date(bytes_to_naive_time(raw_value))),
             // TODO:
             _ => Err(ValueError::new(&format!("can't parse result value:{}", self.sqltype))),
         }

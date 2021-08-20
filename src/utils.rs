@@ -26,11 +26,12 @@ use std::io::prelude::*;
 use std::mem::transmute;
 use std::str;
 
+use hex;
+use chrono;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
-use hex;
 use num_bigint::{BigInt, BigUint, Sign};
-use chrono::{NaiveDateTime, NaiveDate, NaiveTime};
+//use chrono::{NaiveDateTime, NaiveDate, NaiveTime};
 
 pub fn int32_to_bytes(i: i32) -> [u8; 4] {
     // little endian u32 to Vec<u8>
@@ -146,8 +147,30 @@ pub fn bytes_to_f64(b: &[u8]) -> f64 {
 // TODO:
 // chrono::{NaiveDateTime, NaiveDate, NaiveTime}
 // bytes_to_naive_datetime
-// bytes_to_naive_date
-// bytes_to_naive_time
+
+pub fn bytes_to_naive_time(b: &[u8]) -> chrono::NaiveDate {
+    let mut nday = bytes_to_buint32(b);
+    let century = (4*nday - 1) / 146097;
+    nday = 4*nday - 1 - 146097*century;
+    let mut day = nday / 4;
+
+    nday = (4*day + 3) / 1461;
+    day = 4*day + 3 - 1461*nday;
+    day = (day + 4) / 4;
+
+    let mut month = (5*day - 3) / 153;
+    day = 5*day - 3 - 153*month;
+    day = (day + 5) / 5;
+    let mut year = (100*century + nday) as i32;
+    if month < 10 {
+        month += 3;
+    } else {
+        month -= 9;
+        year += 1;
+    }
+
+    chrono::NaiveDate::from_ymd(year, month, day)
+}
 
 // TODO:
 // chrono::{DateTime, Date}

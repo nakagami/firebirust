@@ -22,6 +22,7 @@
 
 use super::error::{Error, ValueError};
 use std::result::Result;
+use chrono;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Value {
@@ -32,7 +33,7 @@ pub enum Value {
     Long(i32),
     Float(f32),
     //  Time(time),
-    //  Date(date),
+    Date(chrono::NaiveDate),
     Double(f64),
     //    TimeStamp(??),
     Blob(Vec<u8>),
