@@ -172,6 +172,23 @@ pub fn bytes_to_naive_date(b: &[u8]) -> chrono::NaiveDate {
     chrono::NaiveDate::from_ymd(year, month, day)
 }
 
+pub fn bytes_to_naive_time(b: &[u8]) -> chrono::NaiveTime {
+    let n = bytes_to_buint32(b);
+    let mut s = n / 10000;
+    let mut m = s / 60;
+    let h = m / 60;
+    m = m % 60;
+    s = s % 60;
+    chrono::NaiveTime::from_hms_micro(h, m, s, (n % 10000) * 100000)
+}
+
+pub fn bytes_to_naive_date_time(b: &[u8]) -> chrono::NaiveDateTime {
+    let date = bytes_to_naive_date(&b[..4]);
+    let time = bytes_to_naive_time(&b[4..]);
+
+    chrono::NaiveDateTime::new(date, time)
+}
+
 // TODO:
 // chrono::{DateTime, Date}
 
