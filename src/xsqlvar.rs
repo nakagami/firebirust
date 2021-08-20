@@ -112,11 +112,16 @@ impl XSQLVar {
             SQL_TYPE_SHORT => Ok(Value::Short(bytes_to_int16(raw_value))),
             SQL_TYPE_LONG => Ok(Value::Long(bytes_to_int32(raw_value))),
             SQL_TYPE_FLOAT => Ok(Value::Float(bytes_to_f32(raw_value))),
-            SQL_TYPE_DOUBLE => Ok(Value::Double(bytes_to_f64(raw_value))),
-            SQL_TYPE_INT64 => Ok(Value::Int64(bytes_to_int64(raw_value))),
-            SQL_TYPE_DATE => Ok(Value::Date(bytes_to_naive_date(raw_value))),
             SQL_TYPE_TIME => Ok(Value::Time(bytes_to_naive_time(raw_value))),
+            SQL_TYPE_DATE => Ok(Value::Date(bytes_to_naive_date(raw_value))),
+            SQL_TYPE_DOUBLE => Ok(Value::Double(bytes_to_f64(raw_value))),
             SQL_TYPE_TIMESTAMP => Ok(Value::TimeStamp(bytes_to_naive_date_time(raw_value))),
+            SQL_TYPE_BLOB => Ok(Value::Blob(raw_value.to_vec())),
+
+            SQL_TYPE_INT64 => Ok(Value::Int64(bytes_to_int64(raw_value))),
+
+            SQL_TYPE_BOOLEAN => Ok(Value::Boolean(raw_value[0] != 0)),
+
             _ => Err(ValueError::new(&format!("can't parse result value:{}", self.sqltype))),
         }
     }
