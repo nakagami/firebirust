@@ -116,7 +116,11 @@ impl XSQLVar {
             SQL_TYPE_DATE => Ok(Value::Date(bytes_to_naive_date(raw_value))),
             SQL_TYPE_DOUBLE => Ok(Value::Double(bytes_to_f64(raw_value))),
             SQL_TYPE_TIMESTAMP => Ok(Value::TimeStamp(bytes_to_naive_date_time(raw_value))),
-            SQL_TYPE_BLOB => Ok(Value::Blob(raw_value.to_vec())),
+            SQL_TYPE_BLOB => Ok(if self.sqlsubtype == 1 {
+                Value::BlobText(raw_value.to_vec())
+            } else {
+                Value::BlobBinary(raw_value.to_vec())
+            }),
 
             SQL_TYPE_INT64 => Ok(Value::Int64(bytes_to_int64(raw_value))),
 

@@ -36,7 +36,8 @@ pub enum Value {
     Date(chrono::NaiveDate),
     Double(f64),
     TimeStamp(chrono::NaiveDateTime),
-    Blob(Vec<u8>),
+    BlobBinary(Vec<u8>),
+    BlobText(Vec<u8>),
     Int64(i64),
     Int128(i128),
     //    TimeStampTZ(??),
@@ -104,7 +105,7 @@ impl Value {
     pub fn get_bytes(&self) -> Result<Option<Vec<u8>>, Error> {
         match self {
             Value::Null => Ok(None),
-            Value::Blob(v) => {
+            Value::BlobBinary(v) => {
                 let mut blob: Vec<u8> = Vec::new();
                 Ok(Some(blob))
             }
