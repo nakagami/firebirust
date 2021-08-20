@@ -74,12 +74,13 @@ impl Statement<'_> {
         let mut more_data = true;
         while more_data {
             self.conn.wp.op_fetch(self.stmt_handle, &blr)?;
-            let (rows_segment, more_data) = self.conn.wp.op_fetch_response(
+            let (rows_segment, more) = self.conn.wp.op_fetch_response(
                 self.stmt_handle,
                 self.conn.trans_handle,
                 &self.xsqlda,
             )?;
             rows.extend(rows_segment);
+            more_data = more
         }
 
         Ok(rows)
