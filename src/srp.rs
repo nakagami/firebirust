@@ -84,7 +84,7 @@ pub fn get_user_hash(salt: &[u8], user: &str, password: &str) -> BigInt {
 
 pub fn get_client_seed() -> (BigInt, BigInt) {
     let (prime, g, _) = get_prime();
-    let mut key_private_a: BigInt;
+    let key_private_a: BigInt;
     if SRP_DEBUG {
         key_private_a = utils::big_int_from_hex_string(DEBUG_PRIVATE_KEY);
     } else {
@@ -163,7 +163,7 @@ pub fn get_server_session(
     let (prime, _, _) = get_prime();
     let u = get_scramble(key_public_a, key_public_b);
     let v = get_verifier(user, password, salt);
-    let mut vu = v.modpow(&u, &prime);
+    let vu = v.modpow(&u, &prime);
     let avu = (key_public_a * vu) % &prime;
     let session_secret = avu.modpow(&key_private_b, &prime);
     utils::big_int_to_sha1(&session_secret)
@@ -194,7 +194,7 @@ pub fn get_client_proof(
     let n3 = n1.modpow(&n2, &prime);
     let n4 = get_string_hash(user);
 
-    let mut key_m: Vec<u8>;
+    let key_m: Vec<u8>;
     // Srp
     if plugin_name == "Srp" {
         let mut hasher = Sha1::new();

@@ -106,8 +106,7 @@ impl Value {
         match self {
             Value::Null => Ok(None),
             Value::BlobBinary(v) => {
-                let mut blob: Vec<u8> = Vec::new();
-                Ok(Some(blob))
+                Ok(Some(v.to_vec()))
             }
             _ => Err(Error::ValueError(ValueError::new("Can't get_bytes()"))),
         }

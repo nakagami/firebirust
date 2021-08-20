@@ -688,13 +688,14 @@ impl WireProtocol {
                 ISC_INFO_SQL_SUB_TYPE => {
                     let ln: usize = utils::bytes_to_uint16(&buf[i..i + 2]) as usize;
                     i += 2;
-                    let sqlsubtype = utils::bytes_to_uint32(&buf[i..i + ln]);
+                    let sqlsubtype = utils::bytes_to_uint32(&buf[i..i + ln]) as i32;
+                    xsqlda[index - 1].sqlsubtype = sqlsubtype;
                     i += ln;
                 }
                 ISC_INFO_SQL_SCALE => {
                     let ln: usize = utils::bytes_to_uint16(&buf[i..i + 2]) as usize;
                     i += 2;
-                    xsqlda[index - 1].sqlsubtype = utils::bytes_to_uint32(&buf[i..i + ln]) as i32;
+                    xsqlda[index - 1].sqlscale = utils::bytes_to_uint32(&buf[i..i + ln]) as i32;
                     i += ln;
                 }
                 ISC_INFO_SQL_LENGTH => {

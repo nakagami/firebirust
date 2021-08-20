@@ -21,8 +21,8 @@
 // SOFTWARE.
 
 use super::error::{Error, ValueError};
-use super::params;
 use std::result::Result;
+
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Param {
@@ -104,8 +104,7 @@ impl Param {
         match self {
             Param::Null => Ok(None),
             Param::Blob(v) => {
-                let mut blob: Vec<u8> = Vec::new();
-                Ok(Some(blob))
+                Ok(Some(v.to_vec()))
             }
             _ => Err(Error::ValueError(ValueError::new("Can't get_bytes()"))),
         }
@@ -126,6 +125,7 @@ impl From<&str> for Param {
 
 #[test]
 fn test_params() {
+    use super::params;
     let params = vec![Param::from(1i32), Param::from("foo"), Param::Null];
     assert_eq!(params, params![1i32, "foo", Param::Null]);
     assert_eq!(params[0].get_i32().unwrap(), Some(1));

@@ -70,7 +70,6 @@ impl Statement<'_> {
         let mut rows = VecDeque::new();
         let blr = self.calc_blr();
 
-        let mut more_data = true;
         loop {
             self.conn.wp.op_fetch(self.stmt_handle, &blr)?;
             let (rows_segment, more_data) = self.conn.wp.op_fetch_response(
@@ -114,12 +113,12 @@ impl Statement<'_> {
         Ok(Rows::new(self, VecDeque::new()))
     }
 
-    pub fn execute_update(&mut self, params: &[Value]) -> Result<u64, Error> {
+    pub fn execute_update(&mut self, params: &Vec<Param>) -> Result<u64, Error> {
         // TODO:
         Ok(0)
     }
 
-    pub fn query_map(&mut self, param: &[Value]) -> Result<u64, Error> {
+    pub fn query_map(&mut self, param: &Vec<Param>) -> Result<u64, Error> {
         // TODO:
         Ok(0)
     }
