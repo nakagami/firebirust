@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 #![allow(dead_code)]
-
 use super::error::ValueError;
 use super::utils::*;
 use super::*;
@@ -83,24 +82,24 @@ impl XSQLVar {
             let map = hashmap! {
                 SQL_TYPE_TEXT=>         -1,
                 SQL_TYPE_VARYING=>      -1,
-                SQL_TYPE_SHORT=>        6,
-                SQL_TYPE_LONG=>         11,
-                SQL_TYPE_FLOAT=>        17,
-                SQL_TYPE_TIME=>         11,
-                SQL_TYPE_DATE=>         10,
-                SQL_TYPE_DOUBLE=>       17,
-                SQL_TYPE_TIMESTAMP=>    22,
-                SQL_TYPE_BLOB=>         0,
-                SQL_TYPE_ARRAY=>        -1,
-                SQL_TYPE_QUAD=>         20,
-                SQL_TYPE_INT64=>        20,
-                SQL_TYPE_INT128=>       20,
-                SQL_TYPE_TIMESTAMP_TZ=> 28,
-                SQL_TYPE_TIME_TZ=>      17,
-                SQL_TYPE_DEC64=>        16,
-                SQL_TYPE_DEC128=>       34,
-                SQL_TYPE_DEC_FIXED=>    34,
-                SQL_TYPE_BOOLEAN=>      5,
+                SQL_TYPE_SHORT=>        4,
+                SQL_TYPE_LONG=>         4,
+                SQL_TYPE_FLOAT=>        4,
+                SQL_TYPE_TIME=>         4,
+                SQL_TYPE_DATE=>         4,
+                SQL_TYPE_DOUBLE=>       8,
+                SQL_TYPE_TIMESTAMP=>    8,
+                SQL_TYPE_BLOB=>         8,
+                SQL_TYPE_ARRAY=>        8,
+                SQL_TYPE_QUAD=>         8,
+                SQL_TYPE_INT64=>        8,
+                SQL_TYPE_INT128=>       16,
+                SQL_TYPE_TIMESTAMP_TZ=> 10,
+                SQL_TYPE_TIME_TZ=>      6,
+                SQL_TYPE_DEC64=>        8,
+                SQL_TYPE_DEC128=>       16,
+                SQL_TYPE_DEC_FIXED=>    16,
+                SQL_TYPE_BOOLEAN=>      1,
             };
             map[&self.sqltype]
         }
