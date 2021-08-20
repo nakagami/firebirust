@@ -1153,7 +1153,7 @@ impl WireProtocol {
             self.pack_u32(0);
             self.pack_u32(0);
         } else {
-            let (blr, values) = self.params_to_blr(trans_handle, params)?;
+            let (blr, values) = self.params_to_blr(params)?;
             // println!("blr={:?}", &blr);
             // println!("values={:?}", &values);
             self.pack_bytes(&blr);
@@ -1182,7 +1182,7 @@ impl WireProtocol {
             self.pack_u32(0);
             self.pack_u32(0);
         } else {
-            let (blr, values) = self.params_to_blr(trans_handle, params)?;
+            let (blr, values) = self.params_to_blr(params)?;
             self.pack_bytes(&blr);
             self.pack_u32(0);
             self.pack_u32(1);
@@ -1457,7 +1457,6 @@ impl WireProtocol {
 
     pub fn params_to_blr(
         &mut self,
-        trans_handle: i32,
         params: &Vec<Param>,
     ) -> Result<(Vec<u8>, Vec<u8>), Error> {
         // Convert parameter array to BLR and values format.
