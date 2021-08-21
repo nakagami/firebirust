@@ -76,6 +76,12 @@ pub fn bytes_to_int32(b: &[u8]) -> i32 {
     v
 }
 
+pub fn bytes_to_bint32(b: &[u8]) -> i32 {
+    let tmp: [u8; 4] = [b[3], b[2], b[1], b[0]];
+    let v: i32 = unsafe { transmute::<[u8; 4], i32>(tmp) };
+    v
+}
+
 pub fn bytes_to_uint32(b: &[u8]) -> u32 {
     // little endian u32
     ((b[0] as u32) << 0) + ((b[1] as u32) << 8) + ((b[2] as u32) << 16) + ((b[3] as u32) << 24)
@@ -88,6 +94,12 @@ pub fn bytes_to_buint32(b: &[u8]) -> u32 {
 
 pub fn bytes_to_int16(b: &[u8]) -> i16 {
     let tmp: [u8; 2] = [b[0], b[1]];
+    let v: i16 = unsafe { transmute::<[u8; 2], i16>(tmp) };
+    v
+}
+
+pub fn bytes_to_bint16(b: &[u8]) -> i16 {
+    let tmp: [u8; 2] = [b[1], b[0]];
     let v: i16 = unsafe { transmute::<[u8; 2], i16>(tmp) };
     v
 }

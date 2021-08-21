@@ -19,7 +19,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-use super::{Error, Statement, Value};
+use super::error::{Error, ValueError};
+use super::value::CellValueToVal;
+use super::{CellValue, Statement};
 use std::collections::VecDeque;
 use std::result::Result;
 
@@ -28,11 +30,11 @@ pub struct ResultSetMetaData {}
 
 pub struct Rows<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
-    rows: VecDeque<Vec<Value>>,
+    rows: VecDeque<Vec<CellValue>>,
 }
 
 impl Rows<'_> {
-    pub(crate) fn new<'a>(stmt: &'a Statement, rows: VecDeque<Vec<Value>>) -> Rows<'a> {
+    pub(crate) fn new<'a>(stmt: &'a Statement, rows: VecDeque<Vec<CellValue>>) -> Rows<'a> {
         Rows { stmt, rows }
     }
 
@@ -41,40 +43,6 @@ impl Rows<'_> {
           // TODO:
         }
     */
-
-    pub fn get_i8(&self, i: u64) -> Result<Option<i8>, Error> {
-        self.rows[0][i as usize].get_i8()
-    }
-
-    pub fn get_i16(&self, i: u64) -> Result<Option<i16>, Error> {
-        self.rows[0][i as usize].get_i16()
-    }
-
-    pub fn get_i32(&self, i: u64) -> Result<Option<i32>, Error> {
-        self.rows[0][i as usize].get_i32()
-    }
-
-    pub fn get_i64(&self, i: u64) -> Result<Option<i64>, Error> {
-        self.rows[0][i as usize].get_i64()
-    }
-
-    pub fn get_f32(&self, i: u64) -> Result<Option<f32>, Error> {
-        self.rows[0][i as usize].get_f32()
-    }
-
-    pub fn get_f64(&self, i: u64) -> Result<Option<f64>, Error> {
-        self.rows[0][i as usize].get_f64()
-    }
-
-    pub fn get_string(&self, i: u64) -> Result<Option<String>, Error> {
-        self.rows[0][i as usize].get_string()
-    }
-
-    pub fn get_bytes(&self, i: u64) -> Result<Option<Vec<u8>>, Error> {
-        self.rows[0][i as usize].get_bytes()
-    }
-
-    // TODO: get other types
 }
 
 impl<'stmt> Iterator for Rows<'stmt> {
@@ -93,5 +61,20 @@ impl<'stmt> Iterator for Rows<'stmt> {
 
 pub struct Row<'stmt> {
     pub(crate) stmt: &'stmt Statement<'stmt>,
-    row: Vec<Value>,
+    row: Vec<CellValue>,
+}
+
+impl<'stmt> Row<'stmt> {
+    pub fn get<T>(&self, idx: usize) -> Result<T, Error>
+    where
+        CellValue: CellValueToVal<T>,
+    {
+        if let Some(cell_value) = self.row.get(idx) {
+            cell_value.clone().to_val()
+        } else {
+            Err(Error::ValueError(ValueError::new(
+                "This index doesn't exists",
+            )))
+        }
+    }
 }

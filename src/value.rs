@@ -25,7 +25,7 @@ use chrono;
 use std::result::Result;
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum Value {
+pub enum CellValue {
     Null,
     Text(String),
     Varying(String),
@@ -46,81 +46,82 @@ pub enum Value {
     Boolean(bool),
 }
 
-impl Value {
+impl CellValue {
     pub fn get_i8(&self) -> Result<Option<i8>, Error> {
         match self {
-            Value::Null => Ok(None),
+            CellValue::Null => Ok(None),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i8()"))),
         }
     }
 
     pub fn get_i16(&self) -> Result<Option<i16>, Error> {
         match self {
-            Value::Null => Ok(None),
-            Value::Short(v) => Ok(Some(*v)),
+            CellValue::Null => Ok(None),
+            CellValue::Short(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i16()"))),
         }
     }
 
     pub fn get_i32(&self) -> Result<Option<i32>, Error> {
         match self {
-            Value::Null => Ok(None),
-            Value::Long(v) => Ok(Some(*v)),
+            CellValue::Null => Ok(None),
+            CellValue::Long(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i32()"))),
         }
     }
 
     pub fn get_i64(&self) -> Result<Option<i64>, Error> {
         match self {
-            Value::Null => Ok(None),
-            Value::Int64(v) => Ok(Some(*v)),
+            CellValue::Null => Ok(None),
+            CellValue::Int64(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_i64()"))),
         }
     }
 
     pub fn get_f32(&self) -> Result<Option<f32>, Error> {
         match self {
-            Value::Null => Ok(None),
-            Value::Float(v) => Ok(Some(*v)),
+            CellValue::Null => Ok(None),
+            CellValue::Float(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_f32()"))),
         }
     }
 
     pub fn get_f64(&self) -> Result<Option<f64>, Error> {
         match self {
-            Value::Null => Ok(None),
-            Value::Double(v) => Ok(Some(*v)),
+            CellValue::Null => Ok(None),
+            CellValue::Double(v) => Ok(Some(*v)),
             _ => Err(Error::ValueError(ValueError::new("Can't get_f64()"))),
         }
     }
 
     pub fn get_string(&self) -> Result<Option<String>, Error> {
         match self {
-            Value::Null => Ok(None),
-            Value::Text(v) | Value::Varying(v) => Ok(Some(v.to_string())),
+            CellValue::Null => Ok(None),
+            CellValue::Text(v) | CellValue::Varying(v) => Ok(Some(v.to_string())),
             _ => Err(Error::ValueError(ValueError::new("Can't get_string()"))),
         }
     }
 
     pub fn get_bytes(&self) -> Result<Option<Vec<u8>>, Error> {
         match self {
-            Value::Null => Ok(None),
-            Value::BlobBinary(v) => {
-                Ok(Some(v.to_vec()))
-            }
+            CellValue::Null => Ok(None),
+            CellValue::BlobBinary(v) => Ok(Some(v.to_vec())),
             _ => Err(Error::ValueError(ValueError::new("Can't get_bytes()"))),
         }
     }
 }
 
-impl From<i32> for Value {
-    fn from(v: i32) -> Value {
-        Value::Long(v)
-    }
+pub trait CellValueToVal<T> {
+    fn to_val(self) -> Result<T, Error>
+    where
+        Self: std::marker::Sized;
 }
 
-impl From<&str> for Value {
-    fn from(v: &str) -> Value {
-        Value::Text(v.to_string())
+impl CellValueToVal<i32> for CellValue {
+    fn to_val(self) -> Result<i32, Error> {
+        match self {
+            CellValue::Long(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't decode value i32"))),
+        }
     }
 }

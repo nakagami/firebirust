@@ -78,5 +78,8 @@ fn test_connnect() {
     conn.commit().unwrap();
 
     let mut stmt = conn.prepare("select * from foo").unwrap();
-    stmt.query(&params![]).unwrap();
+
+    for row in stmt.query(&params![]).unwrap() {
+        println!("something row")
+    }
 }

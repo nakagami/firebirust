@@ -21,11 +21,11 @@
 // SOFTWARE.
 #![allow(dead_code)]
 use super::xsqlvar::*;
+use super::CellValue;
 use super::Connection;
 use super::Error;
 use super::Param;
 use super::Rows;
-use super::Value;
 use maplit::hashmap;
 use std::collections::VecDeque;
 
@@ -66,7 +66,7 @@ impl Statement<'_> {
         }
     }
 
-    fn fetch_records(&mut self) -> Result<VecDeque<Vec<Value>>, Error> {
+    fn fetch_records(&mut self) -> Result<VecDeque<Vec<CellValue>>, Error> {
         let mut rows = VecDeque::new();
         let blr = self.calc_blr();
 
@@ -91,7 +91,7 @@ impl Statement<'_> {
             .wp
             .op_execute(self.stmt_handle, self.conn.trans_handle, &params)?;
         self.conn.wp.op_response()?;
-        let mut rows: VecDeque<Vec<Value>> = VecDeque::new();
+        let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records()?
         }
@@ -159,7 +159,7 @@ impl Statement<'_> {
         blr
     }
 
-    fn fetch_segment(&mut self) -> Result<(Vec<Vec<Value>>, bool), Error> {
+    fn fetch_segment(&mut self) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
         let blr = self.calc_blr();
         self.conn
             .wp

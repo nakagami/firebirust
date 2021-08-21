@@ -105,26 +105,26 @@ impl XSQLVar {
         }
     }
 
-    pub fn value(&self, raw_value: &[u8]) -> Result<Value, ValueError> {
+    pub fn value(&self, raw_value: &[u8]) -> Result<CellValue, ValueError> {
         match self.sqltype {
-            SQL_TYPE_TEXT => Ok(Value::Text(bytes_to_str(raw_value))),
-            SQL_TYPE_VARYING => Ok(Value::Varying(bytes_to_str(raw_value))),
-            SQL_TYPE_SHORT => Ok(Value::Short(bytes_to_int16(raw_value))),
-            SQL_TYPE_LONG => Ok(Value::Long(bytes_to_int32(raw_value))),
-            SQL_TYPE_FLOAT => Ok(Value::Float(bytes_to_f32(raw_value))),
-            SQL_TYPE_TIME => Ok(Value::Time(bytes_to_naive_time(raw_value))),
-            SQL_TYPE_DATE => Ok(Value::Date(bytes_to_naive_date(raw_value))),
-            SQL_TYPE_DOUBLE => Ok(Value::Double(bytes_to_f64(raw_value))),
-            SQL_TYPE_TIMESTAMP => Ok(Value::TimeStamp(bytes_to_naive_date_time(raw_value))),
+            SQL_TYPE_TEXT => Ok(CellValue::Text(bytes_to_str(raw_value))),
+            SQL_TYPE_VARYING => Ok(CellValue::Varying(bytes_to_str(raw_value))),
+            SQL_TYPE_SHORT => Ok(CellValue::Short(bytes_to_bint16(raw_value))),
+            SQL_TYPE_LONG => Ok(CellValue::Long(bytes_to_bint32(raw_value))),
+            SQL_TYPE_FLOAT => Ok(CellValue::Float(bytes_to_f32(raw_value))),
+            SQL_TYPE_TIME => Ok(CellValue::Time(bytes_to_naive_time(raw_value))),
+            SQL_TYPE_DATE => Ok(CellValue::Date(bytes_to_naive_date(raw_value))),
+            SQL_TYPE_DOUBLE => Ok(CellValue::Double(bytes_to_f64(raw_value))),
+            SQL_TYPE_TIMESTAMP => Ok(CellValue::TimeStamp(bytes_to_naive_date_time(raw_value))),
             SQL_TYPE_BLOB => Ok(if self.sqlsubtype == 1 {
-                Value::BlobText(raw_value.to_vec())
+                CellValue::BlobText(raw_value.to_vec())
             } else {
-                Value::BlobBinary(raw_value.to_vec())
+                CellValue::BlobBinary(raw_value.to_vec())
             }),
 
-            SQL_TYPE_INT64 => Ok(Value::Int64(bytes_to_int64(raw_value))),
+            SQL_TYPE_INT64 => Ok(CellValue::Int64(bytes_to_int64(raw_value))),
 
-            SQL_TYPE_BOOLEAN => Ok(Value::Boolean(raw_value[0] != 0)),
+            SQL_TYPE_BOOLEAN => Ok(CellValue::Boolean(raw_value[0] != 0)),
 
             _ => Err(ValueError::new(&format!(
                 "can't parse result value:{}",

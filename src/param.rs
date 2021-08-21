@@ -23,7 +23,6 @@
 use super::error::{Error, ValueError};
 use std::result::Result;
 
-
 #[derive(PartialEq, Debug, Clone)]
 pub enum Param {
     Null,
@@ -103,9 +102,7 @@ impl Param {
     pub fn get_bytes(&self) -> Result<Option<Vec<u8>>, Error> {
         match self {
             Param::Null => Ok(None),
-            Param::Blob(v) => {
-                Ok(Some(v.to_vec()))
-            }
+            Param::Blob(v) => Ok(Some(v.to_vec())),
             _ => Err(Error::ValueError(ValueError::new("Can't get_bytes()"))),
         }
     }

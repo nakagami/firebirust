@@ -1223,7 +1223,7 @@ impl WireProtocol {
         stmt_handle: i32,
         trans_handle: i32,
         xsqlda: &[XSQLVar],
-    ) -> Result<(Vec<Vec<Value>>, bool), Error> {
+    ) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
         debug_print!("op_fetch_response()");
         let mut opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);
         while opcode == OP_DUMMY {
@@ -1242,7 +1242,7 @@ impl WireProtocol {
 
         let mut status = utils::bytes_to_buint32(&self.recv_packets(4)?);
         let mut count = utils::bytes_to_buint32(&self.recv_packets(4)?);
-        let mut rows: Vec<Vec<Value>> = Vec::new();
+        let mut rows: Vec<Vec<CellValue>> = Vec::new();
         let xsqlda_len = xsqlda.len();
 
         while count > 0 {
@@ -1257,10 +1257,10 @@ impl WireProtocol {
                 null_indicator += *c as u128;
             }
 
-            let mut row: Vec<Value> = Vec::with_capacity(xsqlda_len);
+            let mut row: Vec<CellValue> = Vec::with_capacity(xsqlda_len);
             for (i, x) in xsqlda.iter().enumerate() {
                 if (null_indicator & (1 << i)) != 0 {
-                    row.push(Value::Null)
+                    row.push(CellValue::Null)
                 } else {
                     let ln = if x.io_length() < 0 {
                         utils::bytes_to_buint32(&self.recv_packets(4)?) as usize
@@ -1380,10 +1380,10 @@ impl WireProtocol {
         }
     }
 
-    pub fn op_sql_response(&mut self, xsqlda: &[XSQLVar]) -> Result<Vec<Value>, Error> {
+    pub fn op_sql_response(&mut self, xsqlda: &[XSQLVar]) -> Result<Vec<CellValue>, Error> {
         debug_print!("op_sql_response()");
         let xsqlda_len = xsqlda.len();
-        let mut row: Vec<Value> = Vec::with_capacity(xsqlda_len);
+        let mut row: Vec<CellValue> = Vec::with_capacity(xsqlda_len);
         let mut opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);
         while opcode == OP_DUMMY {
             opcode = utils::bytes_to_buint32(&self.recv_packets(4)?);
@@ -1455,10 +1455,7 @@ impl WireProtocol {
         Ok(blob_id)
     }
 
-    pub fn params_to_blr(
-        &mut self,
-        params: &Vec<Param>,
-    ) -> Result<(Vec<u8>, Vec<u8>), Error> {
+    pub fn params_to_blr(&mut self, params: &Vec<Param>) -> Result<(Vec<u8>, Vec<u8>), Error> {
         // Convert parameter array to BLR and values format.
         let mut values_list: Vec<u8> = Vec::new();
         let mut blr_list: Vec<u8> = Vec::new();
