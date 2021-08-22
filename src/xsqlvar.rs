@@ -25,6 +25,7 @@ use super::cellvalue::CellValue;
 use super::error::ValueError;
 use super::utils::*;
 use maplit::hashmap;
+use rust_decimal;
 
 pub const SQL_TYPE_TEXT: u32 = 452;
 pub const SQL_TYPE_VARYING: u32 = 448;

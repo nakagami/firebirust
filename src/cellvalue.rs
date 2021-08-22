@@ -22,6 +22,7 @@
 
 use super::error::{Error, ValueError};
 use chrono;
+use rust_decimal;
 use std::result::Result;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -42,73 +43,8 @@ pub enum CellValue {
     Int128(i128),
     //    TimeStampTZ(??),
     //    TimeTz(??),
-    //  Decimal(??),
+    Decimal(rust_decimal::Decimal),
     Boolean(bool),
-}
-
-impl CellValue {
-    pub fn get_i8(&self) -> Result<Option<i8>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i8()"))),
-        }
-    }
-
-    pub fn get_i16(&self) -> Result<Option<i16>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            CellValue::Short(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i16()"))),
-        }
-    }
-
-    pub fn get_i32(&self) -> Result<Option<i32>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            CellValue::Long(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i32()"))),
-        }
-    }
-
-    pub fn get_i64(&self) -> Result<Option<i64>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            CellValue::Int64(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i64()"))),
-        }
-    }
-
-    pub fn get_f32(&self) -> Result<Option<f32>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            CellValue::Float(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_f32()"))),
-        }
-    }
-
-    pub fn get_f64(&self) -> Result<Option<f64>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            CellValue::Double(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_f64()"))),
-        }
-    }
-
-    pub fn get_string(&self) -> Result<Option<String>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            CellValue::Text(v) | CellValue::Varying(v) => Ok(Some(v.to_string())),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_string()"))),
-        }
-    }
-
-    pub fn get_bytes(&self) -> Result<Option<Vec<u8>>, Error> {
-        match self {
-            CellValue::Null => Ok(None),
-            CellValue::BlobBinary(v) => Ok(Some(v.to_vec())),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_bytes()"))),
-        }
-    }
 }
 
 pub trait CellValueToVal<T> {
@@ -129,11 +65,74 @@ where
     }
 }
 
+impl CellValueToVal<String> for CellValue {
+    fn to_val(self) -> Result<String, Error> {
+        match self {
+            CellValue::Text(v) => Ok(v.to_string()),
+            CellValue::Varying(v) => Ok(v.to_string()),
+            CellValue::BlobBinary(v) => Ok(String::from_utf8_lossy(&v).to_string()),
+            CellValue::BlobText(v) => Ok(String::from_utf8_lossy(&v).to_string()),
+            _ => Err(Error::ValueError(ValueError::new("Can't get string"))),
+        }
+    }
+}
+
+impl CellValueToVal<i64> for CellValue {
+    fn to_val(self) -> Result<i64, Error> {
+        match self {
+            CellValue::Short(v) => Ok(v.into()),
+            CellValue::Long(v) => Ok(v.into()),
+            CellValue::Int64(v) => Ok(v.into()),
+            _ => Err(Error::ValueError(ValueError::new("Can't get int"))),
+        }
+    }
+}
+
 impl CellValueToVal<i32> for CellValue {
     fn to_val(self) -> Result<i32, Error> {
+        CellValueToVal::<i64>::to_val(self).map(|i| i as i32)
+    }
+}
+
+impl CellValueToVal<i16> for CellValue {
+    fn to_val(self) -> Result<i16, Error> {
+        CellValueToVal::<i64>::to_val(self).map(|i| i as i16)
+    }
+}
+
+impl CellValueToVal<f64> for CellValue {
+    fn to_val(self) -> Result<f64, Error> {
         match self {
-            CellValue::Long(v) => Ok(v),
-            _ => Err(Error::ValueError(ValueError::new("Can't decode value i32"))),
+            CellValue::Double(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't get double"))),
+        }
+    }
+}
+
+impl CellValueToVal<f32> for CellValue {
+    fn to_val(self) -> Result<f32, Error> {
+        match self {
+            CellValue::Float(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't get float"))),
+        }
+    }
+}
+
+impl CellValueToVal<Vec<u8>> for CellValue {
+    fn to_val(self) -> Result<Vec<u8>, Error> {
+        match self {
+            CellValue::BlobBinary(v) => Ok(v.clone()),
+            CellValue::BlobText(v) => Ok(v.clone()),
+            _ => Err(Error::ValueError(ValueError::new("Can't get binary"))),
+        }
+    }
+}
+
+impl CellValueToVal<bool> for CellValue {
+    fn to_val(self) -> Result<bool, Error> {
+        match self {
+            CellValue::Boolean(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't get bool"))),
         }
     }
 }
