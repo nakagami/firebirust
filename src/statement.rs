@@ -159,10 +159,4 @@ impl Statement<'_> {
         blr
     }
 
-    fn fetch_segment(&mut self) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
-        let blr = self.calc_blr();
-        self.conn
-            .wp
-            .op_fetch_response(self.stmt_handle, self.conn.trans_handle, &self.xsqlda)
-    }
 }
