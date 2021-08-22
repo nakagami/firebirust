@@ -1405,6 +1405,7 @@ impl WireProtocol {
                 null_indicator += *c as u128
             }
             for x in xsqlda.iter() {
+                // TODO: skip null value
                 let ln = if x.io_length() < 0 {
                     utils::bytes_to_buint32(&self.recv_packets(4)?) as usize
                 } else {
