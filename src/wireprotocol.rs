@@ -375,8 +375,6 @@ pub struct WireProtocol {
     channel: WireChannel,
     host: String,
     port: u16,
-    username: String,
-    password: String,
 
     pub(crate) db_handle: i32,
 
@@ -402,8 +400,6 @@ impl WireProtocol {
             channel: WireChannel::new(&params.host, params.port)?,
             host: params.host.to_string(),
             port: params.port,
-            username: params.username.to_string(),
-            password: params.password.to_string(),
             db_handle: -1,
             protocol_version: -1,
             accept_architecture: -1,
@@ -436,7 +432,7 @@ impl WireProtocol {
     fn uid(
         &self,
         username: &str,
-        password: &str,
+        _password: &str,
         auth_plugin_name: &str,
         wire_crypt: bool,
         client_public: &BigInt,
@@ -638,8 +634,8 @@ impl WireProtocol {
         let server_public =
             utils::big_int_from_hex_string(&utils::bytes_to_str(&data[4 + ln..]).as_bytes());
         let (auth_data, session_key) = srp::get_client_proof(
-            &self.username.to_uppercase(),
-            &self.password,
+            &username.to_uppercase(),
+            password,
             servre_salt,
             client_public,
             &server_public,
@@ -859,7 +855,7 @@ impl WireProtocol {
         &mut self,
         db_name: &str,
         username: &str,
-        password: &str,
+        _password: &str,
         role: &str,
         page_size: u32,
     ) -> Result<(), Error> {
@@ -920,7 +916,7 @@ impl WireProtocol {
         &mut self,
         db_name: &str,
         username: &str,
-        password: &str,
+        _password: &str,
         role: &str,
     ) -> Result<(), Error> {
         debug_print!("op_attach()");
@@ -1189,6 +1185,9 @@ impl WireProtocol {
             self.pack_u32(1);
             self.append_bytes(&values);
         }
+        self.pack_bytes(output_blr);
+        self.pack_u32(0);
+
         self.send_packets()?;
         Ok(())
     }
@@ -1221,7 +1220,6 @@ impl WireProtocol {
 
     pub fn op_fetch_response(
         &mut self,
-        stmt_handle: i32,
         xsqlda: &[XSQLVar],
     ) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
         debug_print!("op_fetch_response()");
