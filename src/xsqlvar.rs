@@ -21,9 +21,9 @@
 // SOFTWARE.
 
 #![allow(dead_code)]
+use super::cellvalue::CellValue;
 use super::error::ValueError;
 use super::utils::*;
-use super::cellvalue::CellValue;
 use maplit::hashmap;
 
 pub const SQL_TYPE_TEXT: u32 = 452;
@@ -111,21 +111,24 @@ impl XSQLVar {
             SQL_TYPE_VARYING => Ok(CellValue::Varying(bytes_to_str(raw_value))),
             SQL_TYPE_SHORT => Ok(CellValue::Short(bytes_to_bint16(raw_value))),
             SQL_TYPE_LONG => Ok(CellValue::Long(bytes_to_bint32(raw_value))),
-            SQL_TYPE_FLOAT => Ok(CellValue::Float(bytes_to_f32(raw_value))),
-            SQL_TYPE_TIME => Ok(CellValue::Time(bytes_to_naive_time(raw_value))),
+            SQL_TYPE_INT64 => Ok(CellValue::Int64(bytes_to_int64(raw_value))),
+            // SQL_TYPE_INT128 => Ok(CellValue::Int64(bytes_to_int128(raw_value))),
             SQL_TYPE_DATE => Ok(CellValue::Date(bytes_to_naive_date(raw_value))),
-            SQL_TYPE_DOUBLE => Ok(CellValue::Double(bytes_to_f64(raw_value))),
+            SQL_TYPE_TIME => Ok(CellValue::Time(bytes_to_naive_time(raw_value))),
             SQL_TYPE_TIMESTAMP => Ok(CellValue::TimeStamp(bytes_to_naive_date_time(raw_value))),
+            // SQL_TYPE_TIME_TZ => Ok(CellValue::Time(bytes_to_naive_time(raw_value))),
+            // SQL_TYPE_TIMESTAMP_TZ => Ok(CellValue::TimeStamp(bytes_to_naive_date_time(raw_value))),
+            SQL_TYPE_FLOAT => Ok(CellValue::Float(bytes_to_f32(raw_value))),
+            SQL_TYPE_DOUBLE => Ok(CellValue::Double(bytes_to_f64(raw_value))),
+            SQL_TYPE_BOOLEAN => Ok(CellValue::Boolean(raw_value[0] != 0)),
             SQL_TYPE_BLOB => Ok(if self.sqlsubtype == 1 {
                 CellValue::BlobText(raw_value.to_vec())
             } else {
                 CellValue::BlobBinary(raw_value.to_vec())
             }),
-
-            SQL_TYPE_INT64 => Ok(CellValue::Int64(bytes_to_int64(raw_value))),
-
-            SQL_TYPE_BOOLEAN => Ok(CellValue::Boolean(raw_value[0] != 0)),
-
+            // SQL_TYPE_DEC_FIXED => Ok(CellValue::Xxx(raw_value[0])),
+            // SQL_TYPE_DEC64 => Ok(CellValue::Xxx(raw_value[0])),
+            // SQL_TYPE_DEC128 => Ok(CellValue::Xxx(raw_value[0])),
             _ => Err(ValueError::new(&format!(
                 "can't parse result value:{}",
                 self.sqltype

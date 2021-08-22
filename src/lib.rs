@@ -19,6 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+mod cellvalue;
 mod conn_params;
 mod connection;
 mod errmsgs;
@@ -28,7 +29,6 @@ mod row;
 mod srp;
 mod statement;
 mod utils;
-mod cellvalue;
 mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;

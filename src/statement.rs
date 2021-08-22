@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #![allow(dead_code)]
-use super::xsqlvar::*;
 use super::cellvalue::CellValue;
+use super::xsqlvar::*;
 use super::Connection;
 use super::Error;
 use super::Param;

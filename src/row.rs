@@ -19,8 +19,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-use super::error::{Error, ValueError};
 use super::cellvalue::{CellValue, CellValueToVal};
+use super::error::{Error, ValueError};
 use super::statement::Statement;
 use std::collections::VecDeque;
 use std::result::Result;
