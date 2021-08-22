@@ -117,6 +117,18 @@ pub trait CellValueToVal<T> {
         Self: std::marker::Sized;
 }
 
+impl<T> CellValueToVal<Option<T>> for CellValue
+where
+    CellValue: CellValueToVal<T>,
+{
+    fn to_val(self) -> Result<Option<T>, Error> {
+        match self {
+            CellValue::Null => Ok(None),
+            _ => Ok(Some(self.to_val()?)),
+        }
+    }
+}
+
 impl CellValueToVal<i32> for CellValue {
     fn to_val(self) -> Result<i32, Error> {
         match self {
