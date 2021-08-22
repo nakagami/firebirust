@@ -74,7 +74,6 @@ impl Statement<'_> {
             self.conn.wp.op_fetch(self.stmt_handle, &blr)?;
             let (rows_segment, more_data) = self.conn.wp.op_fetch_response(
                 self.stmt_handle,
-                self.conn.trans_handle,
                 &self.xsqlda,
             )?;
             rows.extend(rows_segment);

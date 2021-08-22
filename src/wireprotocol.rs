@@ -1222,7 +1222,6 @@ impl WireProtocol {
     pub fn op_fetch_response(
         &mut self,
         stmt_handle: i32,
-        trans_handle: i32,
         xsqlda: &[XSQLVar],
     ) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
         debug_print!("op_fetch_response()");
