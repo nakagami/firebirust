@@ -21,7 +21,7 @@
 // SOFTWARE.
 #![allow(dead_code)]
 use super::xsqlvar::*;
-use super::CellValue;
+use super::cellvalue::CellValue;
 use super::Connection;
 use super::Error;
 use super::Param;

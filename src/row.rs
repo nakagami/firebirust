@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 use super::error::{Error, ValueError};
-use super::value::CellValueToVal;
-use super::{CellValue, Statement};
+use super::cellvalue::{CellValue, CellValueToVal};
+use super::statement::Statement;
 use std::collections::VecDeque;
 use std::result::Result;
 

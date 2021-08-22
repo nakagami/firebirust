@@ -23,7 +23,7 @@
 #![allow(dead_code)]
 use super::error::ValueError;
 use super::utils::*;
-use super::*;
+use super::cellvalue::CellValue;
 use maplit::hashmap;
 
 pub const SQL_TYPE_TEXT: u32 = 452;

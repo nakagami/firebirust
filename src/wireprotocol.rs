@@ -33,6 +33,7 @@ use super::error::{Error, FirebirdError};
 use super::wirechannel::WireChannel;
 use super::xsqlvar::XSQLVar;
 use super::*;
+use super::cellvalue::CellValue;
 
 const PLUGIN_NAME_LIST: &str = "Srp256,Srp";
 const BUFFER_LEN: u32 = 1024;

@@ -28,7 +28,7 @@ mod row;
 mod srp;
 mod statement;
 mod utils;
-mod value;
+mod cellvalue;
 mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;
@@ -38,7 +38,6 @@ pub use crate::error::Error;
 pub use crate::param::Param;
 pub use crate::row::Rows;
 pub use crate::statement::Statement;
-pub use crate::value::CellValue;
 pub use crate::xsqlvar::XSQLVar;
 
 #[macro_export]
