@@ -120,6 +120,14 @@ pub fn bytes_to_int64(b: &[u8]) -> i64 {
     v
 }
 
+pub fn bytes_to_uint128(b: &[u8]) -> u128 {
+    let tmp: [u8; 16] = [
+        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13],
+        b[14], b[15],
+    ];
+    let v: u128 = unsafe { transmute::<[u8; 16], u128>(tmp) };
+    v
+}
 pub fn bytes_to_int128(b: &[u8]) -> i128 {
     let tmp: [u8; 16] = [
         b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13],

@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 use rust_decimal;
+use super::utils::*;
 
 use super::error::ValueError;
 
@@ -89,7 +90,7 @@ fn dpd_to_int(dpd: u16) -> Result<u16, ValueError> {
     Ok(d[2] * 100 + d[1] * 10 + d[0])
 }
 
-fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i64) -> Result<u128, ValueError> {
+fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i32) -> Result<u128, ValueError> {
     // prefix: High bits integer value
     // dpd_bits: dpd encoded bits
     // num_bits: bit length of dpd_bits
@@ -112,64 +113,59 @@ fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i64) -> Result<u1
     Ok(v)
 }
 
-/*
-func decimal128ToSignDigitsExponent(b []byte) (v *decimal.Decimal, sign int, digits *big.Int, exponent int32) {
+fn decimal128_to_sign_digits_exponent(b:Vec<u8>) -> Result<(i32, u128, i32), ValueError> {
     // https://en.wikipedia.org/wiki/Decimal128_floating-point_format
+    let mut sign:i32 = 0;
+    let mut exponent:i32 = 0;
+    let mut prefix:i64 = 0;
 
-    var prefix int64
     if (b[0] & 0x80) == 0x80 {
-        sign = 1
+        sign = 1;
     }
-    cf := (uint32(b[0]&0x7f) << 10) + uint32(b[1]<<2) + uint32(b[2]>>6)
+    let cf = (((b[0]&0x7f) as u32) << 10) + ((b[1] as u32) <<2) + (b[2]>>6) as u32;
     if (cf & 0x1F000) == 0x1F000 {
-        var d decimal.Decimal
         if sign == 1 {
-            // Is there -NaN ?
-            d = decimal.NewFromFloat(math.NaN())
+            return Err(ValueError::new("NaN"));
         } else {
-            d = decimal.NewFromFloat(math.NaN())
+            return Err(ValueError::new("NaN"));
         }
-        v = &d
-        return
     } else if (cf & 0x1F000) == 0x1E000 {
-        var d decimal.Decimal
         if sign == 1 {
-            d = decimal.NewFromFloat(math.Inf(-1))
+            return Err(ValueError::new("-Inf"));
         } else {
-            d = decimal.NewFromFloat(math.Inf(1))
+            return Err(ValueError::new("Inf"));
         }
-        v = &d
-        return
     } else if (cf & 0x18000) == 0x00000 {
-        exponent = int32(0x0000 + (cf & 0x00fff))
-        prefix = int64((cf >> 12) & 0x07)
+        exponent = (0x0000 + (cf & 0x00fff)) as i32;
+        prefix = ((cf >> 12) & 0x07) as i64;
     } else if (cf & 0x18000) == 0x08000 {
-        exponent = int32(0x1000 + (cf & 0x00fff))
-        prefix = int64((cf >> 12) & 0x07)
+        exponent = (0x1000 + (cf & 0x00fff)) as i32;
+        prefix = ((cf >> 12) & 0x07) as i64;
     } else if (cf & 0x18000) == 0x10000 {
-        exponent = int32(0x2000 + (cf & 0x00fff))
-        prefix = int64((cf >> 12) & 0x07)
+        exponent = (0x2000 + (cf & 0x00fff)) as i32;
+        prefix = ((cf >> 12) & 0x07) as i64;
     } else if (cf & 0x1e000) == 0x18000 {
-        exponent = int32(0x0000 + (cf & 0x00fff))
-        prefix = int64(8 + (cf>>12)&0x01)
+        exponent = (0x0000 + (cf & 0x00fff)) as i32;
+        prefix = (8 + (cf>>12)&0x01) as i64;
     } else if (cf & 0x1e000) == 0x1a000 {
-        exponent = int32(0x1000 + (cf & 0x00fff))
-        prefix = int64(8 + (cf>>12)&0x01)
+        exponent = (0x1000 + (cf & 0x00fff)) as i32;
+        prefix = (8 + (cf>>12)&0x01) as i64;
     } else if (cf & 0x1e000) == 0x1c000 {
-        exponent = int32(0x2000 + (cf & 0x00fff))
-        prefix = int64(8 + (cf>>12)&0x01)
+        exponent = (0x2000 + (cf & 0x00fff)) as i32;
+        prefix = (8 + (cf>>12)&0x01) as i64;
     } else {
-        panic("decimal128 value error")
+        return Err(ValueError::new("decimal128 value error"));
     }
-    exponent -= 6176
+    exponent -= 6176;
 
-    dpdBits := bytesToBigInt(b)
-    mask := bigIntFromHexString("3fffffffffffffffffffffffffff")
-    dpdBits.And(dpdBits, mask)
-    digits = calcSignificand(prefix, dpdBits, 110)
+    let dpd_bits = bytes_to_uint128(&b);
+    let mask:u128 = 0x3fffffffffffffffffffffffffff;
+    let digits = calc_significand(prefix, dpd_bits & mask , 110)?;
 
-    return
+    Ok((sign, digits, exponent))
 }
+
+/*
 
 func decimalFixedToDecimal(b []byte, scale int32) decimal.Decimal {
     v, sign, digits, _ := decimal128ToSignDigitsExponent(b)
