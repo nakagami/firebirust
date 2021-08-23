@@ -36,7 +36,7 @@ struct FooRow {
 fn test_connnect() {
     let mut conn;
     match Connection::create_database(
-        "firebird://sysdba:masterkey@localhost/tmp/rust-firebird-test.fdb",
+        "firebird://SYSDBA:masterkey@localhost/tmp/rust-firebird-test.fdb",
     ) {
         Ok(c) => {
             conn = c;

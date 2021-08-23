@@ -634,7 +634,7 @@ impl WireProtocol {
         let server_public =
             utils::big_int_from_hex_string(&utils::bytes_to_str(&data[4 + ln..]).as_bytes());
         let (auth_data, session_key) = srp::get_client_proof(
-            &username.to_uppercase(),
+            username,
             password,
             servre_salt,
             client_public,
