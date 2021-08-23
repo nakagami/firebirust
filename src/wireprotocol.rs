@@ -1404,15 +1404,18 @@ impl WireProtocol {
                 null_indicator <<= 8;
                 null_indicator += *c as u128
             }
-            for x in xsqlda.iter() {
-                // TODO: skip null value
-                let ln = if x.io_length() < 0 {
-                    utils::bytes_to_buint32(&self.recv_packets(4)?) as usize
+            for (i, x) in xsqlda.iter().enumerate() {
+                if null_indicator & (1 << i) != 0 {
+                    row.push(CellValue::Null)
                 } else {
-                    x.io_length() as usize
-                };
-                let raw_value = self.recv_packets_alignment(ln as usize)?;
-                row.push(x.value(&raw_value)?);
+                    let ln = if x.io_length() < 0 {
+                        utils::bytes_to_buint32(&self.recv_packets(4)?) as usize
+                    } else {
+                        x.io_length() as usize
+                    };
+                    let raw_value = self.recv_packets_alignment(ln as usize)?;
+                    row.push(x.value(&raw_value)?);
+                }
             }
         }
 
