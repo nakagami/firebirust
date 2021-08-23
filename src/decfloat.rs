@@ -23,7 +23,7 @@ use rust_decimal;
 
 use super::utils::*;
 
-use super::error::{Error, ValueError};
+use super::error::ValueError;
 
 fn dpd_bit_to_int(dpd: u16, mask: u16) -> u16 {
     if (dpd & mask) != 0 {
@@ -99,7 +99,7 @@ fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i32) -> Result<u1
     let mut dpd_bits = dpd_bits_arg;
     let num_segments = num_bits / 10;
     let mut segments: Vec<u16> = Vec::new();
-    for i in 0..num_segments {
+    for _ in 0..num_segments {
         segments.push(dpd_bits as u16 & 0b1111111111);
         dpd_bits = dpd_bits >> 10;
     }
@@ -116,13 +116,12 @@ fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i32) -> Result<u1
 
 fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), ValueError> {
     // https://en.wikipedia.org/wiki/Decimal128_floating-point_format
-    let mut sign: i32 = 0;
-    let mut exponent: i32 = 0;
-    let mut prefix: i64 = 0;
+    let sign: i32 = if (b[0] & 0x80) == 0x80 {
+        1
+    } else {
+        0
+    };
 
-    if (b[0] & 0x80) == 0x80 {
-        sign = 1;
-    }
     let cf = (((b[0] & 0x7f) as u32) << 10) + ((b[1] as u32) << 2) + (b[2] >> 6) as u32;
     if (cf & 0x1F000) == 0x1F000 {
         if sign == 1 {
@@ -130,13 +129,18 @@ fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), Valu
         } else {
             return Err(ValueError::new("NaN"));
         }
-    } else if (cf & 0x1F000) == 0x1E000 {
+    }
+    if (cf & 0x1F000) == 0x1E000 {
         if sign == 1 {
             return Err(ValueError::new("-Inf"));
         } else {
             return Err(ValueError::new("Inf"));
         }
-    } else if (cf & 0x18000) == 0x00000 {
+    } 
+
+    let mut exponent: i32;
+    let prefix: i64;
+    if (cf & 0x18000) == 0x00000 {
         exponent = (0x0000 + (cf & 0x00fff)) as i32;
         prefix = ((cf >> 12) & 0x07) as i64;
     } else if (cf & 0x18000) == 0x08000 {
@@ -166,7 +170,7 @@ fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), Valu
     Ok((sign, digits, exponent))
 }
 
-pub fn decimal_fixed_to_decimal(b: &[u8], scale: i32) -> Result<rust_decimal::Decimal, ValueError> {
+pub fn decimal_fixed_to_decimal(b: &[u8], _scale: i32) -> Result<rust_decimal::Decimal, ValueError> {
     let (sign, digits, _) = decimal128_to_sign_digits_exponent(b)?;
     let mut num = digits as i64;
     if sign != 0 {
@@ -178,14 +182,13 @@ pub fn decimal_fixed_to_decimal(b: &[u8], scale: i32) -> Result<rust_decimal::De
 
 pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueError> {
     // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
-    let mut prefix:i64 = 0;
-    let mut sign:i32 = 0;
-    let mut exponent:i32 = 0;
-    if (b[0] & 0x80) == 0x80 {
-        sign = 1;
-    }
+    let sign = if (b[0] & 0x80) == 0x80 {
+        1
+    } else {
+        0
+    };
+
     let cf = ((b[0] as u32) >> 2) & 0x1f;
-    exponent = (((b[0] as i32) & 3) << 6) + (((b[1] as i32) >> 2) & 0x3f);
 
     let dpd_bits = bytes_to_uint128(&b);
     let mask: u128 = 0x3fffffffffffffffffffffffffff;
@@ -196,13 +199,18 @@ pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueErro
         } else {
             return Err(ValueError::new("NaN"));
         }
-    } else if cf == 0x1e {
+    }
+    if cf == 0x1e {
         if sign == 1 {
             return Err(ValueError::new("-Inf"));
         } else {
             return Err(ValueError::new("Inf"));
         }
-    } else if (cf & 0x18) == 0x00 {
+    }
+
+    let mut exponent:i32 = (((b[0] as i32) & 3) << 6) + (((b[1] as i32) >> 2) & 0x3f);
+    let prefix:i64;
+    if (cf & 0x18) == 0x00 {
         exponent = 0x000 + exponent;
         prefix = (cf & 0x07) as i64;
     } else if (cf & 0x18) == 0x08 {
