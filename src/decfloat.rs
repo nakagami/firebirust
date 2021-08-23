@@ -20,9 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 use rust_decimal;
+
 use super::utils::*;
 
-use super::error::ValueError;
+use super::error::{Error, ValueError};
 
 fn dpd_bit_to_int(dpd: u16, mask: u16) -> u16 {
     if (dpd & mask) != 0 {
@@ -113,16 +114,16 @@ fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i32) -> Result<u1
     Ok(v)
 }
 
-fn decimal128_to_sign_digits_exponent(b:Vec<u8>) -> Result<(i32, u128, i32), ValueError> {
+fn decimal128_to_sign_digits_exponent(b: Vec<u8>) -> Result<(i32, u128, i32), ValueError> {
     // https://en.wikipedia.org/wiki/Decimal128_floating-point_format
-    let mut sign:i32 = 0;
-    let mut exponent:i32 = 0;
-    let mut prefix:i64 = 0;
+    let mut sign: i32 = 0;
+    let mut exponent: i32 = 0;
+    let mut prefix: i64 = 0;
 
     if (b[0] & 0x80) == 0x80 {
         sign = 1;
     }
-    let cf = (((b[0]&0x7f) as u32) << 10) + ((b[1] as u32) <<2) + (b[2]>>6) as u32;
+    let cf = (((b[0] & 0x7f) as u32) << 10) + ((b[1] as u32) << 2) + (b[2] >> 6) as u32;
     if (cf & 0x1F000) == 0x1F000 {
         if sign == 1 {
             return Err(ValueError::new("NaN"));
@@ -146,37 +147,35 @@ fn decimal128_to_sign_digits_exponent(b:Vec<u8>) -> Result<(i32, u128, i32), Val
         prefix = ((cf >> 12) & 0x07) as i64;
     } else if (cf & 0x1e000) == 0x18000 {
         exponent = (0x0000 + (cf & 0x00fff)) as i32;
-        prefix = (8 + (cf>>12)&0x01) as i64;
+        prefix = (8 + (cf >> 12) & 0x01) as i64;
     } else if (cf & 0x1e000) == 0x1a000 {
         exponent = (0x1000 + (cf & 0x00fff)) as i32;
-        prefix = (8 + (cf>>12)&0x01) as i64;
+        prefix = (8 + (cf >> 12) & 0x01) as i64;
     } else if (cf & 0x1e000) == 0x1c000 {
         exponent = (0x2000 + (cf & 0x00fff)) as i32;
-        prefix = (8 + (cf>>12)&0x01) as i64;
+        prefix = (8 + (cf >> 12) & 0x01) as i64;
     } else {
         return Err(ValueError::new("decimal128 value error"));
     }
     exponent -= 6176;
 
     let dpd_bits = bytes_to_uint128(&b);
-    let mask:u128 = 0x3fffffffffffffffffffffffffff;
-    let digits = calc_significand(prefix, dpd_bits & mask , 110)?;
+    let mask: u128 = 0x3fffffffffffffffffffffffffff;
+    let digits = calc_significand(prefix, dpd_bits & mask, 110)?;
 
     Ok((sign, digits, exponent))
 }
 
-/*
-
-func decimalFixedToDecimal(b []byte, scale int32) decimal.Decimal {
-    v, sign, digits, _ := decimal128ToSignDigitsExponent(b)
-    if v != nil {
-        return *v
-    }
+fn decimal_fixed_to_decimal(b: Vec<u8>, scale: i32) -> Result<rust_decimal::Decimal, Error> {
+    let (sign, digits, _) = decimal128_to_sign_digits_exponent(b)?;
+    let mut num = digits as i64;
     if sign != 0 {
-        digits.Mul(digits, big.NewInt(-1))
+        num *= -1;
     }
-    return decimal.NewFromBigInt(digits, scale)
+    Ok(rust_decimal::Decimal::new(num, 0))
 }
+
+/*
 
 func decimal64ToDecimal(b []byte) decimal.Decimal {
     // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
