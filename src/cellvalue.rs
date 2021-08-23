@@ -159,7 +159,9 @@ impl CellValueToVal<chrono::NaiveDateTime> for CellValue {
     fn to_val(self) -> Result<chrono::NaiveDateTime, Error> {
         match self {
             CellValue::TimeStamp(v) => Ok(v),
-            _ => Err(Error::ValueError(ValueError::new("Can't convert timestamp"))),
+            _ => Err(Error::ValueError(ValueError::new(
+                "Can't convert timestamp",
+            ))),
         }
     }
 }
@@ -172,5 +174,3 @@ impl CellValueToVal<rust_decimal::Decimal> for CellValue {
         }
     }
 }
-
-
