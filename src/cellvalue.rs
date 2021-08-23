@@ -72,7 +72,7 @@ impl CellValueToVal<String> for CellValue {
             CellValue::Varying(v) => Ok(v.to_string()),
             CellValue::BlobBinary(v) => Ok(String::from_utf8_lossy(&v).to_string()),
             CellValue::BlobText(v) => Ok(String::from_utf8_lossy(&v).to_string()),
-            _ => Err(Error::ValueError(ValueError::new("Can't get string"))),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert string"))),
         }
     }
 }
@@ -83,7 +83,7 @@ impl CellValueToVal<i64> for CellValue {
             CellValue::Short(v) => Ok(v.into()),
             CellValue::Long(v) => Ok(v.into()),
             CellValue::Int64(v) => Ok(v.into()),
-            _ => Err(Error::ValueError(ValueError::new("Can't get int"))),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert int"))),
         }
     }
 }
@@ -104,7 +104,7 @@ impl CellValueToVal<f64> for CellValue {
     fn to_val(self) -> Result<f64, Error> {
         match self {
             CellValue::Double(v) => Ok(v),
-            _ => Err(Error::ValueError(ValueError::new("Can't get double"))),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert double"))),
         }
     }
 }
@@ -113,7 +113,7 @@ impl CellValueToVal<f32> for CellValue {
     fn to_val(self) -> Result<f32, Error> {
         match self {
             CellValue::Float(v) => Ok(v),
-            _ => Err(Error::ValueError(ValueError::new("Can't get float"))),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert float"))),
         }
     }
 }
@@ -123,7 +123,7 @@ impl CellValueToVal<Vec<u8>> for CellValue {
         match self {
             CellValue::BlobBinary(v) => Ok(v.clone()),
             CellValue::BlobText(v) => Ok(v.clone()),
-            _ => Err(Error::ValueError(ValueError::new("Can't get binary"))),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert binary"))),
         }
     }
 }
@@ -132,7 +132,45 @@ impl CellValueToVal<bool> for CellValue {
     fn to_val(self) -> Result<bool, Error> {
         match self {
             CellValue::Boolean(v) => Ok(v),
-            _ => Err(Error::ValueError(ValueError::new("Can't get bool"))),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert bool"))),
         }
     }
 }
+
+impl CellValueToVal<chrono::NaiveTime> for CellValue {
+    fn to_val(self) -> Result<chrono::NaiveTime, Error> {
+        match self {
+            CellValue::Time(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert time"))),
+        }
+    }
+}
+
+impl CellValueToVal<chrono::NaiveDate> for CellValue {
+    fn to_val(self) -> Result<chrono::NaiveDate, Error> {
+        match self {
+            CellValue::Date(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert date"))),
+        }
+    }
+}
+
+impl CellValueToVal<chrono::NaiveDateTime> for CellValue {
+    fn to_val(self) -> Result<chrono::NaiveDateTime, Error> {
+        match self {
+            CellValue::TimeStamp(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert timestamp"))),
+        }
+    }
+}
+
+impl CellValueToVal<rust_decimal::Decimal> for CellValue {
+    fn to_val(self) -> Result<rust_decimal::Decimal, Error> {
+        match self {
+            CellValue::Decimal(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert decimal"))),
+        }
+    }
+}
+
+
