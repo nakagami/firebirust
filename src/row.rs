@@ -51,7 +51,7 @@ impl<'stmt> Iterator for Rows<'stmt> {
     fn next(&mut self) -> Option<Row<'stmt>> {
         match self.rows.pop_front() {
             Some(row) => Some(Row {
-                stmt: self.stmt,
+                _stmt: self.stmt,
                 row: row,
             }),
             None => None,
@@ -60,7 +60,7 @@ impl<'stmt> Iterator for Rows<'stmt> {
 }
 
 pub struct Row<'stmt> {
-    pub(crate) stmt: &'stmt Statement<'stmt>,
+    _stmt: &'stmt Statement<'stmt>,
     row: Vec<CellValue>,
 }
 

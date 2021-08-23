@@ -109,16 +109,6 @@ impl Statement<'_> {
         Ok(Rows::new(self, VecDeque::new()))
     }
 
-    pub fn execute_update(&mut self, params: &Vec<Param>) -> Result<u64, Error> {
-        // TODO:
-        Ok(0)
-    }
-
-    pub fn query_map(&mut self, param: &Vec<Param>) -> Result<u64, Error> {
-        // TODO:
-        Ok(0)
-    }
-
     fn calc_blr(&mut self) -> Vec<u8> {
         let ln = self.xsqlda.len() * 2;
         let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
