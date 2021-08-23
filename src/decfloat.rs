@@ -126,7 +126,7 @@ fn decimal128_to_sign_digits_exponent(b: Vec<u8>) -> Result<(i32, u128, i32), Va
     let cf = (((b[0] & 0x7f) as u32) << 10) + ((b[1] as u32) << 2) + (b[2] >> 6) as u32;
     if (cf & 0x1F000) == 0x1F000 {
         if sign == 1 {
-            return Err(ValueError::new("NaN"));
+            return Err(ValueError::new("-NaN"));
         } else {
             return Err(ValueError::new("NaN"));
         }
@@ -175,72 +175,71 @@ fn decimal_fixed_to_decimal(b: Vec<u8>, scale: i32) -> Result<rust_decimal::Deci
     Ok(rust_decimal::Decimal::new(num, 0))
 }
 
-/*
 
-func decimal64ToDecimal(b []byte) decimal.Decimal {
+fn decimal64_to_decimal(b: Vec<u8>) -> Result<rust_decimal::Decimal, Error> {
     // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
-    var prefix int64
-    var sign int
+    let mut prefix:i64 = 0;
+    let mut sign:i32 = 0;
+    let mut exponent:i32 = 0;
     if (b[0] & 0x80) == 0x80 {
-        sign = 1
+        sign = 1;
     }
-    cf := (uint32(b[0]) >> 2) & 0x1f
-    exponent := ((int32(b[0]) & 3) << 6) + ((int32(b[1]) >> 2) & 0x3f)
+    let cf = ((b[0] as u32) >> 2) & 0x1f;
+    exponent = (((b[0] as i32) & 3) << 6) + (((b[1] as i32) >> 2) & 0x3f);
 
-    dpdBits := bytesToBigInt(b)
-    mask := bigIntFromHexString("3ffffffffffff")
-    dpdBits.And(dpdBits, mask)
+    let dpd_bits = bytes_to_uint128(&b);
+    let mask: u128 = 0x3fffffffffffffffffffffffffff;
 
     if cf == 0x1f {
         if sign == 1 {
-            // Is there -NaN ?
-            return decimal.NewFromFloat(math.NaN())
+            return Err(Error::ValueError(ValueError::new("-NaN")));
+        } else {
+            return Err(Error::ValueError(ValueError::new("NaN")));
         }
-        return decimal.NewFromFloat(math.NaN())
     } else if cf == 0x1e {
         if sign == 1 {
-            return decimal.NewFromFloat(math.Inf(-1))
+            return Err(Error::ValueError(ValueError::new("-Inf")));
+        } else {
+            return Err(Error::ValueError(ValueError::new("Inf")));
         }
-        return decimal.NewFromFloat(math.Inf(1))
     } else if (cf & 0x18) == 0x00 {
-        exponent = 0x000 + exponent
-        prefix = int64(cf & 0x07)
+        exponent = 0x000 + exponent;
+        prefix = (cf & 0x07) as i64;
     } else if (cf & 0x18) == 0x08 {
-        exponent = 0x100 + exponent
-        prefix = int64(cf & 0x07)
+        exponent = 0x100 + exponent;
+        prefix = (cf & 0x07) as i64;
     } else if (cf & 0x18) == 0x10 {
-        exponent = 0x200 + exponent
-        prefix = int64(cf & 0x07)
+        exponent = 0x200 + exponent;
+        prefix = (cf & 0x07) as i64;
     } else if (cf & 0x1e) == 0x18 {
-        exponent = 0x000 + exponent
-        prefix = int64(8 + cf&1)
+        exponent = 0x000 + exponent;
+        prefix = (8 + cf&1) as i64;
     } else if (cf & 0x1e) == 0x1a {
-        exponent = 0x100 + exponent
-        prefix = int64(8 + cf&1)
+        exponent = 0x100 + exponent;
+        prefix = (8 + cf&1) as i64;
     } else if (cf & 0x1e) == 0x1c {
-        exponent = 0x200 + exponent
-        prefix = int64(8 + cf&1)
+        exponent = 0x200 + exponent;
+        prefix = (8 + cf&1) as i64;
     } else {
-        panic("decimal64 value error")
+        return Err(Error::ValueError(ValueError::new("decimal64 value error")));
     }
-    digits := calcSignificand(prefix, dpdBits, 50)
-    exponent -= 398
 
+    let digits = calc_significand(prefix, dpd_bits & mask, 50)?;
+    exponent -= 398;
+
+    let mut num = digits as i64;
     if sign != 0 {
-        digits.Mul(digits, big.NewInt(-1))
+        num *= -1;
     }
-    return decimal.NewFromBigInt(digits, exponent)
+    Ok(rust_decimal::Decimal::new(num, exponent as u32))
 }
 
-func decimal128ToDecimal(b []byte) decimal.Decimal {
+fn decimal128_to_decimal(b:Vec<u8>) -> Result<rust_decimal::Decimal, ValueError> {
     // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
-    v, sign, digits, exponent := decimal128ToSignDigitsExponent(b)
-    if v != nil {
-        return *v
-    }
+    let (sign, digits, exponent) = decimal128_to_sign_digits_exponent(b)?;
+    let mut num = digits as i64;
     if sign != 0 {
-        digits.Mul(digits, big.NewInt(-1))
+        num *= -1;
     }
-    return decimal.NewFromBigInt(digits, exponent)
+    Ok(rust_decimal::Decimal::new(num, exponent as u32))
 }
-*/
