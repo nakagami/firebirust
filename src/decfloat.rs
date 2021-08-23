@@ -23,229 +23,229 @@ use rust_decimal;
 
 use super::error::ValueError;
 
- fn dpd_bit_to_int(dpd: u16, mask: u16) -> u16 {
-	if (dpd & mask) != 0 {
-		1
-	} else {
-	    0
+fn dpd_bit_to_int(dpd: u16, mask: u16) -> u16 {
+    if (dpd & mask) != 0 {
+        1
+    } else {
+        0
     }
 }
 
 fn dpd_to_int(dpd: u16) -> Result<u16, ValueError> {
-	// Convert DPD encodined value to int (0-999)
-	// dpd: DPD encoded value. 10bit unsigned int
+    // Convert DPD encodined value to int (0-999)
+    // dpd: DPD encoded value. 10bit unsigned int
 
-    let mut b:[u16; 10] = Default::default();
+    let mut b: [u16; 10] = Default::default();
 
-	b[9] = dpd_bit_to_int(dpd, 0x0200);
-	b[8] = dpd_bit_to_int(dpd, 0x0100);
-	b[7] = dpd_bit_to_int(dpd, 0x0080);
-	b[6] = dpd_bit_to_int(dpd, 0x0040);
-	b[5] = dpd_bit_to_int(dpd, 0x0020);
-	b[4] = dpd_bit_to_int(dpd, 0x0010);
-	b[3] = dpd_bit_to_int(dpd, 0x0008);
-	b[2] = dpd_bit_to_int(dpd, 0x0004);
-	b[1] = dpd_bit_to_int(dpd, 0x0002);
-	b[0] = dpd_bit_to_int(dpd, 0x0001);
+    b[9] = dpd_bit_to_int(dpd, 0x0200);
+    b[8] = dpd_bit_to_int(dpd, 0x0100);
+    b[7] = dpd_bit_to_int(dpd, 0x0080);
+    b[6] = dpd_bit_to_int(dpd, 0x0040);
+    b[5] = dpd_bit_to_int(dpd, 0x0020);
+    b[4] = dpd_bit_to_int(dpd, 0x0010);
+    b[3] = dpd_bit_to_int(dpd, 0x0008);
+    b[2] = dpd_bit_to_int(dpd, 0x0004);
+    b[1] = dpd_bit_to_int(dpd, 0x0002);
+    b[0] = dpd_bit_to_int(dpd, 0x0001);
 
-    let mut d:[u16; 3] = Default::default();
+    let mut d: [u16; 3] = Default::default();
 
-	if b[3] == 0 {
-		d[2] = b[9]*4 + b[8]*2 + b[7];
-		d[1] = b[6]*4 + b[5]*2 + b[4];
-		d[0] = b[2]*4 + b[1]*2 + b[0];
-	} else if b[3] == 1 && b[2] == 0 && b[1] == 0 {
-		d[2] = b[9]*4 + b[8]*2 + b[7];
-		d[1] = b[6]*4 + b[5]*2 + b[4];
-		d[0] = 8 + b[0];
-	} else if b[3] == 1 && b[2] == 0 && b[1] == 1 {
-		d[2] = b[9]*4 + b[8]*2 + b[7];
-		d[1] = 8 + b[4];
-		d[0] = b[6]*4 + b[5]*2 + b[0];
-	} else if b[3] == 1 && b[2] == 1 && b[1] == 0 {
-		d[2] = 8 + b[7];
-		d[1] = b[6]*4 + b[5]*2 + b[4];
-		d[0] = b[9]*4 + b[8]*2 + b[0];
-	} else if b[6] == 0 && b[5] == 0 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
-		d[2] = 8 + b[7];
-		d[1] = 8 + b[4];
-		d[0] = b[9]*4 + b[8]*2 + b[0];
-	} else if b[6] == 0 && b[5] == 1 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
-		d[2] = 8 + b[7];
-		d[1] = b[9]*4 + b[8]*2 + b[4];
-		d[0] = 8 + b[0];
-	} else if b[6] == 1 && b[5] == 0 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
-		d[2] = b[9]*4 + b[8]*2 + b[7];
-		d[1] = 8 + b[4];
-		d[0] = 8 + b[0];
-	} else if b[6] == 1 && b[5] == 1 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
-		d[2] = 8 + b[7];
-		d[1] = 8 + b[4];
-		d[0] = 8 + b[0];
-	} else {
+    if b[3] == 0 {
+        d[2] = b[9] * 4 + b[8] * 2 + b[7];
+        d[1] = b[6] * 4 + b[5] * 2 + b[4];
+        d[0] = b[2] * 4 + b[1] * 2 + b[0];
+    } else if b[3] == 1 && b[2] == 0 && b[1] == 0 {
+        d[2] = b[9] * 4 + b[8] * 2 + b[7];
+        d[1] = b[6] * 4 + b[5] * 2 + b[4];
+        d[0] = 8 + b[0];
+    } else if b[3] == 1 && b[2] == 0 && b[1] == 1 {
+        d[2] = b[9] * 4 + b[8] * 2 + b[7];
+        d[1] = 8 + b[4];
+        d[0] = b[6] * 4 + b[5] * 2 + b[0];
+    } else if b[3] == 1 && b[2] == 1 && b[1] == 0 {
+        d[2] = 8 + b[7];
+        d[1] = b[6] * 4 + b[5] * 2 + b[4];
+        d[0] = b[9] * 4 + b[8] * 2 + b[0];
+    } else if b[6] == 0 && b[5] == 0 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
+        d[2] = 8 + b[7];
+        d[1] = 8 + b[4];
+        d[0] = b[9] * 4 + b[8] * 2 + b[0];
+    } else if b[6] == 0 && b[5] == 1 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
+        d[2] = 8 + b[7];
+        d[1] = b[9] * 4 + b[8] * 2 + b[4];
+        d[0] = 8 + b[0];
+    } else if b[6] == 1 && b[5] == 0 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
+        d[2] = b[9] * 4 + b[8] * 2 + b[7];
+        d[1] = 8 + b[4];
+        d[0] = 8 + b[0];
+    } else if b[6] == 1 && b[5] == 1 && b[3] == 1 && b[2] == 1 && b[1] == 1 {
+        d[2] = 8 + b[7];
+        d[1] = 8 + b[4];
+        d[0] = 8 + b[0];
+    } else {
         return Err(ValueError::new("can't decode decimal"));
-	}
+    }
 
-	Ok(d[2]*100 + d[1]*10 + d[0])
+    Ok(d[2] * 100 + d[1] * 10 + d[0])
 }
 
 fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i64) -> Result<u128, ValueError> {
-	// prefix: High bits integer value
-	// dpd_bits: dpd encoded bits
-	// num_bits: bit length of dpd_bits
-	// https://en.wikipedia.org/wiki/Decimal128_floating-point_format#Densely_packed_decimal_significand_field
+    // prefix: High bits integer value
+    // dpd_bits: dpd encoded bits
+    // num_bits: bit length of dpd_bits
+    // https://en.wikipedia.org/wiki/Decimal128_floating-point_format#Densely_packed_decimal_significand_field
     let mut dpd_bits = dpd_bits_arg;
-	let num_segments = num_bits / 10;
-    let mut segments:Vec<u16> = Vec::new();
+    let num_segments = num_bits / 10;
+    let mut segments: Vec<u16> = Vec::new();
     for i in 0..num_segments {
         segments.push(dpd_bits as u16 & 0b1111111111);
         dpd_bits = dpd_bits >> 10;
     }
     segments.reverse();
 
-	let mut v = prefix as u128;
+    let mut v = prefix as u128;
 
     for dpd in segments {
         v = v * 1000 + dpd_to_int(dpd)? as u128;
     }
 
-	Ok(v)
+    Ok(v)
 }
 
 /*
 func decimal128ToSignDigitsExponent(b []byte) (v *decimal.Decimal, sign int, digits *big.Int, exponent int32) {
-	// https://en.wikipedia.org/wiki/Decimal128_floating-point_format
+    // https://en.wikipedia.org/wiki/Decimal128_floating-point_format
 
-	var prefix int64
-	if (b[0] & 0x80) == 0x80 {
-		sign = 1
-	}
-	cf := (uint32(b[0]&0x7f) << 10) + uint32(b[1]<<2) + uint32(b[2]>>6)
-	if (cf & 0x1F000) == 0x1F000 {
-		var d decimal.Decimal
-		if sign == 1 {
-			// Is there -NaN ?
-			d = decimal.NewFromFloat(math.NaN())
-		} else {
-			d = decimal.NewFromFloat(math.NaN())
-		}
-		v = &d
-		return
-	} else if (cf & 0x1F000) == 0x1E000 {
-		var d decimal.Decimal
-		if sign == 1 {
-			d = decimal.NewFromFloat(math.Inf(-1))
-		} else {
-			d = decimal.NewFromFloat(math.Inf(1))
-		}
-		v = &d
-		return
-	} else if (cf & 0x18000) == 0x00000 {
-		exponent = int32(0x0000 + (cf & 0x00fff))
-		prefix = int64((cf >> 12) & 0x07)
-	} else if (cf & 0x18000) == 0x08000 {
-		exponent = int32(0x1000 + (cf & 0x00fff))
-		prefix = int64((cf >> 12) & 0x07)
-	} else if (cf & 0x18000) == 0x10000 {
-		exponent = int32(0x2000 + (cf & 0x00fff))
-		prefix = int64((cf >> 12) & 0x07)
-	} else if (cf & 0x1e000) == 0x18000 {
-		exponent = int32(0x0000 + (cf & 0x00fff))
-		prefix = int64(8 + (cf>>12)&0x01)
-	} else if (cf & 0x1e000) == 0x1a000 {
-		exponent = int32(0x1000 + (cf & 0x00fff))
-		prefix = int64(8 + (cf>>12)&0x01)
-	} else if (cf & 0x1e000) == 0x1c000 {
-		exponent = int32(0x2000 + (cf & 0x00fff))
-		prefix = int64(8 + (cf>>12)&0x01)
-	} else {
-		panic("decimal128 value error")
-	}
-	exponent -= 6176
+    var prefix int64
+    if (b[0] & 0x80) == 0x80 {
+        sign = 1
+    }
+    cf := (uint32(b[0]&0x7f) << 10) + uint32(b[1]<<2) + uint32(b[2]>>6)
+    if (cf & 0x1F000) == 0x1F000 {
+        var d decimal.Decimal
+        if sign == 1 {
+            // Is there -NaN ?
+            d = decimal.NewFromFloat(math.NaN())
+        } else {
+            d = decimal.NewFromFloat(math.NaN())
+        }
+        v = &d
+        return
+    } else if (cf & 0x1F000) == 0x1E000 {
+        var d decimal.Decimal
+        if sign == 1 {
+            d = decimal.NewFromFloat(math.Inf(-1))
+        } else {
+            d = decimal.NewFromFloat(math.Inf(1))
+        }
+        v = &d
+        return
+    } else if (cf & 0x18000) == 0x00000 {
+        exponent = int32(0x0000 + (cf & 0x00fff))
+        prefix = int64((cf >> 12) & 0x07)
+    } else if (cf & 0x18000) == 0x08000 {
+        exponent = int32(0x1000 + (cf & 0x00fff))
+        prefix = int64((cf >> 12) & 0x07)
+    } else if (cf & 0x18000) == 0x10000 {
+        exponent = int32(0x2000 + (cf & 0x00fff))
+        prefix = int64((cf >> 12) & 0x07)
+    } else if (cf & 0x1e000) == 0x18000 {
+        exponent = int32(0x0000 + (cf & 0x00fff))
+        prefix = int64(8 + (cf>>12)&0x01)
+    } else if (cf & 0x1e000) == 0x1a000 {
+        exponent = int32(0x1000 + (cf & 0x00fff))
+        prefix = int64(8 + (cf>>12)&0x01)
+    } else if (cf & 0x1e000) == 0x1c000 {
+        exponent = int32(0x2000 + (cf & 0x00fff))
+        prefix = int64(8 + (cf>>12)&0x01)
+    } else {
+        panic("decimal128 value error")
+    }
+    exponent -= 6176
 
-	dpdBits := bytesToBigInt(b)
-	mask := bigIntFromHexString("3fffffffffffffffffffffffffff")
-	dpdBits.And(dpdBits, mask)
-	digits = calcSignificand(prefix, dpdBits, 110)
+    dpdBits := bytesToBigInt(b)
+    mask := bigIntFromHexString("3fffffffffffffffffffffffffff")
+    dpdBits.And(dpdBits, mask)
+    digits = calcSignificand(prefix, dpdBits, 110)
 
-	return
+    return
 }
 
 func decimalFixedToDecimal(b []byte, scale int32) decimal.Decimal {
-	v, sign, digits, _ := decimal128ToSignDigitsExponent(b)
-	if v != nil {
-		return *v
-	}
-	if sign != 0 {
-		digits.Mul(digits, big.NewInt(-1))
-	}
-	return decimal.NewFromBigInt(digits, scale)
+    v, sign, digits, _ := decimal128ToSignDigitsExponent(b)
+    if v != nil {
+        return *v
+    }
+    if sign != 0 {
+        digits.Mul(digits, big.NewInt(-1))
+    }
+    return decimal.NewFromBigInt(digits, scale)
 }
 
 func decimal64ToDecimal(b []byte) decimal.Decimal {
-	// https://en.wikipedia.org/wiki/Decimal64_floating-point_format
-	var prefix int64
-	var sign int
-	if (b[0] & 0x80) == 0x80 {
-		sign = 1
-	}
-	cf := (uint32(b[0]) >> 2) & 0x1f
-	exponent := ((int32(b[0]) & 3) << 6) + ((int32(b[1]) >> 2) & 0x3f)
+    // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
+    var prefix int64
+    var sign int
+    if (b[0] & 0x80) == 0x80 {
+        sign = 1
+    }
+    cf := (uint32(b[0]) >> 2) & 0x1f
+    exponent := ((int32(b[0]) & 3) << 6) + ((int32(b[1]) >> 2) & 0x3f)
 
-	dpdBits := bytesToBigInt(b)
-	mask := bigIntFromHexString("3ffffffffffff")
-	dpdBits.And(dpdBits, mask)
+    dpdBits := bytesToBigInt(b)
+    mask := bigIntFromHexString("3ffffffffffff")
+    dpdBits.And(dpdBits, mask)
 
-	if cf == 0x1f {
-		if sign == 1 {
-			// Is there -NaN ?
-			return decimal.NewFromFloat(math.NaN())
-		}
-		return decimal.NewFromFloat(math.NaN())
-	} else if cf == 0x1e {
-		if sign == 1 {
-			return decimal.NewFromFloat(math.Inf(-1))
-		}
-		return decimal.NewFromFloat(math.Inf(1))
-	} else if (cf & 0x18) == 0x00 {
-		exponent = 0x000 + exponent
-		prefix = int64(cf & 0x07)
-	} else if (cf & 0x18) == 0x08 {
-		exponent = 0x100 + exponent
-		prefix = int64(cf & 0x07)
-	} else if (cf & 0x18) == 0x10 {
-		exponent = 0x200 + exponent
-		prefix = int64(cf & 0x07)
-	} else if (cf & 0x1e) == 0x18 {
-		exponent = 0x000 + exponent
-		prefix = int64(8 + cf&1)
-	} else if (cf & 0x1e) == 0x1a {
-		exponent = 0x100 + exponent
-		prefix = int64(8 + cf&1)
-	} else if (cf & 0x1e) == 0x1c {
-		exponent = 0x200 + exponent
-		prefix = int64(8 + cf&1)
-	} else {
-		panic("decimal64 value error")
-	}
-	digits := calcSignificand(prefix, dpdBits, 50)
-	exponent -= 398
+    if cf == 0x1f {
+        if sign == 1 {
+            // Is there -NaN ?
+            return decimal.NewFromFloat(math.NaN())
+        }
+        return decimal.NewFromFloat(math.NaN())
+    } else if cf == 0x1e {
+        if sign == 1 {
+            return decimal.NewFromFloat(math.Inf(-1))
+        }
+        return decimal.NewFromFloat(math.Inf(1))
+    } else if (cf & 0x18) == 0x00 {
+        exponent = 0x000 + exponent
+        prefix = int64(cf & 0x07)
+    } else if (cf & 0x18) == 0x08 {
+        exponent = 0x100 + exponent
+        prefix = int64(cf & 0x07)
+    } else if (cf & 0x18) == 0x10 {
+        exponent = 0x200 + exponent
+        prefix = int64(cf & 0x07)
+    } else if (cf & 0x1e) == 0x18 {
+        exponent = 0x000 + exponent
+        prefix = int64(8 + cf&1)
+    } else if (cf & 0x1e) == 0x1a {
+        exponent = 0x100 + exponent
+        prefix = int64(8 + cf&1)
+    } else if (cf & 0x1e) == 0x1c {
+        exponent = 0x200 + exponent
+        prefix = int64(8 + cf&1)
+    } else {
+        panic("decimal64 value error")
+    }
+    digits := calcSignificand(prefix, dpdBits, 50)
+    exponent -= 398
 
-	if sign != 0 {
-		digits.Mul(digits, big.NewInt(-1))
-	}
-	return decimal.NewFromBigInt(digits, exponent)
+    if sign != 0 {
+        digits.Mul(digits, big.NewInt(-1))
+    }
+    return decimal.NewFromBigInt(digits, exponent)
 }
 
 func decimal128ToDecimal(b []byte) decimal.Decimal {
-	// https://en.wikipedia.org/wiki/Decimal64_floating-point_format
-	v, sign, digits, exponent := decimal128ToSignDigitsExponent(b)
-	if v != nil {
-		return *v
-	}
-	if sign != 0 {
-		digits.Mul(digits, big.NewInt(-1))
-	}
-	return decimal.NewFromBigInt(digits, exponent)
+    // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
+    v, sign, digits, exponent := decimal128ToSignDigitsExponent(b)
+    if v != nil {
+        return *v
+    }
+    if sign != 0 {
+        digits.Mul(digits, big.NewInt(-1))
+    }
+    return decimal.NewFromBigInt(digits, exponent)
 }
 */

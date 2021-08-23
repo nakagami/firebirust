@@ -22,6 +22,7 @@
 mod cellvalue;
 mod conn_params;
 mod connection;
+mod decfloat;
 mod errmsgs;
 mod error;
 mod param;
@@ -32,7 +33,6 @@ mod utils;
 mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;
-mod decfloat;
 
 pub use crate::connection::Connection;
 pub use crate::error::Error;
