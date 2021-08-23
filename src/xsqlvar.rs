@@ -22,9 +22,9 @@
 
 #![allow(dead_code)]
 use super::cellvalue::CellValue;
+use super::decfloat;
 use super::error::ValueError;
 use super::utils::*;
-use super::decfloat;
 use maplit::hashmap;
 
 pub const SQL_TYPE_TEXT: u32 = 452;
@@ -127,9 +127,16 @@ impl XSQLVar {
             } else {
                 CellValue::BlobBinary(raw_value.to_vec())
             }),
-            SQL_TYPE_DEC_FIXED => Ok(CellValue::Decimal(decfloat::decimal_fixed_to_decimal(raw_value, self.sqlscale)?)),
-            SQL_TYPE_DEC64 => Ok(CellValue::Decimal(decfloat::decimal64_to_decimal(raw_value)?)),
-            SQL_TYPE_DEC128 => Ok(CellValue::Decimal(decfloat::decimal128_to_decimal(raw_value)?)),
+            SQL_TYPE_DEC_FIXED => Ok(CellValue::Decimal(decfloat::decimal_fixed_to_decimal(
+                raw_value,
+                self.sqlscale,
+            )?)),
+            SQL_TYPE_DEC64 => Ok(CellValue::Decimal(decfloat::decimal64_to_decimal(
+                raw_value,
+            )?)),
+            SQL_TYPE_DEC128 => Ok(CellValue::Decimal(decfloat::decimal128_to_decimal(
+                raw_value,
+            )?)),
             _ => Err(ValueError::new(&format!(
                 "can't parse result value:{}",
                 self.sqltype

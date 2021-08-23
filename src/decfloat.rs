@@ -116,11 +116,7 @@ fn calc_significand(prefix: i64, dpd_bits_arg: u128, num_bits: i32) -> Result<u1
 
 fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), ValueError> {
     // https://en.wikipedia.org/wiki/Decimal128_floating-point_format
-    let sign: i32 = if (b[0] & 0x80) == 0x80 {
-        1
-    } else {
-        0
-    };
+    let sign: i32 = if (b[0] & 0x80) == 0x80 { 1 } else { 0 };
 
     let cf = (((b[0] & 0x7f) as u32) << 10) + ((b[1] as u32) << 2) + (b[2] >> 6) as u32;
     if (cf & 0x1F000) == 0x1F000 {
@@ -136,7 +132,7 @@ fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), Valu
         } else {
             return Err(ValueError::new("Inf"));
         }
-    } 
+    }
 
     let mut exponent: i32;
     let prefix: i64;
@@ -170,7 +166,10 @@ fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), Valu
     Ok((sign, digits, exponent))
 }
 
-pub fn decimal_fixed_to_decimal(b: &[u8], _scale: i32) -> Result<rust_decimal::Decimal, ValueError> {
+pub fn decimal_fixed_to_decimal(
+    b: &[u8],
+    _scale: i32,
+) -> Result<rust_decimal::Decimal, ValueError> {
     let (sign, digits, _) = decimal128_to_sign_digits_exponent(b)?;
     let mut num = digits as i64;
     if sign != 0 {
@@ -179,14 +178,9 @@ pub fn decimal_fixed_to_decimal(b: &[u8], _scale: i32) -> Result<rust_decimal::D
     Ok(rust_decimal::Decimal::new(num, 0))
 }
 
-
 pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueError> {
     // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
-    let sign = if (b[0] & 0x80) == 0x80 {
-        1
-    } else {
-        0
-    };
+    let sign = if (b[0] & 0x80) == 0x80 { 1 } else { 0 };
 
     let cf = ((b[0] as u32) >> 2) & 0x1f;
 
@@ -208,8 +202,8 @@ pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueErro
         }
     }
 
-    let mut exponent:i32 = (((b[0] as i32) & 3) << 6) + (((b[1] as i32) >> 2) & 0x3f);
-    let prefix:i64;
+    let mut exponent: i32 = (((b[0] as i32) & 3) << 6) + (((b[1] as i32) >> 2) & 0x3f);
+    let prefix: i64;
     if (cf & 0x18) == 0x00 {
         exponent = 0x000 + exponent;
         prefix = (cf & 0x07) as i64;
@@ -221,13 +215,13 @@ pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueErro
         prefix = (cf & 0x07) as i64;
     } else if (cf & 0x1e) == 0x18 {
         exponent = 0x000 + exponent;
-        prefix = (8 + cf&1) as i64;
+        prefix = (8 + cf & 1) as i64;
     } else if (cf & 0x1e) == 0x1a {
         exponent = 0x100 + exponent;
-        prefix = (8 + cf&1) as i64;
+        prefix = (8 + cf & 1) as i64;
     } else if (cf & 0x1e) == 0x1c {
         exponent = 0x200 + exponent;
-        prefix = (8 + cf&1) as i64;
+        prefix = (8 + cf & 1) as i64;
     } else {
         return Err(ValueError::new("decimal64 value error"));
     }
@@ -242,7 +236,7 @@ pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueErro
     Ok(rust_decimal::Decimal::new(num, exponent as u32))
 }
 
-pub fn decimal128_to_decimal(b:&[u8]) -> Result<rust_decimal::Decimal, ValueError> {
+pub fn decimal128_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueError> {
     // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
     let (sign, digits, exponent) = decimal128_to_sign_digits_exponent(b)?;
     let mut num = digits as i64;
