@@ -33,7 +33,7 @@ struct Foo {
     e: NaiveDate,
     f: NaiveDateTime,
     g: NaiveTime,
-    h: Vec<u8>,
+    h: Option<Vec<u8>>,
     i: f64,
     j: f32,
 }
