@@ -118,7 +118,7 @@ impl Connection {
         })
     }
 
-    pub fn execute_immediate(&mut self, query: &str) -> Result<(), Error> {
+    pub fn execute_batch(&mut self, query: &str) -> Result<(), Error> {
         self.wp.op_exec_immediate(self.trans_handle, query)?;
         self.wp.op_response()?;
         Ok(())

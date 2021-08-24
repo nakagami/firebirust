@@ -47,7 +47,7 @@ fn test_connnect() {
         }
     }
 
-    conn.execute_immediate(
+    conn.execute_batch(
         r#"
         CREATE TABLE foo (
             a INTEGER NOT NULL,
