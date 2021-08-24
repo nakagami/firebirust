@@ -20,9 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use super::error::{Error, ValueError};
-use std::result::Result;
-
 #[derive(PartialEq, Debug, Clone)]
 pub enum Param {
     Null,
@@ -43,68 +40,9 @@ pub enum Param {
     Boolean(bool),
 }
 
-impl Param {
-    pub fn get_i8(&self) -> Result<Option<i8>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i8()"))),
-        }
-    }
-
-    pub fn get_i16(&self) -> Result<Option<i16>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            Param::Short(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i16()"))),
-        }
-    }
-
-    pub fn get_i32(&self) -> Result<Option<i32>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            Param::Long(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i32()"))),
-        }
-    }
-
-    pub fn get_i64(&self) -> Result<Option<i64>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            Param::Int64(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_i64()"))),
-        }
-    }
-
-    pub fn get_f32(&self) -> Result<Option<f32>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            Param::Float(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_f32()"))),
-        }
-    }
-
-    pub fn get_f64(&self) -> Result<Option<f64>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            Param::Double(v) => Ok(Some(*v)),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_f64()"))),
-        }
-    }
-
-    pub fn get_string(&self) -> Result<Option<String>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            Param::Text(v) => Ok(Some(v.to_string())),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_string()"))),
-        }
-    }
-
-    pub fn get_bytes(&self) -> Result<Option<Vec<u8>>, Error> {
-        match self {
-            Param::Null => Ok(None),
-            Param::Blob(v) => Ok(Some(v.to_vec())),
-            _ => Err(Error::ValueError(ValueError::new("Can't get_bytes()"))),
-        }
+impl From<&str> for Param {
+    fn from(v: &str) -> Param {
+        Param::Text(v.to_string())
     }
 }
 
@@ -114,18 +52,14 @@ impl From<i32> for Param {
     }
 }
 
-impl From<&str> for Param {
-    fn from(v: &str) -> Param {
-        Param::Text(v.to_string())
-    }
-}
 
 #[test]
 fn test_params() {
     use super::params;
     let params = vec![Param::from(1i32), Param::from("foo"), Param::Null];
     assert_eq!(params, params![1i32, "foo", Param::Null]);
-    assert_eq!(params[0].get_i32().unwrap(), Some(1));
-    assert_eq!(params[1].get_string().unwrap(), Some("foo".to_string()));
-    assert_eq!(params[2].get_string().unwrap(), None);
+    assert_eq!(params[0], Param::Long(1));
+    assert_eq!(params[1], Param::Text("foo".to_string()));
+    assert_eq!(params[2], Param::Null);
+
 }
