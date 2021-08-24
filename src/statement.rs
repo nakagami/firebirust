@@ -90,6 +90,9 @@ impl Statement<'_> {
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records()?
+        } else {
+            // commit automatically
+            self.conn.commit()?;
         }
 
         Ok(Rows::new(self, rows))
@@ -98,15 +101,6 @@ impl Statement<'_> {
     pub fn execute(&mut self, params: &Vec<Param>) -> Result<(), Error> {
         self.query(params)?;
         Ok(())
-    }
-
-    pub fn execute_query(&mut self, params: &Vec<Param>) -> Result<Rows, Error> {
-        self.conn
-            .wp
-            .op_execute(self.stmt_handle, self.conn.trans_handle, params)?;
-        self.conn.wp.parse_op_response()?;
-        // TODO: add new parameter
-        Ok(Rows::new(self, VecDeque::new()))
     }
 
     fn calc_blr(&mut self) -> Vec<u8> {
