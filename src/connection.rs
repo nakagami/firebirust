@@ -149,17 +149,17 @@ impl Connection {
         stmt.execute(&params)?;
 
         // commit automatically
-        self.commit_()?;
+        self.commit()?;
         Ok(())
     }
 
-    pub fn commit_(&mut self) -> Result<(), Error> {
+    pub fn commit(&mut self) -> Result<(), Error> {
         self.wp.op_commit_retaining(self.trans_handle)?;
         self.wp.op_response()?;
         Ok(())
     }
 
-    pub fn rollback_(&mut self) -> Result<(), Error> {
+    pub fn rollback(&mut self) -> Result<(), Error> {
         self.wp.op_rollback_retaining(self.trans_handle)?;
         self.wp.op_response()?;
         Ok(())
