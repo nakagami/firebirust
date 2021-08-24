@@ -84,7 +84,19 @@ fn test_connnect() {
 
     let mut stmt = conn.prepare("select * from foo").unwrap();
 
-    for row in stmt.query(params![]).unwrap() {
-        println!("something row")
+
+    for (i, row) in stmt.query(params![]).unwrap().enumerate() {
+        let foo = Foo {
+            a: row.get(0).unwrap(),
+            b: row.get(1).unwrap(),
+            c: row.get(2).unwrap(),
+            d: row.get(3).unwrap(),
+            e: row.get(4).unwrap(),
+            f: row.get(5).unwrap(),
+            g: row.get(6).unwrap(),
+            h: row.get(7).unwrap(),
+            i: row.get(8).unwrap(),
+            j: row.get(9).unwrap(),
+        };
     }
 }
