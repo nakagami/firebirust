@@ -22,11 +22,11 @@
 #![allow(dead_code)]
 use super::cellvalue::CellValue;
 use super::param::Param;
+use super::row::Rows;
 use super::wireprotocol::*;
 use super::xsqlvar::*;
 use super::Connection;
 use super::Error;
-use super::row::Rows;
 use maplit::hashmap;
 use std::collections::VecDeque;
 
@@ -45,8 +45,8 @@ const ISC_INFO_SQL_STMT_SELECT_FOR_UPD: u32 = 12;
 const ISC_INFO_SQL_STMT_SET_GENERATOR: u32 = 13;
 const ISC_INFO_SQL_STMT_SAVEPOINT: u32 = 14;
 
-const DSQL_CLOSE:i32 = 1;
-const DSQL_DROP:i32 = 2;
+const DSQL_CLOSE: i32 = 1;
+const DSQL_DROP: i32 = 2;
 
 pub struct Statement<'conn> {
     conn: &'conn mut Connection,
@@ -152,7 +152,10 @@ impl Statement<'_> {
 
 impl Drop for Statement<'_> {
     fn drop(&mut self) {
-        self.conn.wp.op_free_statement(self.stmt_handle, DSQL_DROP).unwrap();
+        self.conn
+            .wp
+            .op_free_statement(self.stmt_handle, DSQL_DROP)
+            .unwrap();
         if self.conn.wp.accept_type == PTYPE_LAZY_SEND {
             self.conn.wp.lazy_response_count += 1;
         } else {
