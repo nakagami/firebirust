@@ -98,7 +98,7 @@ impl ConnParams {
 
 #[test]
 fn test_conn_params() {
-    let (params, options) =
+    let (params, _options) =
         ConnParams::from_url("firebird://user:pass%20word@localhost:3051/foo/bar.fdb").unwrap();
     assert_eq!(&params.host, "localhost");
     assert_eq!(params.port, 3051u16);
@@ -106,7 +106,7 @@ fn test_conn_params() {
     assert_eq!(&params.password, "pass word");
     assert_eq!(&params.db_name, "/foo/bar.fdb");
 
-    let (params, options) = ConnParams::from_url("firebird://user:pass@foo/bar.fdb").unwrap();
+    let (params, _options) = ConnParams::from_url("firebird://user:pass@foo/bar.fdb").unwrap();
 
     assert_eq!(&params.host, "foo");
     assert_eq!(params.port, 3050u16);
@@ -114,7 +114,7 @@ fn test_conn_params() {
     assert_eq!(&params.password, "pass");
     assert_eq!(&params.db_name, "bar.fdb"); // leading slash omited
 
-    let (params, options) =
+    let (_params, options) =
         ConnParams::from_url("firebird://user:pass@localhost/foo/bar.fdb?page_size=1234").unwrap();
     assert_eq!(&options["page_size"], "1234");
 }
