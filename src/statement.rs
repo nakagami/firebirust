@@ -90,9 +90,6 @@ impl Statement<'_> {
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records()?
-        } else {
-            // commit automatically
-            self.conn.commit()?;
         }
 
         Ok(Rows::new(self, rows))

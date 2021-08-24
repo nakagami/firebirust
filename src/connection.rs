@@ -146,7 +146,10 @@ impl Connection {
         let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
         let mut stmt = Statement::new(self, stmt_handle, stmt_type, xsqlda);
 
-        stmt.execute(&params)
+        stmt.execute(&params)?;
+        // commit automatically
+        self.commit()?;
+        Ok(())
     }
 
     pub fn commit(&mut self) -> Result<(), Error> {
