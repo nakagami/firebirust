@@ -177,13 +177,13 @@ pub fn bytes_to_buint64(b: &[u8]) -> u64 {
 }
 
 pub fn bytes_to_f32(b: &[u8]) -> f32 {
-    let tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
+    let tmp: [u8; 4] = [b[3], b[2], b[1], b[0]];
     let v: f32 = unsafe { transmute::<[u8; 4], f32>(tmp) };
     v
 }
 
 pub fn bytes_to_f64(b: &[u8]) -> f64 {
-    let tmp: [u8; 8] = [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]];
+    let tmp: [u8; 8] = [b[7], b[6], b[5], b[4], b[3], b[2], b[1], b[0]];
     let v: f64 = unsafe { transmute::<[u8; 8], f64>(tmp) };
     v
 }
