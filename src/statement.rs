@@ -88,7 +88,7 @@ impl Statement<'_> {
         Ok(rows)
     }
 
-    pub fn query(&mut self, params: &Vec<Param>) -> Result<Rows<'_>, Error> {
+    pub fn query(&mut self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
         self.conn
             .wp
             .op_execute(self.stmt_handle, self.trans_handle, &params)?;
@@ -104,7 +104,7 @@ impl Statement<'_> {
         Ok(Rows::new(self, rows))
     }
 
-    pub fn execute(&mut self, params: &Vec<Param>) -> Result<(), Error> {
+    pub fn execute(&mut self, params: Vec<Param>) -> Result<(), Error> {
         self.query(params)?;
         Ok(())
     }

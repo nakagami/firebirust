@@ -159,7 +159,7 @@ impl Connection {
             true,
         );
 
-        stmt.execute(&params)?;
+        stmt.execute(params)?;
 
         Ok(())
     }
