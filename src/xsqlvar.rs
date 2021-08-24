@@ -107,7 +107,7 @@ impl XSQLVar {
     }
 
     pub fn value(&self, raw_value: &[u8]) -> Result<CellValue, ValueError> {
-        match self.sqltype {
+        let v = match self.sqltype {
             SQL_TYPE_TEXT => Ok(CellValue::Text(bytes_to_str(raw_value))),
             SQL_TYPE_VARYING => Ok(CellValue::Varying(bytes_to_str(raw_value))),
             SQL_TYPE_SHORT => Ok(CellValue::Short(bytes_to_bint16(raw_value))),
@@ -165,6 +165,8 @@ impl XSQLVar {
                 "can't parse result value:{}",
                 self.sqltype
             ))),
-        }
+        };
+        println!("{:?}", v.clone().unwrap());
+        v
     }
 }
