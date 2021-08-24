@@ -1,4 +1,3 @@
-
 //
 // Copyright (c) 2021 Hajime Nakagami<nakagami@gmail.com>
 //
@@ -113,13 +112,29 @@ impl XSQLVar {
             SQL_TYPE_VARYING => Ok(CellValue::Varying(bytes_to_str(raw_value))),
             SQL_TYPE_SHORT => Ok(CellValue::Short(bytes_to_bint16(raw_value))),
             SQL_TYPE_LONG => Ok(CellValue::Long(bytes_to_bint32(raw_value))),
-            SQL_TYPE_INT64 => Ok(if self.sqlscale != 0 {
-                CellValue::Decimal(rust_decimal::Decimal::new(bytes_to_bint64(raw_value), self.sqlscale as u32))
+            SQL_TYPE_INT64 => Ok(if self.sqlscale < 0 {
+                CellValue::Decimal(rust_decimal::Decimal::new(
+                    bytes_to_bint64(raw_value),
+                    (self.sqlscale * -1) as u32,
+                ))
+            } else if self.sqlscale > 0 {
+                CellValue::Decimal(rust_decimal::Decimal::new(
+                    bytes_to_bint64(raw_value) * (self.sqlscale as i64),
+                    0,
+                ))
             } else {
                 CellValue::Int64(bytes_to_bint64(raw_value))
             }),
-            SQL_TYPE_INT128 => Ok(if self.sqlscale != 0 {
-                CellValue::Decimal(rust_decimal::Decimal::new(bytes_to_bint128(raw_value) as i64, self.sqlscale as u32))
+            SQL_TYPE_INT128 => Ok(if self.sqlscale < 0 {
+                CellValue::Decimal(rust_decimal::Decimal::new(
+                    bytes_to_bint64(raw_value),
+                    (self.sqlscale * -1) as u32,
+                ))
+            } else if self.sqlscale > 0 {
+                CellValue::Decimal(rust_decimal::Decimal::new(
+                    (bytes_to_bint128(raw_value) as i64) * (self.sqlscale as i64),
+                    0,
+                ))
             } else {
                 CellValue::Int128(bytes_to_bint128(raw_value))
             }),
