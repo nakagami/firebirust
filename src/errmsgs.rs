@@ -968,6 +968,8 @@ pub fn error_message_by_id(id: u32) -> &'static str {
          335545271=> r#"Replication error\n"#,
          335545272=> r#"Reset of user session failed. Connection is shut down.\n"#,
          335545273=> r#"File size is less than expected\n"#,
+         335545274=> r#"Invalid key length @1, need >@2\n"#,
+         335545275=> r#"Invalid information arguments\n"#,
          335740929=> r#"data base file name (@1) already given\n"#,
          335740930=> r#"invalid switch @1\n"#,
          335740932=> r#"incompatible switch combination\n"#,
