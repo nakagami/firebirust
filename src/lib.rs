@@ -49,6 +49,8 @@ macro_rules! params {
             $(
                 temp_vec.push(Param::from($x));
             )*
+            temp_vec.push(Param::Null);
+            temp_vec.pop();
             temp_vec
         }
     };
