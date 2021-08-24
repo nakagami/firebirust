@@ -121,6 +121,10 @@ impl Connection {
     pub fn execute_batch(&mut self, query: &str) -> Result<(), Error> {
         self.wp.op_exec_immediate(self.trans_handle, query)?;
         self.wp.op_response()?;
+
+        // commit automatically
+        self.commit()?;
+
         Ok(())
     }
 
@@ -144,12 +148,17 @@ impl Connection {
         }
         let (_, buf, _) = self.wp.op_response()?;
         let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
-        let mut stmt = Statement::new(self, self.trans_handle, stmt_handle, stmt_type, xsqlda);
+        let mut stmt = Statement::new(
+            self,
+            self.trans_handle,
+            stmt_handle,
+            stmt_type,
+            xsqlda,
+            true,
+        );
 
         stmt.execute(&params)?;
 
-        // commit automatically
-        self.commit()?;
         Ok(())
     }
 
@@ -192,6 +201,7 @@ impl Connection {
             stmt_handle,
             stmt_type,
             xsqlda,
+            true, // autocommit is true
         ))
     }
 }

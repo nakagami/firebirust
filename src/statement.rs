@@ -50,6 +50,7 @@ pub struct Statement<'conn> {
     pub(crate) stmt_handle: i32,
     stmt_type: u32,
     pub(crate) xsqlda: Vec<XSQLVar>,
+    autocommit: bool,
 }
 
 impl Statement<'_> {
@@ -59,6 +60,7 @@ impl Statement<'_> {
         stmt_handle: i32,
         stmt_type: u32,
         xsqlda: Vec<XSQLVar>,
+        autocommit: bool,
     ) -> Statement {
         Statement {
             conn,
@@ -66,6 +68,7 @@ impl Statement<'_> {
             stmt_handle,
             stmt_type,
             xsqlda,
+            autocommit,
         }
     }
 
@@ -93,6 +96,9 @@ impl Statement<'_> {
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records()?
+        } else if self.autocommit {
+            // commit automatically
+            self.conn.commit()?;
         }
 
         Ok(Rows::new(self, rows))
