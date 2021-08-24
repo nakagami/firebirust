@@ -21,7 +21,6 @@
 // SOFTWARE.
 use super::params;
 use super::Connection;
-use super::Param;
 
 #[derive(Debug)]
 struct FooRow {

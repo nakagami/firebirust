@@ -26,6 +26,8 @@ use std::collections::HashMap;
 
 use super::conn_params::ConnParams;
 use super::error::Error;
+use super::param::Param;
+use super::statement::Statement;
 use super::wireprotocol::*;
 use super::*;
 

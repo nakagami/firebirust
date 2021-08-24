@@ -52,7 +52,6 @@ impl From<i32> for Param {
     }
 }
 
-
 #[test]
 fn test_params() {
     use super::params;
@@ -61,5 +60,4 @@ fn test_params() {
     assert_eq!(params[0], Param::Long(1));
     assert_eq!(params[1], Param::Text("foo".to_string()));
     assert_eq!(params[2], Param::Null);
-
 }

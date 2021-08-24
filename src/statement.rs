@@ -21,11 +21,11 @@
 // SOFTWARE.
 #![allow(dead_code)]
 use super::cellvalue::CellValue;
+use super::param::Param;
 use super::xsqlvar::*;
 use super::Connection;
 use super::Error;
-use super::Param;
-use super::Rows;
+use super::row::Rows;
 use maplit::hashmap;
 use std::collections::VecDeque;
 

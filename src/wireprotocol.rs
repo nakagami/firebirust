@@ -31,6 +31,7 @@ use num_bigint::BigInt;
 use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::{Error, FirebirdError};
+use super::param::Param;
 use super::wirechannel::WireChannel;
 use super::xsqlvar::XSQLVar;
 use super::*;
