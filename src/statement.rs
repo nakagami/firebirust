@@ -46,6 +46,7 @@ const ISC_INFO_SQL_STMT_SAVEPOINT: u32 = 14;
 
 pub struct Statement<'conn> {
     conn: &'conn mut Connection,
+    pub(crate) trans_handle: i32,
     pub(crate) stmt_handle: i32,
     stmt_type: u32,
     pub(crate) xsqlda: Vec<XSQLVar>,
@@ -54,12 +55,14 @@ pub struct Statement<'conn> {
 impl Statement<'_> {
     pub(super) fn new(
         conn: &mut Connection,
+        trans_handle: i32,
         stmt_handle: i32,
         stmt_type: u32,
         xsqlda: Vec<XSQLVar>,
     ) -> Statement {
         Statement {
             conn,
+            trans_handle,
             stmt_handle,
             stmt_type,
             xsqlda,
@@ -85,7 +88,7 @@ impl Statement<'_> {
     pub fn query(&mut self, params: &Vec<Param>) -> Result<Rows<'_>, Error> {
         self.conn
             .wp
-            .op_execute(self.stmt_handle, self.conn.trans_handle, &params)?;
+            .op_execute(self.stmt_handle, self.trans_handle, &params)?;
         self.conn.wp.op_response()?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {

@@ -31,7 +31,7 @@ use super::*;
 
 pub struct Connection {
     pub(crate) wp: WireProtocol,
-    pub(crate) trans_handle: i32,
+    pub(crate) trans_handle: i32, // transaction for operating from connection methods
     conn_params: ConnParams,
     conn_options: HashMap<String, String>,
 }
@@ -144,21 +144,22 @@ impl Connection {
         }
         let (_, buf, _) = self.wp.op_response()?;
         let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
-        let mut stmt = Statement::new(self, stmt_handle, stmt_type, xsqlda);
+        let mut stmt = Statement::new(self, self.trans_handle, stmt_handle, stmt_type, xsqlda);
 
         stmt.execute(&params)?;
+
         // commit automatically
-        self.commit()?;
+        self.commit_()?;
         Ok(())
     }
 
-    pub fn commit(&mut self) -> Result<(), Error> {
+    pub fn commit_(&mut self) -> Result<(), Error> {
         self.wp.op_commit_retaining(self.trans_handle)?;
         self.wp.op_response()?;
         Ok(())
     }
 
-    pub fn rollback(&mut self) -> Result<(), Error> {
+    pub fn rollback_(&mut self) -> Result<(), Error> {
         self.wp.op_rollback_retaining(self.trans_handle)?;
         self.wp.op_response()?;
         Ok(())
@@ -185,6 +186,12 @@ impl Connection {
         let (_, _, buf) = self.wp.op_response()?;
         let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
 
-        Ok(Statement::new(self, stmt_handle, stmt_type, xsqlda))
+        Ok(Statement::new(
+            self,
+            self.trans_handle,
+            stmt_handle,
+            stmt_type,
+            xsqlda,
+        ))
     }
 }
