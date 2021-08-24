@@ -19,14 +19,22 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+use rust_decimal::Decimal;
 use super::params;
 use super::Connection;
+use chrono::{NaiveDateTime, NaiveDate, NaiveTime};
+
 
 #[derive(Debug)]
-struct FooRow {
+struct Foo {
     a: i32,
     b: String,
     c: String,
+    d: Decimal,
+    e: NaiveDate,
+    f: NaiveDateTime,
+    g: NaiveTime,
+    h: Vec<u8>,
     i: f64,
     j: f32,
 }
