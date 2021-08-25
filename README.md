@@ -8,6 +8,8 @@ It attempts to expose an interface similar to Rusqlite https://github.com/rusqli
 
 Database connection
 ```
+use firebirust::Connection;
+
 let mut conn =
     Connection::connect("firebird://SYSDBA:masterkey@localhost/tmp/rust-firebird-test.fdb")
         .unwrap();
@@ -38,6 +40,8 @@ conn.execute_batch(
 
 Execute SQL statement with parameter
 ```
+use firebirust::params;
+
 conn.execute(
     "insert into foo(a, b, c, h) values (?, ?, ?, ?)",
     params![1, "a", "b", "This is a pen"],
@@ -47,6 +51,8 @@ conn.execute(
 
 Execute Query and get results
 ```
+use firebirust::params;
+
 let mut stmt = conn.prepare("select * from foo").unwrap();
 for row in stmt.query(params![]).unwrap() {
     let a:i32 = row.get(0).unwrap();
@@ -56,6 +62,10 @@ for row in stmt.query(params![]).unwrap() {
 
 Execute Query and map
 ```
+use firebirust::params;
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use rust_decimal::Decimal;
+
 #[derive(Debug)]
 struct Foo {
     a: i32,
