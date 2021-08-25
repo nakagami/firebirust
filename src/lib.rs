@@ -36,17 +36,17 @@ mod xsqlvar;
 
 pub use crate::connection::Connection;
 pub use crate::error::Error;
+pub use crate::param::Param;
 
 #[macro_export]
 macro_rules! params {
     ( $( $x:expr ),* ) => {
         {
-            use crate::param::Param;
             let mut temp_vec = Vec::new();
             $(
-                temp_vec.push(Param::from($x));
+                temp_vec.push($crate::Param::from($x));
             )*
-            temp_vec.push(Param::Null);
+            temp_vec.push($crate::Param::Null);
             temp_vec.pop();
             temp_vec
         }
