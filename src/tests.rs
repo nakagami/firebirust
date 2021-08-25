@@ -23,8 +23,9 @@ use super::params;
 use super::Connection;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 struct Foo {
     a: i32,
     b: String,
@@ -75,13 +76,51 @@ fn test_connnect() {
 
     conn.execute(
         "insert into foo(a, b, c, h) values (?, ?, ?, ?)",
-        params![1, "a", "b", "This is a memo"],
+        params![1, "a", "b", "This is a pen"],
     )
     .unwrap();
 
     conn.execute("insert into foo(a, b, c, e, g, i, j) values (2, 'A', 'B', '1999-01-25', '00:00:01', 0.1, 0.1)", params![]).unwrap();
     conn.execute("insert into foo(a, b, c, e, g, i, j) values (3, 'X', 'Y', '2001-07-05', '00:01:02', 0.2, 0.2)", params![]).unwrap();
 
+    let expects: [Foo; 3] = [
+        Foo {
+            a: 1,
+            b: "a".to_string(),
+            c: "b".to_string(),
+            d: dec!(-0.123),
+            e: NaiveDate::from_ymd(1967, 8, 11),
+            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+            g: NaiveTime::from_hms(23, 45, 1),
+            h: Some("This is a pen".to_string().into_bytes()),
+            i: 0.0,
+            j: 0.0,
+        },
+        Foo {
+            a: 2,
+            b: "A".to_string(),
+            c: "B".to_string(),
+            d: dec!(-0.123),
+            e: NaiveDate::from_ymd(1999, 1, 25),
+            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+            g: NaiveTime::from_hms(0, 0, 1),
+            h: None,
+            i: 0.1,
+            j: 0.1,
+        },
+        Foo {
+            a: 3,
+            b: "X".to_string(),
+            c: "Y".to_string(),
+            d: dec!(-0.123),
+            e: NaiveDate::from_ymd(2001, 7, 5),
+            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+            g: NaiveTime::from_hms(0, 1, 2),
+            h: None,
+            i: 0.2,
+            j: 0.2,
+        },
+    ];
     let mut stmt = conn.prepare("select * from foo").unwrap();
 
     for (i, row) in stmt.query(params![]).unwrap().enumerate() {
@@ -97,5 +136,6 @@ fn test_connnect() {
             i: row.get(8).unwrap(),
             j: row.get(9).unwrap(),
         };
+        assert_eq!(foo, expects[i]);
     }
 }
