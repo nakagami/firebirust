@@ -121,8 +121,8 @@ fn test_connnect() {
             j: 0.2,
         },
     ];
-    let mut stmt = conn.prepare("select * from foo").unwrap();
 
+    let mut stmt = conn.prepare("select * from foo").unwrap();
     for (i, row) in stmt.query(params![]).unwrap().enumerate() {
         let foo = Foo {
             a: row.get(0).unwrap(),
@@ -137,5 +137,25 @@ fn test_connnect() {
             j: row.get(9).unwrap(),
         };
         assert_eq!(foo, expects[i]);
+    }
+
+    let foo_iter = stmt
+        .query_map(params![], |row| {
+            Ok(Foo {
+                a: row.get(0).unwrap(),
+                b: row.get(1).unwrap(),
+                c: row.get(2).unwrap(),
+                d: row.get(3).unwrap(),
+                e: row.get(4).unwrap(),
+                f: row.get(5).unwrap(),
+                g: row.get(6).unwrap(),
+                h: row.get(7).unwrap(),
+                i: row.get(8).unwrap(),
+                j: row.get(9).unwrap(),
+            })
+        })
+        .unwrap();
+    for (i, foo) in foo_iter.enumerate() {
+        assert_eq!(foo.unwrap(), expects[i]);
     }
 }

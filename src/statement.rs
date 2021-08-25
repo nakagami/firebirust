@@ -22,7 +22,7 @@
 #![allow(dead_code)]
 use super::cellvalue::CellValue;
 use super::param::Param;
-use super::row::Rows;
+use super::row::{MappedRows, Row, Rows};
 use super::wireprotocol::*;
 use super::xsqlvar::*;
 use super::Connection;
@@ -115,13 +115,29 @@ impl Statement<'_> {
         self.conn.wp.op_response()?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
-            rows = self.fetch_records(self.trans_handle)?
+            rows = self.fetch_records(self.trans_handle)?;
+            self.conn
+                .wp
+                .op_free_statement(self.stmt_handle, DSQL_CLOSE)
+                .unwrap();
+            if self.conn.wp.accept_type == PTYPE_LAZY_SEND {
+                self.conn.wp.lazy_response_count += 1;
+            } else {
+                self.conn.wp.op_response().unwrap();
+            }
         } else if self.autocommit {
             // commit automatically
             self.conn.commit()?;
         }
 
         Ok(Rows::new(self, rows))
+    }
+
+    pub fn query_map<T, F>(&mut self, params: Vec<Param>, f: F) -> Result<MappedRows<'_, F>, Error>
+    where
+        F: FnMut(&Row<'_>) -> Result<T, Error>,
+    {
+        self.query(params).map(|rows| rows.mapped(f))
     }
 
     pub fn execute(&mut self, params: Vec<Param>) -> Result<(), Error> {

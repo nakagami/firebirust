@@ -33,16 +33,17 @@ pub struct Rows<'stmt> {
     rows: VecDeque<Vec<CellValue>>,
 }
 
-impl Rows<'_> {
+impl<'stmt> Rows<'stmt> {
     pub(crate) fn new<'a>(stmt: &'a Statement, rows: VecDeque<Vec<CellValue>>) -> Rows<'a> {
         Rows { stmt, rows }
     }
 
-    /*
-        pub fn meta_data(&mut self) -> ResultSetMetaData {
-          // TODO:
-        }
-    */
+    pub fn mapped<F, B>(self, f: F) -> MappedRows<'stmt, F>
+    where
+        F: FnMut(&Row<'_>) -> Result<B, Error>,
+    {
+        MappedRows { rows: self, map: f }
+    }
 }
 
 impl<'stmt> Iterator for Rows<'stmt> {
@@ -75,6 +76,27 @@ impl<'stmt> Row<'stmt> {
             Err(Error::ValueError(ValueError::new(
                 "This index doesn't exists",
             )))
+        }
+    }
+}
+
+pub struct MappedRows<'stmt, F> {
+    rows: Rows<'stmt>,
+    map: F,
+}
+
+impl<T, F> Iterator for MappedRows<'_, F>
+where
+    F: FnMut(&Row<'_>) -> Result<T, Error>,
+{
+    type Item = Result<T, Error>;
+
+    fn next(&mut self) -> Option<Result<T, Error>> {
+        let map = &mut self.map;
+        let row = self.rows.next();
+        match row {
+            Some(r) => Some(map(&r)),
+            None => None,
         }
     }
 }
