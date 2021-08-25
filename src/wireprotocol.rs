@@ -789,7 +789,7 @@ impl WireProtocol {
         Ok((stmt_type, xsqlda))
     }
 
-    fn get_blob_segments(
+    pub fn get_blob_segments(
         &mut self,
         blob_id: &Vec<u8>,
         trans_handle: i32,

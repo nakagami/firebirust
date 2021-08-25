@@ -76,7 +76,7 @@ impl Statement<'_> {
         }
     }
 
-    fn fetch_records(&mut self) -> Result<VecDeque<Vec<CellValue>>, Error> {
+    fn fetch_records(&mut self, trans_handle: i32) -> Result<VecDeque<Vec<CellValue>>, Error> {
         let mut rows = VecDeque::new();
         let blr = self.calc_blr();
 
@@ -86,6 +86,22 @@ impl Statement<'_> {
             rows.extend(rows_segment);
             if !more_data {
                 break;
+            }
+        }
+
+        for row in rows.iter_mut() {
+            for cell in row.iter_mut() {
+                match cell {
+                    CellValue::BlobBinary(blob_id) => {
+                        let blob = self.conn.wp.get_blob_segments(&blob_id, trans_handle);
+                        *cell = CellValue::BlobBinary(blob.unwrap());
+                    }
+                    CellValue::BlobText(blob_id) => {
+                        let blob = self.conn.wp.get_blob_segments(&blob_id, trans_handle);
+                        *cell = CellValue::BlobText(blob.unwrap());
+                    }
+                    _ => {}
+                }
             }
         }
 
@@ -99,7 +115,7 @@ impl Statement<'_> {
         self.conn.wp.op_response()?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
-            rows = self.fetch_records()?
+            rows = self.fetch_records(self.trans_handle)?
         } else if self.autocommit {
             // commit automatically
             self.conn.commit()?;
