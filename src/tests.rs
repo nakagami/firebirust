@@ -58,7 +58,7 @@ fn test_connnect() {
         &user,
         urlencoding::encode(&password)
     );
-    println!("user:password={}:{}", &user, urlencoding::encode(&password));
+    println!("{}:{}", &user, urlencoding::encode(&password));
 
     match Connection::create_database(&conn_string) {
         Ok(c) => {
