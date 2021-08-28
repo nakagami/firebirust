@@ -55,10 +55,10 @@ fn test_connnect() {
     let mut conn;
     let conn_string = format!(
         "firebird://{}:{}@localhost/tmp/rust-firebird-test.fdb",
-        user,
+        &user,
         urlencoding::encode(&password)
     );
-    println!("conn_string={}", conn_string);
+    println!("user:password={}:{}", &user, urlencoding::encode(&password));
 
     match Connection::create_database(&conn_string) {
         Ok(c) => {
