@@ -31,6 +31,4 @@ jobs:
     - name: Run tests
       run: |
         source test_user.env
-        echo "user:" $ISC_USER
-        echo "password": $ISC_PASSWORD
-        cargo test -- --nocapture
+        cargo test --verbose

@@ -45,7 +45,7 @@ struct Foo {
 fn test_connnect() {
     let user = match env::var("ISC_USER") {
         Ok(val) => val,
-        Err(_) => "SYSDBA".to_string(),
+        Err(_) => "sysdba".to_string(),
     };
     let password = match env::var("ISC_PASSWORD") {
         Ok(val) => val,
@@ -58,7 +58,6 @@ fn test_connnect() {
         &user,
         urlencoding::encode(&password)
     );
-    println!("{}:{}", &user, urlencoding::encode(&password));
 
     match Connection::create_database(&conn_string) {
         Ok(c) => {
