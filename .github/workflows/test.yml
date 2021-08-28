@@ -1,4 +1,4 @@
-name: Rust
+name: Run tests
 
 on:
   push:
@@ -16,7 +16,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Set up Firebird
+      run: |
+        sudo apt install firebird3.0-server -y
+        sudo cp misc/firebird.conf /etc/firebird/3.0
+        sudo systemctl restart firebird3.0
+        sudo chmod 0664 /etc/firebird/3.0/SYSDBA.password
+        grep '=' /etc/firebird/3.0/SYSDBA.password |sed 's/^/export /' >test_user.env
+
     - name: Build
       run: cargo build --verbose
+
     - name: Run tests
       run: cargo test --verbose

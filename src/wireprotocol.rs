@@ -323,8 +323,8 @@ const ISC_INFO_TRA_ACCESS: u32 = 9;
 const ISC_INFO_TRA_LOCK_TIMEOUT: u32 = 10;
 
 macro_rules! debug_print {
-//    ($( $args:expr ),*) => { println!( $( $args ),* ); }
-    ($( $args:expr ),*) => {}
+    //    ($( $args:expr ),*) => { println!( $( $args ),* ); }
+    ($( $args:expr ),*) => {};
 }
 
 fn info_sql_select_describe_vars() -> [u8; 13] {

@@ -24,6 +24,8 @@ use super::Connection;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+use std::env;
+use urlencoding;
 
 #[derive(PartialEq, Debug)]
 struct Foo {
@@ -41,10 +43,23 @@ struct Foo {
 
 #[test]
 fn test_connnect() {
+    let user = match env::var("ISC_USER") {
+        Ok(val) => val,
+        Err(_) => "SYSDBA".to_string(),
+    };
+    let password = match env::var("ISC_PASSWORD") {
+        Ok(val) => val,
+        Err(_) => "masterkey".to_string(),
+    };
+
     let mut conn;
-    match Connection::create_database(
-        "firebird://SYSDBA:masterkey@localhost/tmp/rust-firebird-test.fdb",
-    ) {
+    let conn_string = format!(
+        "firebird://{}:{}@localhost/tmp/rust-firebird-test.fdb",
+        user,
+        urlencoding::encode(&password)
+    );
+
+    match Connection::create_database(&conn_string) {
         Ok(c) => {
             conn = c;
         }
