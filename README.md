@@ -4,6 +4,11 @@ firebirust is a database driver for firebird rdbms https://firebirdsql.org/ writ
 
 It attempts to expose an interface similar to Rusqlite https://github.com/rusqlite/rusqlite.
 
+
+## Supported Firebird
+
+Firebird 3.0 is supported
+
 ## code example
 
 Database connection
