@@ -33,6 +33,7 @@ mod utils;
 mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;
+mod tz_map;
 
 pub use crate::connection::Connection;
 pub use crate::error::Error;
