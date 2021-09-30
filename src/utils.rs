@@ -239,10 +239,14 @@ pub fn bytes_to_time_tz(b: &[u8]) -> (chrono::NaiveTime, chrono_tz::Tz) {
     let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[6..8]))
         .parse()
         .unwrap();
-    // TODO:
-    println!("{:?}", timezone);
-    println!("{:?}", offset);
-    (time, offset)
+
+    let date = chrono::Utc::today().naive_local();
+    let dt = chrono::NaiveDateTime::new(date, time);
+    let tz_aware = timezone
+        .from_local_datetime(&dt)
+        .unwrap()
+        .with_timezone(&offset);
+    (tz_aware.time(), offset)
 }
 
 pub fn bytes_to_naive_date_time(b: &[u8]) -> chrono::NaiveDateTime {
