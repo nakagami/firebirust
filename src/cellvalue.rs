@@ -22,6 +22,7 @@
 
 use super::error::{Error, ValueError};
 use chrono;
+use chrono_tz;
 use rust_decimal;
 use std::result::Result;
 
@@ -41,8 +42,8 @@ pub enum CellValue {
     BlobText(Vec<u8>),
     Int64(i64),
     Int128(i128),
-    //    TimeStampTZ(??),
-    //    TimeTz(??),
+    TimeStampTz(chrono::DateTime<chrono_tz::Tz>),
+    TimeTz((chrono::NaiveTime, chrono_tz::Tz)),
     Decimal(rust_decimal::Decimal),
     Boolean(bool),
 }

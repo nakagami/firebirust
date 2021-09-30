@@ -27,10 +27,14 @@ use std::mem::transmute;
 use std::str;
 
 use chrono;
+use chrono::TimeZone;
+use chrono_tz;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use hex;
 use num_bigint::{BigInt, BigUint, Sign};
+
+use super::tz_map;
 
 pub fn int32_to_bytes(i: i32) -> [u8; 4] {
     // little endian u32 to Vec<u8>
@@ -226,6 +230,21 @@ pub fn bytes_to_naive_time(b: &[u8]) -> chrono::NaiveTime {
     chrono::NaiveTime::from_hms_micro(h, m, s, (n % 10000) * 100000)
 }
 
+pub fn bytes_to_time_tz(b: &[u8]) -> (chrono::NaiveTime, chrono_tz::Tz) {
+    // https://stackoverflow.com/questions/56050292/is-there-a-way-to-parse-a-timezone-abbreviation-into-a-timezone-offset-in-rust
+    let time = bytes_to_naive_time(&b[..4]);
+    let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[4..6]))
+        .parse()
+        .unwrap();
+    let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[6..8]))
+        .parse()
+        .unwrap();
+    // TODO:
+    println!("{:?}", timezone);
+    println!("{:?}", offset);
+    (time, offset)
+}
+
 pub fn bytes_to_naive_date_time(b: &[u8]) -> chrono::NaiveDateTime {
     let date = bytes_to_naive_date(&b[..4]);
     let time = bytes_to_naive_time(&b[4..]);
@@ -233,8 +252,20 @@ pub fn bytes_to_naive_date_time(b: &[u8]) -> chrono::NaiveDateTime {
     chrono::NaiveDateTime::new(date, time)
 }
 
-// TODO:
-// chrono::{DateTime, Date}
+pub fn bytes_to_date_time_tz(b: &[u8]) -> chrono::DateTime<chrono_tz::Tz> {
+    let dt = bytes_to_naive_date_time(&b[..8]);
+    let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[8..10]))
+        .parse()
+        .unwrap();
+    let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[10..12]))
+        .parse()
+        .unwrap();
+
+    timezone
+        .from_local_datetime(&dt)
+        .unwrap()
+        .with_timezone(&offset)
+}
 
 pub fn big_int_from_hex_string(s: &[u8]) -> BigInt {
     BigInt::parse_bytes(s, 16).unwrap()

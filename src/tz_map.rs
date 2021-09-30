@@ -2,6 +2,7 @@
 
 use maplit::hashmap;
 
+#[allow(dead_code)]
 pub fn timezone_id_by_name(s: &str) -> u16 {
     let map = hashmap! {
         "GMT" => 65535,
@@ -641,7 +642,6 @@ pub fn timezone_id_by_name(s: &str) -> u16 {
     };
     map[s]
 }
-
 
 pub fn timezone_name_by_id(id: u16) -> &'static str {
     let map = hashmap! {
