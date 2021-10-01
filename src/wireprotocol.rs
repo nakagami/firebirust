@@ -469,7 +469,7 @@ impl WireProtocol {
 
     fn send_packets(&mut self) -> Result<(), Error> {
         self.channel.write(&self.write_buf)?;
-        &self.write_buf.clear();
+        self.write_buf.clear();
         Ok(())
     }
 
@@ -606,7 +606,7 @@ impl WireProtocol {
 
         // skip keys
         ln = utils::bytes_to_buint32(&self.recv_packets(4)?) as usize;
-        &self.recv_packets_alignment(ln);
+        self.recv_packets_alignment(ln)?;
 
         assert!(&self.accept_plugin_name == "Srp" || &self.accept_plugin_name == "Srp256");
 
@@ -621,14 +621,14 @@ impl WireProtocol {
             data = self.recv_packets_alignment(ln)?;
 
             ln = utils::bytes_to_buint32(&self.recv_packets_alignment(4)?) as usize;
-            &self.recv_packets_alignment(ln)?; // plugin_name
+            self.recv_packets_alignment(ln)?; // plugin_name
 
             ln = utils::bytes_to_buint32(&self.recv_packets_alignment(4)?) as usize;
-            &self.recv_packets_alignment(ln)?; // plugin_name_list
+            self.recv_packets_alignment(ln)?; // plugin_name_list
 
             // skip keys
             ln = utils::bytes_to_buint32(&self.recv_packets(4)?) as usize;
-            &self.recv_packets_alignment(ln);
+            self.recv_packets_alignment(ln)?;
         }
         ln = utils::bytes_to_uint16(&data[..2]) as usize;
         let servre_salt = &data[2..2 + ln];
