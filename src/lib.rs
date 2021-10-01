@@ -56,3 +56,5 @@ macro_rules! params {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_timezone;

@@ -175,3 +175,25 @@ impl CellValueToVal<rust_decimal::Decimal> for CellValue {
         }
     }
 }
+
+impl CellValueToVal<(chrono::NaiveTime, chrono_tz::Tz)> for CellValue {
+    fn to_val(self) -> Result<(chrono::NaiveTime, chrono_tz::Tz), Error> {
+        match self {
+            CellValue::TimeTz(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new(
+                "Can't convert time with time zone",
+            ))),
+        }
+    }
+}
+
+impl CellValueToVal<chrono::DateTime<chrono_tz::Tz>> for CellValue {
+    fn to_val(self) -> Result<chrono::DateTime<chrono_tz::Tz>, Error> {
+        match self {
+            CellValue::TimeStampTz(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new(
+                "Can't convert timestamp with time zone",
+            ))),
+        }
+    }
+}

@@ -114,7 +114,7 @@ pub fn bytes_to_uint16(b: &[u8]) -> u16 {
 
 pub fn bytes_to_buint16(b: &[u8]) -> u16 {
     // big endian u16
-    ((b[2] as u16) << 8) + ((b[3] as u16) << 0)
+    ((b[0] as u16) << 8) + ((b[1] as u16) << 0)
 }
 
 pub fn bytes_to_int64(b: &[u8]) -> i64 {
@@ -233,10 +233,10 @@ pub fn bytes_to_naive_time(b: &[u8]) -> chrono::NaiveTime {
 pub fn bytes_to_time_tz(b: &[u8]) -> (chrono::NaiveTime, chrono_tz::Tz) {
     // https://stackoverflow.com/questions/56050292/is-there-a-way-to-parse-a-timezone-abbreviation-into-a-timezone-offset-in-rust
     let time = bytes_to_naive_time(&b[..4]);
-    let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[4..6]))
+    let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_buint16(&b[4..6]))
         .parse()
         .unwrap();
-    let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[6..8]))
+    let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_buint16(&b[6..8]))
         .parse()
         .unwrap();
 
@@ -258,10 +258,10 @@ pub fn bytes_to_naive_date_time(b: &[u8]) -> chrono::NaiveDateTime {
 
 pub fn bytes_to_date_time_tz(b: &[u8]) -> chrono::DateTime<chrono_tz::Tz> {
     let dt = bytes_to_naive_date_time(&b[..8]);
-    let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[8..10]))
+    let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_buint16(&b[8..10]))
         .parse()
         .unwrap();
-    let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_uint16(&b[10..12]))
+    let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_buint16(&b[10..12]))
         .parse()
         .unwrap();
 
