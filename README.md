@@ -7,7 +7,7 @@ It attempts to expose an interface similar to Rusqlite https://github.com/rusqli
 
 ## Supported Firebird
 
-Firebird 3.0 is supported
+Firebird 3.0+ is supported
 
 ## code example
 
