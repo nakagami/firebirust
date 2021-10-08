@@ -36,6 +36,7 @@ struct TzTest {
 }
 
 #[test]
+#[ignore]
 fn test_timezone() {
     let user = match env::var("ISC_USER") {
         Ok(val) => val,
