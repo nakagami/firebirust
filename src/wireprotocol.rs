@@ -832,12 +832,20 @@ impl WireProtocol {
         client_public: &BigInt,
     ) -> Result<(), Error> {
         debug_print!("op_connect()");
+        // PROTOCOL_VERSION, Arch type (Generic=1), min, max, weight
+        let protocols = [
+            "ffff800d00000001000000000000000500000008", // 13, 1, 0, 5, 8
+            "ffff800e0000000100000000000000050000000a", // 14, 1, 0, 5, 10
+            "ffff800f0000000100000000000000050000000c", // 15, 1, 0, 5, 12
+            "ffff80100000000100000000000000050000000e", // 16, 1, 0, 5, 14
+            "ffff801100000001000000000000000500000010", // 17, 1, 0, 5, 16
+        ];
         self.pack_u32(OP_CONNECT);
         self.pack_u32(OP_ATTACH);
         self.pack_u32(3); // CONNECT_VERSION3
         self.pack_u32(1); // Arch Type(GENERIC)
         self.pack_str(db_name);
-        self.pack_u32(5); // protocol count
+        self.pack_u32(protocols.len() as u32); // protocol count
         self.pack_bytes(&self.uid(
             &username,
             password,
@@ -845,12 +853,10 @@ impl WireProtocol {
             options["wire_crypt"] == "true",
             client_public,
         ));
-        // PROTOCOL_VERSION, Arch type (Generic=1), min, max, weight
-        self.append_bytes(&hex::decode("ffff800d00000001000000000000000500000008").unwrap());   // 13, 1, 0, 5, 8
-        self.append_bytes(&hex::decode("ffff800e0000000100000000000000050000000a").unwrap());   // 14, 1, 0, 5, 10
-        self.append_bytes(&hex::decode("ffff800f0000000100000000000000050000000c").unwrap());   // 15, 1, 0, 5, 12
-        self.append_bytes(&hex::decode("ffff80100000000100000000000000050000000e").unwrap());   // 16, 1, 0, 5, 14
-        self.append_bytes(&hex::decode("ffff801100000001000000000000000500000010").unwrap());   // 17, 1, 0, 5, 16
+
+        for p in protocols.iter() {
+            self.append_bytes(&hex::decode(p).unwrap());
+        }
         self.send_packets()?;
 
         Ok(())
