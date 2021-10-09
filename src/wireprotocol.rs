@@ -587,8 +587,8 @@ impl WireProtocol {
             panic!("connection error"); // not reach
         }
 
-        self.protocol_version = self.recv_packets(1)?[0] as i32;
         self.recv_packets(3)?;
+        self.protocol_version = self.recv_packets(1)?[0] as i32;
         self.accept_architecture = utils::bytes_to_buint32(&self.recv_packets(4)?) as i32;
         self.accept_type = utils::bytes_to_buint32(&self.recv_packets(4)?) as i32;
 
