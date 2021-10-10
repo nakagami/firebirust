@@ -192,10 +192,6 @@ pub fn bytes_to_f64(b: &[u8]) -> f64 {
     v
 }
 
-// TODO:
-// chrono::{NaiveDateTime, NaiveDate, NaiveTime}
-// bytes_to_naive_datetime
-
 pub fn bytes_to_naive_date(b: &[u8]) -> chrono::NaiveDate {
     let mut nday = bytes_to_buint32(b) + 678882;
     let century = (4 * nday - 1) / 146097;
