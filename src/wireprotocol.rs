@@ -566,6 +566,27 @@ impl WireProtocol {
         }
     }
 
+    fn guess_wire_crypt(&self, buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
+        let mut params = HashMap::new();
+        let mut i: usize = 0;
+
+        while i < buf.len() {
+            let k = buf[i];
+            i += 1;
+            let ln = buf[i] as usize;
+            i += 1;
+            let v = &buf[i..i+ln];
+            i += ln;
+            params.insert(k, v);
+        }
+        if let Some(chacha) = params.get(&3) {
+            if &chacha[0..7] == b"chacha\x00" {
+                return (b"ChaCha".to_vec(), chacha[7..].to_vec());
+            }
+        }
+        return (b"Arc4".to_vec(), vec![]);
+    }
+
     pub fn parse_connect_response(
         &mut self,
         username: &str,
