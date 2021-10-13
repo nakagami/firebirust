@@ -369,7 +369,6 @@ fn get_srp_client_public_bytes(client_public: &BigInt) -> Vec<u8> {
     v
 }
 
-#[derive(Debug)]
 pub struct WireProtocol {
     write_buf: Vec<u8>,
 
@@ -575,12 +574,12 @@ impl WireProtocol {
             i += 1;
             let ln = buf[i] as usize;
             i += 1;
-            let v = &buf[i..i+ln];
+            let v = &buf[i..i + ln];
             i += ln;
             params.insert(k, v);
         }
         if let Some(chacha) = params.get(&3) {
-            if &chacha[0..7] == b"chacha\x00" {
+            if &chacha[0..7] == b"ChaCha\x00" {
                 return (b"ChaCha".to_vec(), chacha[7..].to_vec());
             }
         }
@@ -665,14 +664,18 @@ impl WireProtocol {
             &self.accept_plugin_name,
         );
 
-        if opcode == OP_COND_ACCEPT {
+        let (encrypt_plugin, nonce) = if opcode == OP_COND_ACCEPT {
             self.op_cont_auth(&auth_data)?;
-            self.op_response()?;
-        }
+            let (_, _, buf) = self.op_response()?;
+            self.guess_wire_crypt(&buf)
+        } else {
+            (Vec::new(), Vec::new())
+        };
 
         if options["wire_crypt"] == "true" {
-            self.op_crypt()?;
-            self.channel.set_arc4_key(&session_key);
+            self.op_crypt(&encrypt_plugin)?;
+            self.channel
+                .set_crypt_key(&encrypt_plugin, &session_key, &nonce);
             self.op_response()?;
         } else {
             self.auth_data = Some(auth_data); // use in op_attach(), op_create()
@@ -1006,10 +1009,10 @@ impl WireProtocol {
         Ok(())
     }
 
-    pub fn op_crypt(&mut self) -> Result<(), Error> {
+    pub fn op_crypt(&mut self, plugin: &Vec<u8>) -> Result<(), Error> {
         debug_print!("op_crypt()");
         self.pack_u32(OP_CRYPT);
-        self.pack_str("Arc4");
+        self.pack_bytes(plugin);
         self.pack_str("Symmetric");
         self.send_packets()?;
 

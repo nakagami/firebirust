@@ -21,11 +21,40 @@
 // SOFTWARE.
 
 use super::error::Error;
+use chacha20::cipher::{NewCipher, StreamCipher};
+use chacha20::{ChaCha20, Key, Nonce};
+use crypto::digest::Digest;
+use crypto::sha2::Sha256;
+use hex;
 use std::io::prelude::*;
 use std::net::TcpStream;
 
 trait CryptTranslator {
     fn translate(&mut self, plain: &[u8]) -> Vec<u8>;
+}
+
+#[derive(Debug)]
+struct ChaCha {
+    cipher: ChaCha20,
+}
+
+impl ChaCha {
+    pub fn new(key: &[u8], nonce: &[u8]) -> ChaCha {
+        let key = Key::from_slice(key);
+        let nonce = Nonce::from_slice(&nonce[..nonce.len() - 4]);
+        let cipher = ChaCha20::new(&key, &nonce);
+
+        ChaCha { cipher }
+    }
+}
+
+impl CryptTranslator for ChaCha {
+    fn translate(&mut self, plain: &[u8]) -> Vec<u8> {
+        let mut enc: Vec<u8> = Vec::new();
+        enc.extend_from_slice(&plain);
+        self.cipher.apply_keystream(&mut enc);
+        enc
+    }
 }
 
 #[derive(Debug)]
@@ -78,12 +107,11 @@ impl CryptTranslator for Arc4 {
     }
 }
 
-#[derive(Debug)]
 pub struct WireChannel {
     stream: TcpStream,
     read_buf: Vec<u8>,
-    read_trans: Option<Arc4>,
-    write_trans: Option<Arc4>,
+    read_trans: Option<Box<dyn CryptTranslator>>,
+    write_trans: Option<Box<dyn CryptTranslator>>,
 }
 
 impl WireChannel {
@@ -97,9 +125,17 @@ impl WireChannel {
         })
     }
 
-    pub fn set_arc4_key(&mut self, key: &[u8]) {
-        self.read_trans = Some(Arc4::new(key));
-        self.write_trans = Some(Arc4::new(key));
+    pub fn set_crypt_key(&mut self, plugin: &[u8], key: &[u8], nonce: &[u8]) {
+        if plugin == b"ChaCha" {
+            let mut hasher = Sha256::new();
+            hasher.input(&key);
+            let key = &hex::decode(hasher.result_str()).unwrap();
+            self.read_trans = Some(Box::new(ChaCha::new(key, nonce)));
+            self.write_trans = Some(Box::new(ChaCha::new(key, nonce)));
+        } else if plugin == b"Arc4" {
+            self.read_trans = Some(Box::new(Arc4::new(key)));
+            self.write_trans = Some(Box::new(Arc4::new(key)));
+        }
     }
 
     pub fn read(&mut self, n: usize) -> Result<Vec<u8>, Error> {
