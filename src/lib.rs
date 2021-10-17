@@ -29,6 +29,7 @@ mod param;
 mod row;
 mod srp;
 mod statement;
+mod transaction;
 mod tz_map;
 mod utils;
 mod wirechannel;

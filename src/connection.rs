@@ -28,6 +28,7 @@ use super::conn_params::ConnParams;
 use super::error::Error;
 use super::param::Param;
 use super::statement::Statement;
+use super::transaction::*;
 use super::wireprotocol::*;
 use super::*;
 
@@ -120,8 +121,8 @@ impl Connection {
         })
     }
 
-    pub fn execute_batch(&mut self, query: &str) -> Result<(), Error> {
-        self.wp.op_exec_immediate(self.trans_handle, query)?;
+    pub(crate) fn _execute_batch(&mut self, query: &str, trans_handle: i32) -> Result<(), Error> {
+        self.wp.op_exec_immediate(trans_handle, query)?;
         self.wp.op_response()?;
 
         // commit automatically
@@ -130,7 +131,16 @@ impl Connection {
         Ok(())
     }
 
-    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+    pub fn execute_batch(&mut self, query: &str) -> Result<(), Error> {
+        self._execute_batch(query, self.trans_handle)
+    }
+
+    pub(crate) fn _execute(
+        &mut self,
+        query: &str,
+        params: Vec<Param>,
+        trans_handle: i32,
+    ) -> Result<(), Error> {
         self.wp.op_allocate_statement()?;
 
         let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
@@ -142,7 +152,7 @@ impl Connection {
         };
 
         self.wp
-            .op_prepare_statement(stmt_handle, self.trans_handle, query)?;
+            .op_prepare_statement(stmt_handle, trans_handle, query)?;
         if self.wp.accept_type == PTYPE_LAZY_SEND && self.wp.lazy_response_count > 0 {
             self.wp.lazy_response_count -= 1;
             let (h, _, _) = self.wp.op_response()?;
@@ -150,33 +160,38 @@ impl Connection {
         }
         let (_, buf, _) = self.wp.op_response()?;
         let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
-        let mut stmt = Statement::new(
-            self,
-            self.trans_handle,
-            stmt_handle,
-            stmt_type,
-            xsqlda,
-            true,
-        );
+        let mut stmt = Statement::new(self, trans_handle, stmt_handle, stmt_type, xsqlda, true);
 
         stmt.execute(params)?;
 
         Ok(())
     }
 
+    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+        self._execute(query, params, self.trans_handle)
+    }
+
+    pub(crate) fn _commit(&mut self, trans_handle: i32) -> Result<(), Error> {
+        self.wp.op_commit_retaining(trans_handle)?;
+        self.wp.op_response()?;
+        Ok(())
+    }
+
     pub fn commit(&mut self) -> Result<(), Error> {
-        self.wp.op_commit_retaining(self.trans_handle)?;
+        self._commit(self.trans_handle)
+    }
+
+    pub(crate) fn _rollback(&mut self, trans_handle: i32) -> Result<(), Error> {
+        self.wp.op_rollback_retaining(trans_handle)?;
         self.wp.op_response()?;
         Ok(())
     }
 
     pub fn rollback(&mut self) -> Result<(), Error> {
-        self.wp.op_rollback_retaining(self.trans_handle)?;
-        self.wp.op_response()?;
-        Ok(())
+        self._rollback(self.trans_handle)
     }
 
-    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+    pub fn _prepare(&mut self, query: &str, trans_handle: i32) -> Result<Statement, Error> {
         self.wp.op_allocate_statement()?;
 
         let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
@@ -188,7 +203,7 @@ impl Connection {
         };
 
         self.wp
-            .op_prepare_statement(stmt_handle, self.trans_handle, query)?;
+            .op_prepare_statement(stmt_handle, trans_handle, query)?;
         if self.wp.accept_type == PTYPE_LAZY_SEND && self.wp.lazy_response_count > 0 {
             self.wp.lazy_response_count -= 1;
             let (h, _, _) = self.wp.op_response()?;
@@ -199,11 +214,19 @@ impl Connection {
 
         Ok(Statement::new(
             self,
-            self.trans_handle,
+            trans_handle,
             stmt_handle,
             stmt_type,
             xsqlda,
             true, // autocommit is true
         ))
+    }
+
+    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+        self._prepare(query, self.trans_handle)
+    }
+
+    pub fn transaction(&mut self) -> Result<Transaction, Error> {
+        Transaction::new(self)
     }
 }
