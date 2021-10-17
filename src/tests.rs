@@ -173,4 +173,46 @@ fn test_connnect() {
     for (i, foo) in foo_iter.enumerate() {
         assert_eq!(foo.unwrap(), expects[i]);
     }
+
+
+    // Transction
+    let mut conn = Connection::connect(&conn_string).unwrap();
+    let expects: [Foo; 1] = [
+        Foo {
+            a: 2,
+            b: "A".to_string(),
+            c: "B".to_string(),
+            d: dec!(-0.123),
+            e: NaiveDate::from_ymd(1999, 1, 25),
+            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+            g: NaiveTime::from_hms(0, 0, 1),
+            h: None,
+            i: 0.1,
+            j: 0.1,
+        },
+    ];
+
+    let mut trans = conn.transaction().unwrap();
+    trans.execute("delete from foo where a in (1, 3)", params![]).unwrap();
+
+    let mut stmt = trans.prepare("select * from foo").unwrap();
+    let foo_iter = stmt
+        .query_map(params![], |row| {
+            Ok(Foo {
+                a: row.get(0).unwrap(),
+                b: row.get(1).unwrap(),
+                c: row.get(2).unwrap(),
+                d: row.get(3).unwrap(),
+                e: row.get(4).unwrap(),
+                f: row.get(5).unwrap(),
+                g: row.get(6).unwrap(),
+                h: row.get(7).unwrap(),
+                i: row.get(8).unwrap(),
+                j: row.get(9).unwrap(),
+            })
+        })
+        .unwrap();
+    for (i, foo) in foo_iter.enumerate() {
+        assert_eq!(foo.unwrap(), expects[i]);
+    }
 }
