@@ -174,26 +174,25 @@ fn test_connnect() {
         assert_eq!(foo.unwrap(), expects[i]);
     }
 
-
     // Transction
     let mut conn = Connection::connect(&conn_string).unwrap();
-    let expects: [Foo; 1] = [
-        Foo {
-            a: 2,
-            b: "A".to_string(),
-            c: "B".to_string(),
-            d: dec!(-0.123),
-            e: NaiveDate::from_ymd(1999, 1, 25),
-            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-            g: NaiveTime::from_hms(0, 0, 1),
-            h: None,
-            i: 0.1,
-            j: 0.1,
-        },
-    ];
+    let expects: [Foo; 1] = [Foo {
+        a: 2,
+        b: "A".to_string(),
+        c: "B".to_string(),
+        d: dec!(-0.123),
+        e: NaiveDate::from_ymd(1999, 1, 25),
+        f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+        g: NaiveTime::from_hms(0, 0, 1),
+        h: None,
+        i: 0.1,
+        j: 0.1,
+    }];
 
     let mut trans = conn.transaction().unwrap();
-    trans.execute("delete from foo where a in (1, 3)", params![]).unwrap();
+    trans
+        .execute("delete from foo where a in (1, 3)", params![])
+        .unwrap();
 
     let mut stmt = trans.prepare("select * from foo").unwrap();
     let foo_iter = stmt
