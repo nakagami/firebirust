@@ -22,6 +22,7 @@
 
 use super::error::Error;
 use super::param::Param;
+use super::statement::Statement;
 use super::Connection;
 
 pub struct Transaction<'conn> {
@@ -50,6 +51,10 @@ impl Transaction<'_> {
 
     pub fn rollback(&mut self) -> Result<(), Error> {
         self.conn._rollback(self.trans_handle)
+    }
+
+    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+        self.conn._prepare(query, self.trans_handle)
     }
 }
 

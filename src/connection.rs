@@ -191,7 +191,7 @@ impl Connection {
         self._rollback(self.trans_handle)
     }
 
-    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+    pub fn _prepare(&mut self, query: &str, trans_handle: i32) -> Result<Statement, Error> {
         self.wp.op_allocate_statement()?;
 
         let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
@@ -203,7 +203,7 @@ impl Connection {
         };
 
         self.wp
-            .op_prepare_statement(stmt_handle, self.trans_handle, query)?;
+            .op_prepare_statement(stmt_handle, trans_handle, query)?;
         if self.wp.accept_type == PTYPE_LAZY_SEND && self.wp.lazy_response_count > 0 {
             self.wp.lazy_response_count -= 1;
             let (h, _, _) = self.wp.op_response()?;
@@ -214,12 +214,16 @@ impl Connection {
 
         Ok(Statement::new(
             self,
-            self.trans_handle,
+            trans_handle,
             stmt_handle,
             stmt_type,
             xsqlda,
             true, // autocommit is true
         ))
+    }
+
+    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+        self._prepare(query, self.trans_handle)
     }
 
     pub fn transaction(&mut self) -> Result<Transaction, Error> {
