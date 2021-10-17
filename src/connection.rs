@@ -135,7 +135,12 @@ impl Connection {
         self._execute_batch(query, self.trans_handle)
     }
 
-    pub(crate) fn _execute(&mut self, query: &str, params: Vec<Param>, trans_handle: i32) -> Result<(), Error> {
+    pub(crate) fn _execute(
+        &mut self,
+        query: &str,
+        params: Vec<Param>,
+        trans_handle: i32,
+    ) -> Result<(), Error> {
         self.wp.op_allocate_statement()?;
 
         let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
@@ -155,14 +160,7 @@ impl Connection {
         }
         let (_, buf, _) = self.wp.op_response()?;
         let (stmt_type, xsqlda) = self.wp.parse_xsqlda(&buf, stmt_handle)?;
-        let mut stmt = Statement::new(
-            self,
-            trans_handle,
-            stmt_handle,
-            stmt_type,
-            xsqlda,
-            true,
-        );
+        let mut stmt = Statement::new(self, trans_handle, stmt_handle, stmt_type, xsqlda, true);
 
         stmt.execute(params)?;
 
