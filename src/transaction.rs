@@ -19,43 +19,16 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-mod cellvalue;
-mod conn_params;
-mod connection;
-mod decfloat;
-mod errmsgs;
-mod error;
-mod param;
-mod row;
-mod srp;
-mod statement;
-mod transaction;
-mod tz_map;
-mod utils;
-mod wirechannel;
-mod wireprotocol;
-mod xsqlvar;
 
-pub use crate::connection::Connection;
-pub use crate::error::Error;
-pub use crate::param::Param;
+use super::error::Error;
+use super::Connection;
 
-#[macro_export]
-macro_rules! params {
-    ( $( $x:expr ),* ) => {
-        {
-            let mut temp_vec = Vec::new();
-            $(
-                temp_vec.push($crate::Param::from($x));
-            )*
-            temp_vec.push($crate::Param::Null);
-            temp_vec.pop();
-            temp_vec
-        }
-    };
+pub struct Transaction<'conn> {
+    conn: &'conn Connection,
 }
 
-#[cfg(test)]
-mod tests;
-#[cfg(test)]
-mod tests_timezone;
+impl Transaction<'_> {
+    pub fn new(conn: &mut Connection) -> Result<Transaction, Error> {
+        Ok(Transaction { conn })
+    }
+}
