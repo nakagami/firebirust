@@ -52,6 +52,7 @@ conn.execute(
     params![1, "a", "b", "This is a pen"],
 )
 .unwrap();
+conn.commit()
 ```
 
 Execute Query and get results
@@ -106,4 +107,13 @@ let foo_iter = stmt
 for foo in foo_iter {
     println!("{:?}", foo);
 }
+```
+
+Execute with transaction
+```
+let mut trans = conn.transaction().unwrap();
+trans.execute(
+    "delete from foo where a in (1, 3)", params![])
+.unwrap();
+trans.commit()
 ```
