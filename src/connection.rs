@@ -140,7 +140,7 @@ impl Connection {
         query: &str,
         params: Vec<Param>,
         trans_handle: i32,
-    ) -> Result<(), Error> {
+    ) -> Result<Statement, Error> {
         self.wp.op_allocate_statement()?;
 
         let mut stmt_handle = if self.wp.accept_type == PTYPE_LAZY_SEND {
@@ -164,10 +164,10 @@ impl Connection {
 
         stmt.execute(params)?;
 
-        Ok(())
+        Ok(stmt)
     }
 
-    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<Statement, Error> {
         self._execute(query, params, self.trans_handle)
     }
 

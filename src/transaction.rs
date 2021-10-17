@@ -21,8 +21,9 @@
 // SOFTWARE.
 
 use super::error::Error;
-use super::param::Param;
 use super::Connection;
+use super::param::Param;
+use super::statement::Statement;
 
 pub struct Transaction<'conn> {
     conn: &'conn mut Connection,
@@ -40,7 +41,7 @@ impl Transaction<'_> {
         self.conn._execute_batch(query, self.trans_handle)
     }
 
-    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<Statement, Error> {
         self.conn._execute(query, params, self.trans_handle)
     }
 
