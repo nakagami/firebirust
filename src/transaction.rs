@@ -21,9 +21,9 @@
 // SOFTWARE.
 
 use super::error::Error;
-use super::Connection;
 use super::param::Param;
 use super::statement::Statement;
+use super::Connection;
 
 pub struct Transaction<'conn> {
     conn: &'conn mut Connection,
@@ -51,5 +51,12 @@ impl Transaction<'_> {
 
     pub fn rollback(&mut self) -> Result<(), Error> {
         self.conn._rollback(self.trans_handle)
+    }
+}
+
+impl Drop for Transaction<'_> {
+    fn drop(&mut self) {
+        self.conn.wp.op_rollback(self.trans_handle).unwrap();
+        self.conn.wp.op_response().unwrap();
     }
 }
