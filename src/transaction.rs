@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 use super::error::Error;
+use super::param::Param;
 use super::Connection;
 
 pub struct Transaction<'conn> {
@@ -35,15 +36,19 @@ impl Transaction<'_> {
         Ok(Transaction { conn, trans_handle })
     }
 
+    pub fn execute_batch(&mut self, query: &str) -> Result<(), Error> {
+        self.conn._execute_batch(query, self.trans_handle)
+    }
+
+    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+        self.conn._execute(query, params, self.trans_handle)
+    }
+
     pub fn commit(&mut self) -> Result<(), Error> {
-        self.conn.wp.op_commit_retaining(self.trans_handle)?;
-        self.conn.wp.op_response()?;
-        Ok(())
+        self.conn._commit(self.trans_handle)
     }
 
     pub fn rollback(&mut self) -> Result<(), Error> {
-        self.conn.wp.op_rollback_retaining(self.trans_handle)?;
-        self.conn.wp.op_response()?;
-        Ok(())
+        self.conn._rollback(self.trans_handle)
     }
 }
