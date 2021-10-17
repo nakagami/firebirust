@@ -24,11 +24,26 @@ use super::error::Error;
 use super::Connection;
 
 pub struct Transaction<'conn> {
-    conn: &'conn Connection,
+    conn: &'conn mut Connection,
+    trans_handle: i32,
 }
 
 impl Transaction<'_> {
     pub fn new(conn: &mut Connection) -> Result<Transaction, Error> {
-        Ok(Transaction { conn })
+        conn.wp.op_transaction(false)?;
+        let (trans_handle, _, _) = conn.wp.op_response()?;
+        Ok(Transaction { conn, trans_handle })
+    }
+
+    pub fn commit(&mut self) -> Result<(), Error> {
+        self.conn.wp.op_commit_retaining(self.trans_handle)?;
+        self.conn.wp.op_response()?;
+        Ok(())
+    }
+
+    pub fn rollback(&mut self) -> Result<(), Error> {
+        self.conn.wp.op_rollback_retaining(self.trans_handle)?;
+        self.conn.wp.op_response()?;
+        Ok(())
     }
 }

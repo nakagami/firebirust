@@ -28,6 +28,7 @@ use super::conn_params::ConnParams;
 use super::error::Error;
 use super::param::Param;
 use super::statement::Statement;
+use super::transaction::*;
 use super::wireprotocol::*;
 use super::*;
 
@@ -205,5 +206,9 @@ impl Connection {
             xsqlda,
             true, // autocommit is true
         ))
+    }
+
+    pub fn transaction(&mut self) -> Result<Transaction, Error> {
+        Transaction::new(self)
     }
 }
