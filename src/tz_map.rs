@@ -639,6 +639,7 @@ pub fn timezone_id_by_name(s: &str) -> u16 {
         "Zulu" => 64904,
         "America/Nuuk" => 64903,
         "Asia/Qostanay" => 64902,
+        "Pacific/Kanton" => 64901,
     };
     map[s]
 }
@@ -1279,6 +1280,7 @@ pub fn timezone_name_by_id(id: u16) -> &'static str {
         64904 => "Zulu",
         64903 => "America/Nuuk",
         64902 => "Asia/Qostanay",
+        64901 => "Pacific/Kanton",
     };
     map[&id]
 }
