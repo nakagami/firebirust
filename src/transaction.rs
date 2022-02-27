@@ -59,6 +59,6 @@ impl Transaction<'_> {
 
 impl Drop for Transaction<'_> {
     fn drop(&mut self) {
-        self.conn.drop_transaction(self.trans_handle)
+        self.conn.drop_transaction(self.trans_handle);
     }
 }

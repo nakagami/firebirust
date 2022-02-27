@@ -113,7 +113,7 @@ impl Statement<'_> {
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records(self.trans_handle)?;
-            self.conn.free_statement(self.stmt_handle, DSQL_DROP);
+            self.conn.free_statement(self.stmt_handle, DSQL_CLOSE);
         } else if self.autocommit {
             // commit automatically
             self.conn.commit()?;
