@@ -81,8 +81,7 @@ impl Statement<'_> {
         let blr = self.calc_blr();
 
         loop {
-            self.conn.wp.op_fetch(self.stmt_handle, &blr)?;
-            let (rows_segment, more_data) = self.conn.wp.op_fetch_response(&self.xsqlda)?;
+            let (rows_segment, more_data) = self.conn.fetch(self.stmt_handle, &blr, &self.xsqlda)?;
             rows.extend(rows_segment);
             if !more_data {
                 break;
@@ -93,11 +92,11 @@ impl Statement<'_> {
             for cell in row.iter_mut() {
                 match cell {
                     CellValue::BlobBinary(blob_id) => {
-                        let blob = self.conn.wp.get_blob_segments(&blob_id, trans_handle);
+                        let blob = self.conn.get_blob_segments(&blob_id, trans_handle);
                         *cell = CellValue::BlobBinary(blob.unwrap());
                     }
                     CellValue::BlobText(blob_id) => {
-                        let blob = self.conn.wp.get_blob_segments(&blob_id, trans_handle);
+                        let blob = self.conn.get_blob_segments(&blob_id, trans_handle);
                         *cell = CellValue::BlobText(blob.unwrap());
                     }
                     _ => {}

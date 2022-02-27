@@ -24,16 +24,18 @@
 
 use std::collections::HashMap;
 
+use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::Error;
 use super::param::Param;
+use super::xsqlvar::XSQLVar;
 use super::statement::Statement;
 use super::transaction::*;
 use super::wireprotocol::*;
 use super::*;
 
 pub struct Connection {
-    pub(crate) wp: WireProtocol,
+    wp: WireProtocol,
     trans_handle: i32, // transaction for operating from connection methods
     conn_params: ConnParams,
     conn_options: HashMap<String, String>,
@@ -228,5 +230,18 @@ impl Connection {
 
     pub fn transaction(&mut self) -> Result<Transaction, Error> {
         Transaction::new(self)
+    }
+
+    pub fn fetch(&mut self, stmt_handle:i32, blr: &Vec<u8>, xsqlda: &[XSQLVar]) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
+            self.wp.op_fetch(stmt_handle, &blr)?;
+            self.wp.op_fetch_response(xsqlda)
+    }
+
+    pub fn get_blob_segments(
+        &mut self,
+        blob_id: &Vec<u8>,
+        trans_handle: i32,
+    ) -> Result<Vec<u8>, Error> {
+       self.wp.get_blob_segments(blob_id, trans_handle)
     }
 }
