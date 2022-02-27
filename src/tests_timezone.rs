@@ -125,7 +125,7 @@ fn test_timezone() {
         },
     ];
 
-    let mut stmt = conn.prepare("select * from tz_test").unwrap();
+    let stmt = conn.prepare("select * from tz_test").unwrap();
     for (i, row) in stmt.query(params![]).unwrap().enumerate() {
         let r = TzTest {
             id: row.get(0).unwrap(),
