@@ -34,7 +34,7 @@ use super::*;
 
 pub struct Connection {
     pub(crate) wp: WireProtocol,
-    pub(crate) trans_handle: i32, // transaction for operating from connection methods
+    trans_handle: i32, // transaction for operating from connection methods
     conn_params: ConnParams,
     conn_options: HashMap<String, String>,
 }
