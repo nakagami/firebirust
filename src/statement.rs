@@ -23,7 +23,6 @@
 use super::cellvalue::CellValue;
 use super::param::Param;
 use super::row::{MappedRows, Row, Rows};
-use super::wireprotocol::*;
 use super::xsqlvar::*;
 use super::Connection;
 use super::Error;
@@ -108,22 +107,11 @@ impl Statement<'_> {
     }
 
     pub fn query(&mut self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
-        self.conn
-            .wp
-            .op_execute(self.stmt_handle, self.trans_handle, &params)?;
-        self.conn.wp.op_response()?;
+        self.conn.execute_query(self.stmt_handle, self.trans_handle, &params)?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records(self.trans_handle)?;
-            self.conn
-                .wp
-                .op_free_statement(self.stmt_handle, DSQL_CLOSE)
-                .unwrap();
-            if self.conn.wp.accept_type == PTYPE_LAZY_SEND {
-                self.conn.wp.lazy_response_count += 1;
-            } else {
-                self.conn.wp.op_response().unwrap();
-            }
+            self.conn.free_statement(self.stmt_handle, DSQL_DROP);
         } else if self.autocommit {
             // commit automatically
             self.conn.commit()?;
@@ -183,14 +171,6 @@ impl Statement<'_> {
 
 impl Drop for Statement<'_> {
     fn drop(&mut self) {
-        self.conn
-            .wp
-            .op_free_statement(self.stmt_handle, DSQL_DROP)
-            .unwrap();
-        if self.conn.wp.accept_type == PTYPE_LAZY_SEND {
-            self.conn.wp.lazy_response_count += 1;
-        } else {
-            self.conn.wp.op_response().unwrap();
-        }
+        self.conn.free_statement(self.stmt_handle, DSQL_DROP);
     }
 }

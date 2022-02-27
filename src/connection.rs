@@ -232,6 +232,15 @@ impl Connection {
         Transaction::new(self)
     }
 
+
+    // methods for Statement
+
+    pub fn execute_query(&mut self, stmt_handle: i32, trans_handle: i32, params: &Vec<Param>) -> Result<(), Error> {
+            self.wp.op_execute(stmt_handle, trans_handle, params)?;
+        self.wp.op_response()?;
+        Ok(())
+    }
+
     pub fn fetch(&mut self, stmt_handle:i32, blr: &Vec<u8>, xsqlda: &[XSQLVar]) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
             self.wp.op_fetch(stmt_handle, &blr)?;
             self.wp.op_fetch_response(xsqlda)
@@ -244,4 +253,16 @@ impl Connection {
     ) -> Result<Vec<u8>, Error> {
        self.wp.get_blob_segments(blob_id, trans_handle)
     }
+
+    pub fn free_statement(&mut self, stmt_handle:i32, drop_type: i32) -> () {
+        self.wp
+            .op_free_statement(stmt_handle, drop_type)
+            .unwrap();
+        if self.wp.accept_type == PTYPE_LAZY_SEND {
+            self.wp.lazy_response_count += 1;
+        } else {
+            self.wp.op_response().unwrap();
+        }
+    }
+
 }
