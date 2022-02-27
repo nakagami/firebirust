@@ -80,7 +80,8 @@ impl Statement<'_> {
         let blr = self.calc_blr();
 
         loop {
-            let (rows_segment, more_data) = self.conn.fetch(self.stmt_handle, &blr, &self.xsqlda)?;
+            let (rows_segment, more_data) =
+                self.conn.fetch(self.stmt_handle, &blr, &self.xsqlda)?;
             rows.extend(rows_segment);
             if !more_data {
                 break;
@@ -107,7 +108,8 @@ impl Statement<'_> {
     }
 
     pub fn query(&mut self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
-        self.conn.execute_query(self.stmt_handle, self.trans_handle, &params)?;
+        self.conn
+            .execute_query(self.stmt_handle, self.trans_handle, &params)?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records(self.trans_handle)?;

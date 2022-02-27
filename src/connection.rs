@@ -28,10 +28,10 @@ use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::Error;
 use super::param::Param;
-use super::xsqlvar::XSQLVar;
 use super::statement::Statement;
 use super::transaction::*;
 use super::wireprotocol::*;
+use super::xsqlvar::XSQLVar;
 use super::*;
 
 pub struct Connection {
@@ -183,6 +183,12 @@ impl Connection {
         self._commit(self.trans_handle)
     }
 
+    pub(crate) fn _begin_trans(&mut self) -> Result<i32, Error> {
+        self.wp.op_transaction(false)?;
+        let (trans_handle, _, _) = self.wp.op_response()?;
+        Ok(trans_handle)
+    }
+
     pub(crate) fn _rollback(&mut self, trans_handle: i32) -> Result<(), Error> {
         self.wp.op_rollback_retaining(trans_handle)?;
         self.wp.op_response()?;
@@ -232,32 +238,39 @@ impl Connection {
         Transaction::new(self)
     }
 
-
     // methods for Statement
 
-    pub fn execute_query(&mut self, stmt_handle: i32, trans_handle: i32, params: &Vec<Param>) -> Result<(), Error> {
-            self.wp.op_execute(stmt_handle, trans_handle, params)?;
+    pub(crate) fn execute_query(
+        &mut self,
+        stmt_handle: i32,
+        trans_handle: i32,
+        params: &Vec<Param>,
+    ) -> Result<(), Error> {
+        self.wp.op_execute(stmt_handle, trans_handle, params)?;
         self.wp.op_response()?;
         Ok(())
     }
 
-    pub fn fetch(&mut self, stmt_handle:i32, blr: &Vec<u8>, xsqlda: &[XSQLVar]) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
-            self.wp.op_fetch(stmt_handle, &blr)?;
-            self.wp.op_fetch_response(xsqlda)
+    pub(crate) fn fetch(
+        &mut self,
+        stmt_handle: i32,
+        blr: &Vec<u8>,
+        xsqlda: &[XSQLVar],
+    ) -> Result<(Vec<Vec<CellValue>>, bool), Error> {
+        self.wp.op_fetch(stmt_handle, &blr)?;
+        self.wp.op_fetch_response(xsqlda)
     }
 
-    pub fn get_blob_segments(
+    pub(crate) fn get_blob_segments(
         &mut self,
         blob_id: &Vec<u8>,
         trans_handle: i32,
     ) -> Result<Vec<u8>, Error> {
-       self.wp.get_blob_segments(blob_id, trans_handle)
+        self.wp.get_blob_segments(blob_id, trans_handle)
     }
 
-    pub fn free_statement(&mut self, stmt_handle:i32, drop_type: i32) -> () {
-        self.wp
-            .op_free_statement(stmt_handle, drop_type)
-            .unwrap();
+    pub(crate) fn free_statement(&mut self, stmt_handle: i32, drop_type: i32) -> () {
+        self.wp.op_free_statement(stmt_handle, drop_type).unwrap();
         if self.wp.accept_type == PTYPE_LAZY_SEND {
             self.wp.lazy_response_count += 1;
         } else {
@@ -265,4 +278,9 @@ impl Connection {
         }
     }
 
+    // methods for Transaction
+    pub(crate) fn drop_transaction(&mut self, trans_handle: i32) -> () {
+        self.wp.op_rollback(trans_handle).unwrap();
+        self.wp.op_response().unwrap();
+    }
 }

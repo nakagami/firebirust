@@ -32,8 +32,7 @@ pub struct Transaction<'conn> {
 
 impl Transaction<'_> {
     pub fn new(conn: &mut Connection) -> Result<Transaction, Error> {
-        conn.wp.op_transaction(false)?;
-        let (trans_handle, _, _) = conn.wp.op_response()?;
+        let trans_handle = conn._begin_trans()?;
         Ok(Transaction { conn, trans_handle })
     }
 
@@ -60,7 +59,6 @@ impl Transaction<'_> {
 
 impl Drop for Transaction<'_> {
     fn drop(&mut self) {
-        self.conn.wp.op_rollback(self.trans_handle).unwrap();
-        self.conn.wp.op_response().unwrap();
+        self.conn.drop_transaction(self.trans_handle)
     }
 }
