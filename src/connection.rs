@@ -177,14 +177,14 @@ impl Connection {
         self._execute(query, params, self.trans_handle)
     }
 
-    pub(crate) fn _commit(&mut self, trans_handle: i32) -> Result<(), Error> {
+    pub(crate) fn _commit(&self, trans_handle: i32) -> Result<(), Error> {
         let mut wp = self.wp.borrow_mut();
         wp.op_commit_retaining(trans_handle)?;
         wp.op_response()?;
         Ok(())
     }
 
-    pub fn commit(&mut self) -> Result<(), Error> {
+    pub fn commit(&self) -> Result<(), Error> {
         self._commit(self.trans_handle)
     }
 
@@ -248,7 +248,7 @@ impl Connection {
     // methods for Statement
 
     pub(crate) fn execute_query(
-        &mut self,
+        &self,
         stmt_handle: i32,
         trans_handle: i32,
         params: &Vec<Param>,
@@ -260,7 +260,7 @@ impl Connection {
     }
 
     pub(crate) fn fetch(
-        &mut self,
+        &self,
         stmt_handle: i32,
         blr: &Vec<u8>,
         xsqlda: &[XSQLVar],
@@ -271,7 +271,7 @@ impl Connection {
     }
 
     pub(crate) fn get_blob_segments(
-        &mut self,
+        &self,
         blob_id: &Vec<u8>,
         trans_handle: i32,
     ) -> Result<Vec<u8>, Error> {
@@ -279,7 +279,7 @@ impl Connection {
         wp.get_blob_segments(blob_id, trans_handle)
     }
 
-    pub(crate) fn free_statement(&mut self, stmt_handle: i32, drop_type: i32) -> () {
+    pub(crate) fn free_statement(&self, stmt_handle: i32, drop_type: i32) -> () {
         let mut wp = self.wp.borrow_mut();
         wp.op_free_statement(stmt_handle, drop_type).unwrap();
         if wp.accept_type == PTYPE_LAZY_SEND {
@@ -290,7 +290,7 @@ impl Connection {
     }
 
     // methods for Transaction
-    pub(crate) fn drop_transaction(&mut self, trans_handle: i32) -> () {
+    pub(crate) fn drop_transaction(&self, trans_handle: i32) -> () {
         let mut wp = self.wp.borrow_mut();
         wp.op_rollback(trans_handle).unwrap();
         wp.op_response().unwrap();
