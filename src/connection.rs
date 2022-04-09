@@ -146,27 +146,29 @@ impl Connection {
         params: Vec<Param>,
         trans_handle: i32,
     ) -> Result<(), Error> {
-        let mut wp = self.wp.borrow_mut();
-        wp.op_allocate_statement()?;
+        let mut stmt = {
+            let mut wp = self.wp.borrow_mut();
+            wp.op_allocate_statement()?;
 
-        let mut stmt_handle = if wp.accept_type == PTYPE_LAZY_SEND {
-            wp.lazy_response_count += 1;
-            -1
-        } else {
-            let (stmt_handle, _, _) = wp.op_response()?;
-            stmt_handle
+            let mut stmt_handle = if wp.accept_type == PTYPE_LAZY_SEND {
+                wp.lazy_response_count += 1;
+                -1
+            } else {
+                let (stmt_handle, _, _) = wp.op_response()?;
+                stmt_handle
+            };
+
+            wp.op_prepare_statement(stmt_handle, trans_handle, query)?;
+            if wp.accept_type == PTYPE_LAZY_SEND && wp.lazy_response_count > 0 {
+                wp.lazy_response_count -= 1;
+                let (h, _, _) = wp.op_response()?;
+                stmt_handle = h;
+            }
+            let (_, buf, _) = wp.op_response()?;
+            let (stmt_type, xsqlda) = wp.parse_xsqlda(&buf, stmt_handle)?;
+
+            Statement::new(self, trans_handle, stmt_handle, stmt_type, xsqlda, true)
         };
-
-        wp.op_prepare_statement(stmt_handle, trans_handle, query)?;
-        if wp.accept_type == PTYPE_LAZY_SEND && wp.lazy_response_count > 0 {
-            wp.lazy_response_count -= 1;
-            let (h, _, _) = wp.op_response()?;
-            stmt_handle = h;
-        }
-        let (_, buf, _) = wp.op_response()?;
-        let (stmt_type, xsqlda) = wp.parse_xsqlda(&buf, stmt_handle)?;
-
-        let mut stmt = Statement::new(self, trans_handle, stmt_handle, stmt_type, xsqlda, true);
 
         stmt.execute(params)?;
 
