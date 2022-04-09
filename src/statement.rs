@@ -48,7 +48,7 @@ const DSQL_CLOSE: i32 = 1;
 const DSQL_DROP: i32 = 2;
 
 pub struct Statement<'conn> {
-    conn: &'conn mut Connection,
+    conn: &'conn Connection,
     pub(crate) trans_handle: i32,
     pub(crate) stmt_handle: i32,
     stmt_type: u32,
@@ -58,7 +58,7 @@ pub struct Statement<'conn> {
 
 impl Statement<'_> {
     pub(super) fn new(
-        conn: &mut Connection,
+        conn: &Connection,
         trans_handle: i32,
         stmt_handle: i32,
         stmt_type: u32,
@@ -75,7 +75,7 @@ impl Statement<'_> {
         }
     }
 
-    fn fetch_records(&mut self, trans_handle: i32) -> Result<VecDeque<Vec<CellValue>>, Error> {
+    fn fetch_records(&self, trans_handle: i32) -> Result<VecDeque<Vec<CellValue>>, Error> {
         let mut rows = VecDeque::new();
         let blr = self.calc_blr();
 
@@ -107,7 +107,7 @@ impl Statement<'_> {
         Ok(rows)
     }
 
-    pub fn query(&mut self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
+    pub fn query(&self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
         self.conn
             .execute_query(self.stmt_handle, self.trans_handle, &params)?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
@@ -134,7 +134,7 @@ impl Statement<'_> {
         Ok(())
     }
 
-    fn calc_blr(&mut self) -> Vec<u8> {
+    fn calc_blr(&self) -> Vec<u8> {
         let ln = self.xsqlda.len() * 2;
         let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
 
