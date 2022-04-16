@@ -21,7 +21,7 @@
 // SOFTWARE.
 #![allow(dead_code)]
 use super::cellvalue::CellValue;
-use super::param::Param;
+use super::params::Param;
 use super::row::{MappedRows, Row, Rows};
 use super::xsqlvar::*;
 use super::Connection;

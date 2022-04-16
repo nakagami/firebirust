@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 use super::error::Error;
-use super::param::Param;
+use super::params::Param;
 use super::statement::Statement;
 use super::Connection;
 

@@ -25,7 +25,7 @@ mod connection;
 mod decfloat;
 mod errmsgs;
 mod error;
-mod param;
+mod params;
 mod row;
 mod srp;
 mod statement;
@@ -38,7 +38,7 @@ mod xsqlvar;
 
 pub use crate::connection::Connection;
 pub use crate::error::Error;
-pub use crate::param::Param;
+pub use crate::params::Param;
 
 #[macro_export]
 macro_rules! params {

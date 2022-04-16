@@ -28,7 +28,7 @@ use std::collections::HashMap;
 use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::Error;
-use super::param::Param;
+use super::params::Param;
 use super::statement::Statement;
 use super::transaction::*;
 use super::wireprotocol::*;
