@@ -253,7 +253,7 @@ impl Connection {
         &self,
         stmt_handle: i32,
         trans_handle: i32,
-        params: &Vec<Param>,
+        params: &[Param],
     ) -> Result<(), Error> {
         let mut wp = self.wp.borrow_mut();
         wp.op_execute(stmt_handle, trans_handle, params)?;

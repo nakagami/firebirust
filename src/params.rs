@@ -20,6 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use chrono;
+use chrono_tz;
+use rust_decimal::Decimal;
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum Param {
     Null,
@@ -27,16 +31,16 @@ pub enum Param {
     Short(i16),
     Long(i32),
     Float(f32),
-    //  Time(time),
-    //  Date(date),
+    Time(chrono::NaiveTime),
+    Date(chrono::NaiveDate),
     Double(f64),
-    //    TimeStamp(??),
+    TimeStamp(chrono::NaiveDateTime),
     Blob(Vec<u8>),
     Int64(i64),
     Int128(i128),
-    //    TimeStampTZ(??),
-    //    TimeTz(??),
-    //  Decimal(??),
+    TimeStampTZ(chrono::DateTime<chrono_tz::Tz>),
+    // TimeTz(??),
+    Decimal(Decimal),
     Boolean(bool),
 }
 
@@ -46,9 +50,75 @@ impl From<&str> for Param {
     }
 }
 
+impl From<i16> for Param {
+    fn from(v: i16) -> Param {
+        Param::Short(v)
+    }
+}
+
 impl From<i32> for Param {
     fn from(v: i32) -> Param {
         Param::Long(v)
+    }
+}
+
+impl From<chrono::NaiveTime> for Param {
+    fn from(v: chrono::NaiveTime) -> Param {
+        Param::Time(v)
+    }
+}
+
+impl From<chrono::NaiveDate> for Param {
+    fn from(v: chrono::NaiveDate) -> Param {
+        Param::Date(v)
+    }
+}
+
+impl From<f64> for Param {
+    fn from(v: f64) -> Param {
+        Param::Double(v)
+    }
+}
+
+impl From<chrono::NaiveDateTime> for Param {
+    fn from(v: chrono::NaiveDateTime) -> Param {
+        Param::TimeStamp(v)
+    }
+}
+
+impl From<&[u8]> for Param {
+    fn from(v: &[u8]) -> Param {
+        Param::Blob(Vec::from(v))
+    }
+}
+
+impl From<i64> for Param {
+    fn from(v: i64) -> Param {
+        Param::Int64(v)
+    }
+}
+
+impl From<i128> for Param {
+    fn from(v: i128) -> Param {
+        Param::Int128(v)
+    }
+}
+
+impl From<chrono::DateTime<chrono_tz::Tz>> for Param {
+    fn from(v: chrono::DateTime<chrono_tz::Tz>) -> Param {
+        Param::TimeStampTZ(v)
+    }
+}
+
+impl From<Decimal> for Param {
+    fn from(v: Decimal) -> Param {
+        Param::Decimal(v)
+    }
+}
+
+impl From<bool> for Param {
+    fn from(v: bool) -> Param {
+        Param::Boolean(v)
     }
 }
 
