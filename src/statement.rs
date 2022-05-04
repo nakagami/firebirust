@@ -81,7 +81,7 @@ impl Statement<'_> {
 
         loop {
             let (rows_segment, more_data) =
-                self.conn.fetch(self.stmt_handle, &blr, &self.xsqlda)?;
+                self.conn._fetch(self.stmt_handle, &blr, &self.xsqlda)?;
             rows.extend(rows_segment);
             if !more_data {
                 break;
@@ -92,11 +92,11 @@ impl Statement<'_> {
             for cell in row.iter_mut() {
                 match cell {
                     CellValue::BlobBinary(blob_id) => {
-                        let blob = self.conn.get_blob_segments(&blob_id, trans_handle);
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle);
                         *cell = CellValue::BlobBinary(blob.unwrap());
                     }
                     CellValue::BlobText(blob_id) => {
-                        let blob = self.conn.get_blob_segments(&blob_id, trans_handle);
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle);
                         *cell = CellValue::BlobText(blob.unwrap());
                     }
                     _ => {}
@@ -109,11 +109,11 @@ impl Statement<'_> {
 
     pub fn query(&self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
         self.conn
-            .execute_query(self.stmt_handle, self.trans_handle, &params)?;
+            ._execute_query(self.stmt_handle, self.trans_handle, &params)?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records(self.trans_handle)?;
-            self.conn.free_statement(self.stmt_handle, DSQL_CLOSE);
+            self.conn._free_statement(self.stmt_handle, DSQL_CLOSE);
         } else if self.autocommit {
             // commit automatically
             self.conn.commit()?;
@@ -173,6 +173,6 @@ impl Statement<'_> {
 
 impl Drop for Statement<'_> {
     fn drop(&mut self) {
-        self.conn.free_statement(self.stmt_handle, DSQL_DROP);
+        self.conn._free_statement(self.stmt_handle, DSQL_DROP);
     }
 }

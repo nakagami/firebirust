@@ -249,7 +249,7 @@ impl Connection {
 
     // methods for Statement
 
-    pub(crate) fn execute_query(
+    pub(crate) fn _execute_query(
         &self,
         stmt_handle: i32,
         trans_handle: i32,
@@ -261,7 +261,7 @@ impl Connection {
         Ok(())
     }
 
-    pub(crate) fn fetch(
+    pub(crate) fn _fetch(
         &self,
         stmt_handle: i32,
         blr: &Vec<u8>,
@@ -272,7 +272,7 @@ impl Connection {
         wp.op_fetch_response(xsqlda)
     }
 
-    pub(crate) fn get_blob_segments(
+    pub(crate) fn _get_blob_segments(
         &self,
         blob_id: &Vec<u8>,
         trans_handle: i32,
@@ -281,7 +281,7 @@ impl Connection {
         wp.get_blob_segments(blob_id, trans_handle)
     }
 
-    pub(crate) fn free_statement(&self, stmt_handle: i32, drop_type: i32) -> () {
+    pub(crate) fn _free_statement(&self, stmt_handle: i32, drop_type: i32) -> () {
         let mut wp = self.wp.borrow_mut();
         wp.op_free_statement(stmt_handle, drop_type).unwrap();
         if wp.accept_type == PTYPE_LAZY_SEND {
