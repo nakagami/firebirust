@@ -46,8 +46,18 @@ pub fn uint32_to_bytes(i: u32) -> [u8; 4] {
     unsafe { transmute(i.to_le()) }
 }
 
+pub fn bint128_to_bytes(i: i128) -> [u8; 16] {
+    // big endian i128 to Vec<u8>
+    unsafe { transmute(i.to_be()) }
+}
+
+pub fn bint64_to_bytes(i: i64) -> [u8; 8] {
+    // big endian i64 to Vec<u8>
+    unsafe { transmute(i.to_be()) }
+}
+
 pub fn bint32_to_bytes(i: i32) -> [u8; 4] {
-    // big endian u32 to Vec<u8>
+    // big endian i32 to Vec<u8>
     unsafe { transmute(i.to_be()) }
 }
 
