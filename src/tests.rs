@@ -21,7 +21,6 @@
 // SOFTWARE.
 use super::params;
 use super::Connection;
-use super::Param;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -174,12 +173,6 @@ fn test_connnect() {
     for (i, foo) in foo_iter.enumerate() {
         assert_eq!(foo.unwrap(), expects[i]);
     }
-
-    let mut conn = Connection::connect(&conn_string).unwrap();
-    let stmt = conn.prepare("select count(*) from foo where h=?").unwrap();
-    let mut rows = stmt.query(vec![Param::Null]).unwrap();  // parameter NULL
-    let i: i32 = rows.next().unwrap().get(0).unwrap();
-    assert_eq!(i, 2);
 
     // Transction
     let mut conn = Connection::connect(&conn_string).unwrap();
