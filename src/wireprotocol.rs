@@ -1532,7 +1532,7 @@ impl WireProtocol {
             let v: Vec<u8> = Vec::new();
             match p {
                 Param::Null => {
-                    values_list.write(&[14, 0, 0])?;
+                    blr_list.write(&[14, 0, 0])?;
                 }
                 Param::Text(s) => {
                     let b = s.as_bytes();
