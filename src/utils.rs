@@ -37,7 +37,7 @@ use num_bigint::{BigInt, BigUint, Sign};
 use super::tz_map;
 
 pub fn int32_to_bytes(i: i32) -> [u8; 4] {
-    // little endian u32 to Vec<u8>
+    // little endian i32 to Vec<u8>
     unsafe { transmute(i.to_le()) }
 }
 
