@@ -1548,6 +1548,14 @@ impl WireProtocol {
                     values_list.write(&utils::bint32_to_bytes(*n))?;
                     blr_list.write(&[8, 0])?;
                 }
+                Param::Int64(n) => {
+                    values_list.write(&utils::bint64_to_bytes(*n))?;
+                    blr_list.write(&[16, 0])?;
+                }
+                Param::Int128(n) => {
+                    values_list.write(&utils::bint128_to_bytes(*n))?;
+                    blr_list.write(&[26, 0])?;
+                }
                 Param::Time(t) => {
                     values_list.write(&utils::convert_time(
                         t.hour(),
@@ -1555,11 +1563,11 @@ impl WireProtocol {
                         t.second(),
                         t.nanosecond(),
                     ))?;
-                    blr_list.write(&[13, 0])?;
+                    blr_list.write(&[13])?;
                 }
                 Param::Date(d) => {
                     values_list.write(&utils::convert_date(d.year(), d.month(), d.day()))?;
-                    blr_list.write(&[8, 0])?;
+                    blr_list.write(&[12])?;
                 }
                 Param::TimeStamp(dt) => {
                     let d = dt.date();
@@ -1571,16 +1579,23 @@ impl WireProtocol {
                         t.second(),
                         t.nanosecond(),
                     ))?;
-                    blr_list.write(&[35, 0])?;
+                    blr_list.write(&[35])?;
                 }
-
                 Param::Float(f) => {
                     values_list.write(&utils::f32_to_bytes(*f))?;
-                    blr_list.write(&[10, 0])?;
+                    blr_list.write(&[10])?;
                 }
-                Param::Double(f) => {
-                    values_list.write(&utils::f64_to_bytes(*f))?;
-                    blr_list.write(&[27, 0])?;
+                Param::Double(d) => {
+                    values_list.write(&utils::f64_to_bytes(*d))?;
+                    blr_list.write(&[27])?;
+                }
+                Param::Boolean(b) => {
+                    if *b {
+                        values_list.write(&[1, 0, 0, 0])?;
+                    } else {
+                        values_list.write(&[0, 0, 0, 0])?;
+                    }
+                    blr_list.write(&[23])?;
                 }
                 _ => {
                     // TODO:
