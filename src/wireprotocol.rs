@@ -22,11 +22,11 @@
 
 #![allow(dead_code)]
 
-use std::collections::{HashMap, HashSet};
-use std::io::prelude::*;
-
+use chrono::{Datelike, Timelike};
 use hex;
 use num_bigint::BigInt;
+use std::collections::{HashMap, HashSet};
+use std::io::prelude::*;
 
 use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
@@ -1540,9 +1540,40 @@ impl WireProtocol {
                     values_list.write(&v)?;
                     blr_list.write(&blr)?;
                 }
+                Param::Short(n) => {
+                    values_list.write(&utils::bint32_to_bytes(*n as i32))?;
+                    blr_list.write(&[8, 0])?;
+                }
                 Param::Long(n) => {
                     values_list.write(&utils::bint32_to_bytes(*n))?;
                     blr_list.write(&[8, 0])?;
+                }
+                Param::Time(t) => {
+                    values_list.write(&utils::convert_time(
+                        t.hour(),
+                        t.minute(),
+                        t.second(),
+                        t.nanosecond(),
+                    ))?;
+                    blr_list.write(&[13, 0])?;
+                }
+                Param::Date(d) => {
+                    values_list.write(&utils::convert_date(d.year() as u32, d.month(), d.day()))?;
+                    blr_list.write(&[8, 0])?;
+                }
+                Param::TimeStamp(dt) => {
+                    // TODO:
+
+                    blr_list.write(&[35, 0])?;
+                }
+
+                Param::Float(f) => {
+                    values_list.write(&utils::f32_to_bytes(*f))?;
+                    blr_list.write(&[10, 0])?;
+                }
+                Param::Double(f) => {
+                    values_list.write(&utils::f64_to_bytes(*f))?;
+                    blr_list.write(&[27, 0])?;
                 }
                 _ => {
                     // TODO:

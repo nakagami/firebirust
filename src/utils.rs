@@ -338,3 +338,19 @@ pub fn bytes_to_blr(b: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let blr: Vec<u8> = vec![14, (n & 255) as u8, (n >> 8) as u8];
     (blr, v)
 }
+
+pub fn convert_date(year: u32, month: u32, day: u32) -> [u8; 4] {
+    // Convert date to BLR format data
+    let i = month + 9;
+    let jy = year + (i / 12) - 1;
+    let jm = i % 12;
+    let c = jy / 100;
+    let j = (146097 * c) / 4 + (1461 * (jy - 100 * c)) / 4 + (153 * jm + 2) / 5 + day - 678882;
+    bint32_to_bytes(j as i32)
+}
+
+pub fn convert_time(hour: u32, minute: u32, second: u32, nanosecond: u32) -> [u8; 4] {
+    // Convert time to BLR format time
+    let n = (hour * 3600 + minute * 60 + second) * 10000 + nanosecond * 10;
+    bint32_to_bytes(n as i32)
+}
