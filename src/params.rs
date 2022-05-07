@@ -62,6 +62,18 @@ impl From<i32> for Param {
     }
 }
 
+impl From<i64> for Param {
+    fn from(v: i64) -> Param {
+        Param::Int64(v)
+    }
+}
+
+impl From<i128> for Param {
+    fn from(v: i128) -> Param {
+        Param::Int128(v)
+    }
+}
+
 impl From<chrono::NaiveTime> for Param {
     fn from(v: chrono::NaiveTime) -> Param {
         Param::Time(v)
@@ -74,33 +86,27 @@ impl From<chrono::NaiveDate> for Param {
     }
 }
 
-impl From<f64> for Param {
-    fn from(v: f64) -> Param {
-        Param::Double(v)
-    }
-}
-
 impl From<chrono::NaiveDateTime> for Param {
     fn from(v: chrono::NaiveDateTime) -> Param {
         Param::TimeStamp(v)
     }
 }
 
+impl From<f32> for Param {
+    fn from(v: f32) -> Param {
+        Param::Float(v)
+    }
+}
+
+impl From<f64> for Param {
+    fn from(v: f64) -> Param {
+        Param::Double(v)
+    }
+}
+
 impl From<&[u8]> for Param {
     fn from(v: &[u8]) -> Param {
         Param::Blob(Vec::from(v))
-    }
-}
-
-impl From<i64> for Param {
-    fn from(v: i64) -> Param {
-        Param::Int64(v)
-    }
-}
-
-impl From<i128> for Param {
-    fn from(v: i128) -> Param {
-        Param::Int128(v)
     }
 }
 

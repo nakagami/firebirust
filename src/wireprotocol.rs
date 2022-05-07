@@ -1420,7 +1420,7 @@ impl WireProtocol {
         }
     }
 
-    pub fn op_sql_response(&mut self, xsqlda: &[XSQLVar]) -> Result<Vec<CellValue>, Error> {
+    fn op_sql_response(&mut self, xsqlda: &[XSQLVar]) -> Result<Vec<CellValue>, Error> {
         debug_print!("op_sql_response()");
         let xsqlda_len = xsqlda.len();
         let mut row: Vec<CellValue> = Vec::with_capacity(xsqlda_len);
@@ -1499,7 +1499,7 @@ impl WireProtocol {
         Ok(blob_id)
     }
 
-    pub fn params_to_blr(&mut self, params: &[Param]) -> Result<(Vec<u8>, Vec<u8>), Error> {
+    fn params_to_blr(&mut self, params: &[Param]) -> Result<(Vec<u8>, Vec<u8>), Error> {
         // Convert parameter array to BLR and values format.
         let mut values_list: Vec<u8> = Vec::new();
         let mut blr_list: Vec<u8> = Vec::new();
@@ -1588,6 +1588,13 @@ impl WireProtocol {
                 Param::Double(d) => {
                     values_list.write(&utils::f64_to_bytes(*d))?;
                     blr_list.write(&[27])?;
+                }
+                Param::Decimal(d) => {
+                    let s = d.to_string();
+                    let b = s.as_bytes();
+                    let (blr, v) = utils::bytes_to_blr(b);
+                    values_list.write(&v)?;
+                    blr_list.write(&blr)?;
                 }
                 Param::Boolean(b) => {
                     if *b {
