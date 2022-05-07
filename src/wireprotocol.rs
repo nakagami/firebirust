@@ -1589,6 +1589,14 @@ impl WireProtocol {
                     values_list.write(&utils::f64_to_bytes(*d))?;
                     blr_list.write(&[27])?;
                 }
+                Param::Blob(b) => {
+                    let (blr, v) = utils::bytes_to_blr(b);
+                    values_list.write(&v)?;
+                    blr_list.write(&blr)?;
+                }
+                Param::TimeStampTZ(_dt_tz) => {
+                    // TODO:
+                }
                 Param::Decimal(d) => {
                     let s = d.to_string();
                     let b = s.as_bytes();
@@ -1603,10 +1611,6 @@ impl WireProtocol {
                         values_list.write(&[0, 0, 0, 0])?;
                     }
                     blr_list.write(&[23])?;
-                }
-                _ => {
-                    // TODO:
-                    panic!("another to parameter");
                 }
             }
             blr_list.write(&[7, 0])?;
