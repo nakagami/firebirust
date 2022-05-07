@@ -1558,12 +1558,19 @@ impl WireProtocol {
                     blr_list.write(&[13, 0])?;
                 }
                 Param::Date(d) => {
-                    values_list.write(&utils::convert_date(d.year() as u32, d.month(), d.day()))?;
+                    values_list.write(&utils::convert_date(d.year(), d.month(), d.day()))?;
                     blr_list.write(&[8, 0])?;
                 }
                 Param::TimeStamp(dt) => {
-                    // TODO:
-
+                    let d = dt.date();
+                    let t = dt.time();
+                    values_list.write(&utils::convert_date(d.year(), d.month(), d.day()))?;
+                    values_list.write(&utils::convert_time(
+                        t.hour() as u32,
+                        t.minute(),
+                        t.second(),
+                        t.nanosecond(),
+                    ))?;
                     blr_list.write(&[35, 0])?;
                 }
 
