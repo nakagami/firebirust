@@ -165,6 +165,22 @@ const ISC_INFO_SQL_GET_PLAN: u8 = 22;
 const ISC_INFO_SQL_RECORDS: u8 = 23;
 const ISC_INFO_SQL_BATCH_FETCH: u8 = 24;
 
+// statement
+pub(crate) const ISC_INFO_SQL_STMT_SELECT: u32 = 1;
+pub(crate) const ISC_INFO_SQL_STMT_INSERT: u32 = 2;
+pub(crate) const ISC_INFO_SQL_STMT_UPDATE: u32 = 3;
+pub(crate) const ISC_INFO_SQL_STMT_DELETE: u32 = 4;
+pub(crate) const ISC_INFO_SQL_STMT_DDL: u32 = 5;
+pub(crate) const ISC_INFO_SQL_STMT_GET_SEGMENT: u32 = 6;
+pub(crate) const ISC_INFO_SQL_STMT_PUT_SEGMENT: u32 = 7;
+pub(crate) const ISC_INFO_SQL_STMT_EXEC_PROCEDURE: u32 = 8;
+pub(crate) const ISC_INFO_SQL_STMT_START_TRANS: u32 = 9;
+pub(crate) const ISC_INFO_SQL_STMT_COMMIT: u32 = 10;
+pub(crate) const ISC_INFO_SQL_STMT_ROLLBACK: u32 = 11;
+pub(crate) const ISC_INFO_SQL_STMT_SELECT_FOR_UPD: u32 = 12;
+pub(crate) const ISC_INFO_SQL_STMT_SET_GENERATOR: u32 = 13;
+pub(crate) const ISC_INFO_SQL_STMT_SAVEPOINT: u32 = 14;
+
 //Database Parameter Block Types
 const ISC_DPB_VERSION1: u8 = 1;
 const ISC_DPB_PAGE_SIZE: u8 = 4;
@@ -811,6 +827,23 @@ impl WireProtocol {
         }
 
         Ok((stmt_type, xsqlda))
+    }
+
+    pub fn rowcount(&mut self, stmt_handle: i32, stmt_type: u32) -> Result<usize, Error> {
+        self.op_info_sql(stmt_handle, &[ISC_INFO_SQL_RECORDS])?;
+        let (_, buf, _) = self.op_response()?;
+        let rowcount = if buf.len() >= 32 {
+            if stmt_type == ISC_INFO_SQL_STMT_SELECT {
+                utils::bytes_to_int32(&buf[20..24]) as usize
+            } else {
+                (utils::bytes_to_int32(&buf[27..31])
+                    + utils::bytes_to_int32(&buf[6..10])
+                    + utils::bytes_to_int32(&buf[13..17])) as usize
+            }
+        } else {
+            0
+        };
+        Ok(rowcount)
     }
 
     pub fn get_blob_segments(

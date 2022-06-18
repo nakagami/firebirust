@@ -249,16 +249,17 @@ impl Connection {
 
     // methods for Statement
 
-    pub(crate) fn _execute_query(
+    pub(crate) fn _execute_statement(
         &self,
-        stmt_handle: i32,
         trans_handle: i32,
+        stmt_handle: i32,
+        stmt_type: u32,
         params: &[Param],
-    ) -> Result<(), Error> {
+    ) -> Result<usize, Error> {
         let mut wp = self.wp.borrow_mut();
         wp.op_execute(stmt_handle, trans_handle, params)?;
         wp.op_response()?;
-        Ok(())
+        Ok(wp.rowcount(stmt_handle, stmt_type)?)
     }
 
     pub(crate) fn _fetch(

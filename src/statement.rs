@@ -23,26 +23,12 @@
 use super::cellvalue::CellValue;
 use super::params::Param;
 use super::row::{MappedRows, Row, Rows};
+use super::wireprotocol::*;
 use super::xsqlvar::*;
 use super::Connection;
 use super::Error;
 use maplit::hashmap;
 use std::collections::VecDeque;
-
-const ISC_INFO_SQL_STMT_SELECT: u32 = 1;
-const ISC_INFO_SQL_STMT_INSERT: u32 = 2;
-const ISC_INFO_SQL_STMT_UPDATE: u32 = 3;
-const ISC_INFO_SQL_STMT_DELETE: u32 = 4;
-const ISC_INFO_SQL_STMT_DDL: u32 = 5;
-const ISC_INFO_SQL_STMT_GET_SEGMENT: u32 = 6;
-const ISC_INFO_SQL_STMT_PUT_SEGMENT: u32 = 7;
-const ISC_INFO_SQL_STMT_EXEC_PROCEDURE: u32 = 8;
-const ISC_INFO_SQL_STMT_START_TRANS: u32 = 9;
-const ISC_INFO_SQL_STMT_COMMIT: u32 = 10;
-const ISC_INFO_SQL_STMT_ROLLBACK: u32 = 11;
-const ISC_INFO_SQL_STMT_SELECT_FOR_UPD: u32 = 12;
-const ISC_INFO_SQL_STMT_SET_GENERATOR: u32 = 13;
-const ISC_INFO_SQL_STMT_SAVEPOINT: u32 = 14;
 
 const DSQL_CLOSE: i32 = 1;
 const DSQL_DROP: i32 = 2;
@@ -108,8 +94,12 @@ impl Statement<'_> {
     }
 
     pub fn query(&self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
-        self.conn
-            ._execute_query(self.stmt_handle, self.trans_handle, &params)?;
+        self.conn._execute_statement(
+            self.trans_handle,
+            self.stmt_handle,
+            self.stmt_type,
+            &params,
+        )?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records(self.trans_handle)?;
