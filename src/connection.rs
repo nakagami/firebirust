@@ -249,7 +249,7 @@ impl Connection {
 
     // methods for Statement
 
-    pub(crate) fn _execute_query(
+    pub(crate) fn _execute_statement(
         &self,
         stmt_handle: i32,
         trans_handle: i32,

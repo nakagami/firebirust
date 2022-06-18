@@ -109,7 +109,7 @@ impl Statement<'_> {
 
     pub fn query(&self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
         self.conn
-            ._execute_query(self.stmt_handle, self.trans_handle, &params)?;
+            ._execute_statement(self.stmt_handle, self.trans_handle, &params)?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
             rows = self.fetch_records(self.trans_handle)?;
