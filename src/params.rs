@@ -59,3 +59,34 @@ impl Params for () {
         stmt.bind_parameters(&[])
     }
 }
+
+macro_rules! single_tuple_impl {
+    ($count:literal : $(($field:tt $ftype:ident)),* $(,)?) => {
+        impl<$($ftype,)*> Sealed for ($($ftype,)*) where $($ftype: ToSqlParam,)* {}
+        impl<$($ftype,)*> Params for ($($ftype,)*) where $($ftype: ToSqlParam,)* {
+            fn __bind_in(self, stmt: &mut Statement<'_>) -> Result<(), Error> {
+                stmt.reset_parameter($count)?;
+                $({
+                    stmt.put_parameter(self.$field)?;
+                })+
+                Ok(())
+            }
+        }
+    }
+}
+
+single_tuple_impl!(2: (0 A), (1 B));
+single_tuple_impl!(3: (0 A), (1 B), (2 C));
+single_tuple_impl!(4: (0 A), (1 B), (2 C), (3 D));
+single_tuple_impl!(5: (0 A), (1 B), (2 C), (3 D), (4 E));
+single_tuple_impl!(6: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F));
+single_tuple_impl!(7: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G));
+single_tuple_impl!(8: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H));
+single_tuple_impl!(9: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I));
+single_tuple_impl!(10: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I), (9 J));
+single_tuple_impl!(11: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I), (9 J), (10 K));
+single_tuple_impl!(12: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I), (9 J), (10 K), (11 L));
+single_tuple_impl!(13: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I), (9 J), (10 K), (11 L), (12 M));
+single_tuple_impl!(14: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I), (9 J), (10 K), (11 L), (12 M), (13 N));
+single_tuple_impl!(15: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I), (9 J), (10 K), (11 L), (12 M), (13 N), (14 O));
+single_tuple_impl!(16: (0 A), (1 B), (2 C), (3 D), (4 E), (5 F), (6 G), (7 H), (8 I), (9 J), (10 K), (11 L), (12 M), (13 N), (14 O), (15 P));

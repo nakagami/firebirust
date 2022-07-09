@@ -73,6 +73,16 @@ impl Statement<'_> {
         Ok(())
     }
 
+    pub(crate) fn reset_parameter(&mut self, _capacity: usize) -> Result<(), Error> {
+        self.params = Vec::new();
+        Ok(())
+    }
+
+    pub(crate) fn put_parameter<T: ToSqlParam>(&mut self, param: T) -> Result<(), Error> {
+        self.params.push(param.to_value_blr_isnull());
+        Ok(())
+    }
+
     fn fetch_records(&self, trans_handle: i32) -> Result<VecDeque<Vec<CellValue>>, Error> {
         let mut rows = VecDeque::new();
         let blr = self.calc_blr();
