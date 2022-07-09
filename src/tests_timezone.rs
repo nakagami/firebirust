@@ -75,7 +75,7 @@ fn test_timezone() {
     )
     .unwrap();
 
-    conn.execute("insert into tz_test (id) values (1)",[])
+    conn.execute("insert into tz_test (id) values (1)", [])
         .unwrap();
     conn.execute(
         "insert into tz_test (id, t, ts) values (2, '12:34:56 Asia/Seoul', '1967-08-11 23:45:01.0000 Asia/Seoul')",

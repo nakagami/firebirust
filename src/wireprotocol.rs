@@ -22,7 +22,6 @@
 
 #![allow(dead_code)]
 
-use chrono::{Datelike, Timelike};
 use hex;
 use num_bigint::BigInt;
 use std::collections::{HashMap, HashSet};
@@ -31,7 +30,6 @@ use std::io::prelude::*;
 use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::{Error, FirebirdError};
-use super::param::Param;
 use super::wirechannel::WireChannel;
 use super::xsqlvar::XSQLVar;
 use super::*;
@@ -1530,128 +1528,6 @@ impl WireProtocol {
         self.op_response()?;
 
         Ok(blob_id)
-    }
-
-    fn params_to_blr(&mut self, params: &[Param]) -> Result<(Vec<u8>, Vec<u8>), Error> {
-        // Convert parameter array to BLR and values format.
-        let mut values_list: Vec<u8> = Vec::new();
-        let mut blr_list: Vec<u8> = Vec::new();
-        let ln = params.len() * 2;
-        let blr = vec![5, 2, 4, 0, (ln & 0xFF) as u8, ((ln >> 8) & 0xFF) as u8];
-        blr_list.write(&blr)?;
-
-        let mut null_indicator: u128 = 0;
-        for (i, p) in params.iter().enumerate() {
-            if *p == Param::Null {
-                null_indicator |= 1 << i;
-            }
-        }
-
-        let mut n = params.len() / 8;
-        if params.len() % 8 != 0 {
-            n += 1;
-        }
-        if (n % 4) != 0 {
-            // padding
-            n += 4 - n % 4;
-        }
-
-        for _ in 0..n {
-            values_list.push((null_indicator & 255) as u8);
-            null_indicator >>= 8;
-        }
-
-        for p in params.iter() {
-            let v: Vec<u8> = Vec::new();
-            match p {
-                Param::Null => {
-                    blr_list.write(&[14, 0, 0])?;
-                }
-                Param::Text(s) => {
-                    let b = s.as_bytes();
-                    let (blr, v) = utils::bytes_to_blr(b);
-                    values_list.write(&v)?;
-                    blr_list.write(&blr)?;
-                }
-                Param::Short(n) => {
-                    values_list.write(&utils::bint32_to_bytes(*n as i32))?;
-                    blr_list.write(&[8, 0])?;
-                }
-                Param::Long(n) => {
-                    values_list.write(&utils::bint32_to_bytes(*n))?;
-                    blr_list.write(&[8, 0])?;
-                }
-                Param::Int64(n) => {
-                    values_list.write(&utils::bint64_to_bytes(*n))?;
-                    blr_list.write(&[16, 0])?;
-                }
-                Param::Int128(n) => {
-                    values_list.write(&utils::bint128_to_bytes(*n))?;
-                    blr_list.write(&[26, 0])?;
-                }
-                Param::Time(t) => {
-                    values_list.write(&utils::convert_time(
-                        t.hour(),
-                        t.minute(),
-                        t.second(),
-                        t.nanosecond(),
-                    ))?;
-                    blr_list.write(&[13])?;
-                }
-                Param::Date(d) => {
-                    values_list.write(&utils::convert_date(d.year(), d.month(), d.day()))?;
-                    blr_list.write(&[12])?;
-                }
-                Param::TimeStamp(dt) => {
-                    let d = dt.date();
-                    let t = dt.time();
-                    values_list.write(&utils::convert_date(d.year(), d.month(), d.day()))?;
-                    values_list.write(&utils::convert_time(
-                        t.hour() as u32,
-                        t.minute(),
-                        t.second(),
-                        t.nanosecond(),
-                    ))?;
-                    blr_list.write(&[35])?;
-                }
-                Param::Float(f) => {
-                    values_list.write(&utils::f32_to_bytes(*f))?;
-                    blr_list.write(&[10])?;
-                }
-                Param::Double(d) => {
-                    values_list.write(&utils::f64_to_bytes(*d))?;
-                    blr_list.write(&[27])?;
-                }
-                Param::Blob(b) => {
-                    let (blr, v) = utils::bytes_to_blr(b);
-                    values_list.write(&v)?;
-                    blr_list.write(&blr)?;
-                }
-                Param::TimeStampTZ(_dt_tz) => {
-                    // TODO:
-                }
-                Param::Decimal(d) => {
-                    let s = d.to_string();
-                    let b = s.as_bytes();
-                    let (blr, v) = utils::bytes_to_blr(b);
-                    values_list.write(&v)?;
-                    blr_list.write(&blr)?;
-                }
-                Param::Boolean(b) => {
-                    if *b {
-                        values_list.write(&[1, 0, 0, 0])?;
-                    } else {
-                        values_list.write(&[0, 0, 0, 0])?;
-                    }
-                    blr_list.write(&[23])?;
-                }
-            }
-            blr_list.write(&[7, 0])?;
-            values_list.write(&v)?;
-        }
-
-        blr_list.write(&[255, 76])?;
-        Ok((blr_list, values_list))
     }
 }
 
