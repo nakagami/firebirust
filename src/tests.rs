@@ -94,8 +94,12 @@ fn test_connnect() {
     )
     .unwrap();
 
-    conn.execute("insert into foo(a, b, c, e, g, i, j) values (2, 'A', 'B', '1999-01-25', '00:00:01', 0.1, 0.1)", params![]).unwrap();
-    conn.execute("insert into foo(a, b, c, e, g, i, j) values (3, 'X', 'Y', '2001-07-05', '00:01:02', 0.2, 0.2)", params![]).unwrap();
+    conn.execute(
+        "insert into foo(a, b, c, e, g, i, j) values (2, 'A', 'B', '1999-01-25', '00:00:01', 0.1, 0.1)",
+        ()
+    )
+    .unwrap();
+    conn.execute("insert into foo(a, b, c, e, g, i, j) values (3, 'X', 'Y', '2001-07-05', '00:01:02', 0.2, 0.2)", ()).unwrap();
 
     let expects: [Foo; 3] = [
         Foo {
@@ -137,7 +141,7 @@ fn test_connnect() {
     ];
 
     let mut stmt = conn.prepare("select * from foo").unwrap();
-    for (i, row) in stmt.query(params![]).unwrap().enumerate() {
+    for (i, row) in stmt.query(()).unwrap().enumerate() {
         let foo = Foo {
             a: row.get(0).unwrap(),
             b: row.get(1).unwrap(),
@@ -154,7 +158,7 @@ fn test_connnect() {
     }
 
     let foo_iter = stmt
-        .query_map(params![], |row| {
+        .query_map((), |row| {
             Ok(Foo {
                 a: row.get(0).unwrap(),
                 b: row.get(1).unwrap(),
@@ -190,12 +194,12 @@ fn test_connnect() {
 
     let mut trans = conn.transaction().unwrap();
     trans
-        .execute("delete from foo where a in (1, 3)", params![])
+        .execute("delete from foo where a in (1, 3)", ())
         .unwrap();
 
     let mut stmt = trans.prepare("select * from foo").unwrap();
     let foo_iter = stmt
-        .query_map(params![], |row| {
+        .query_map((), |row| {
             Ok(Foo {
                 a: row.get(0).unwrap(),
                 b: row.get(1).unwrap(),

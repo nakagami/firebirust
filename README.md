@@ -52,6 +52,13 @@ conn.execute(
     params![1, "a", "b", "This is a pen"],
 )
 .unwrap();
+
+conn.execute(
+    "insert into foo(a, b, c, e, g, i, j) values (2, 'A', 'B', '1999-01-25', '00:00:01', 0.1, 0.1)",
+    (), // empty list of parameters.
+)
+.unwrap();
+
 conn.commit()
 ```
 
@@ -60,7 +67,7 @@ Execute Query and get results
 use firebirust::params;
 
 let mut stmt = conn.prepare("select * from foo").unwrap();
-for row in stmt.query(params![]).unwrap() {
+for row in stmt.query(()).unwrap() {
     let a:i32 = row.get(0).unwrap();
     println!("a={}", a);
 }
@@ -113,7 +120,7 @@ Execute with transaction
 ```
 let mut trans = conn.transaction().unwrap();
 trans.execute(
-    "delete from foo where a in (1, 3)", params![])
+    "delete from foo where a in (1, 3)", ())
 .unwrap();
 trans.commit()
 ```

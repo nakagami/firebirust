@@ -75,16 +75,16 @@ fn test_timezone() {
     )
     .unwrap();
 
-    conn.execute("insert into tz_test (id) values (1)", params![])
+    conn.execute("insert into tz_test (id) values (1)",[])
         .unwrap();
     conn.execute(
         "insert into tz_test (id, t, ts) values (2, '12:34:56 Asia/Seoul', '1967-08-11 23:45:01.0000 Asia/Seoul')",
-        params![],
+        ()
     )
     .unwrap();
     conn.execute(
         "insert into tz_test (id, t, ts) values (3, '03:34:56 UTC', '1967-08-11 14:45:01.0000 UTC')",
-        params![],
+        ()
     )
     .unwrap();
 
@@ -125,7 +125,7 @@ fn test_timezone() {
     ];
 
     let mut stmt = conn.prepare("select * from tz_test").unwrap();
-    for (i, row) in stmt.query(params![]).unwrap().enumerate() {
+    for (i, row) in stmt.query(()).unwrap().enumerate() {
         let r = TzTest {
             id: row.get(0).unwrap(),
             t: row.get(1).unwrap(),
