@@ -25,6 +25,7 @@ mod connection;
 mod decfloat;
 mod errmsgs;
 mod error;
+mod param;
 mod params;
 mod row;
 mod srp;
@@ -38,20 +39,16 @@ mod xsqlvar;
 
 pub use crate::connection::Connection;
 pub use crate::error::Error;
-pub use crate::params::Param;
+pub use crate::param::Param;
+pub use crate::param::ToSqlParam;
 
 #[macro_export]
 macro_rules! params {
-    ( $( $x:expr ),* ) => {
-        {
-            let mut temp_vec = Vec::new();
-            $(
-                temp_vec.push($crate::Param::from($x));
-            )*
-            temp_vec.push($crate::Param::Null);
-            temp_vec.pop();
-            temp_vec
-        }
+    () => {
+        &[] as &[&dyn $crate::ToSqlParam]
+    };
+    ($($param:expr),+ $(,)?) => {
+        &[$(&$crate::Param::from($param) as &dyn $crate::ToSqlParam),+] as &[&dyn $crate::ToSqlParam]
     };
 }
 

@@ -28,7 +28,7 @@ use std::collections::HashMap;
 use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::Error;
-use super::params::Param;
+use super::params::Params;
 use super::statement::Statement;
 use super::transaction::*;
 use super::wireprotocol::*;
@@ -140,10 +140,10 @@ impl Connection {
         self._execute_batch(query, self.trans_handle)
     }
 
-    pub(crate) fn _execute(
+    pub(crate) fn _execute<P: Params>(
         &mut self,
         query: &str,
-        params: Vec<Param>,
+        params: P,
         trans_handle: i32,
     ) -> Result<(), Error> {
         let mut stmt = {
@@ -175,7 +175,7 @@ impl Connection {
         Ok(())
     }
 
-    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+    pub fn execute<P: Params>(&mut self, query: &str, params: P) -> Result<(), Error> {
         self._execute(query, params, self.trans_handle)
     }
 
@@ -254,10 +254,11 @@ impl Connection {
         trans_handle: i32,
         stmt_handle: i32,
         stmt_type: u32,
-        params: &[Param],
+        param_blr: &[u8],
+        param_values: &[u8],
     ) -> Result<usize, Error> {
         let mut wp = self.wp.borrow_mut();
-        wp.op_execute(stmt_handle, trans_handle, params)?;
+        wp.op_execute(stmt_handle, trans_handle, param_blr, param_values)?;
         wp.op_response()?;
         Ok(wp.rowcount(stmt_handle, stmt_type)?)
     }

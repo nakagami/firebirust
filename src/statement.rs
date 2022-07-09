@@ -21,7 +21,8 @@
 // SOFTWARE.
 #![allow(dead_code)]
 use super::cellvalue::CellValue;
-use super::params::Param;
+use super::param::ToSqlParam;
+use super::params::Params;
 use super::row::{MappedRows, Row, Rows};
 use super::wireprotocol::*;
 use super::xsqlvar::*;
@@ -29,6 +30,7 @@ use super::Connection;
 use super::Error;
 use maplit::hashmap;
 use std::collections::VecDeque;
+use std::io::prelude::*;
 
 const DSQL_CLOSE: i32 = 1;
 const DSQL_DROP: i32 = 2;
@@ -40,6 +42,8 @@ pub struct Statement<'conn> {
     stmt_type: u32,
     pub(crate) xsqlda: Vec<XSQLVar>,
     autocommit: bool,
+    param_blr: Vec<u8>,
+    param_values: Vec<u8>,
 }
 
 impl Statement<'_> {
@@ -58,7 +62,57 @@ impl Statement<'_> {
             stmt_type,
             xsqlda,
             autocommit,
+            param_blr: Vec::new(),
+            param_values: Vec::new(),
         }
+    }
+
+    #[inline]
+    pub(crate) fn bind_parameters(&mut self, params: &[&dyn ToSqlParam]) -> Result<(), Error> {
+        if params.len() == 0 {
+            self.param_blr = Vec::new();
+            self.param_values = Vec::new();
+        } else {
+            // Convert parameter array to BLR and values format.
+            let mut values_list: Vec<u8> = Vec::new();
+            let mut blr_list: Vec<u8> = Vec::new();
+            let ln = params.len() * 2;
+            let blr = vec![5, 2, 4, 0, (ln & 0xFF) as u8, ((ln >> 8) & 0xFF) as u8];
+            blr_list.write(&blr)?;
+
+            let mut null_indicator: u128 = 0;
+            for (i, p) in params.iter().enumerate() {
+                if p.is_null() {
+                    null_indicator |= 1 << i;
+                }
+            }
+
+            let mut n = params.len() / 8;
+            if params.len() % 8 != 0 {
+                n += 1;
+            }
+            if (n % 4) != 0 {
+                // padding
+                n += 4 - n % 4;
+            }
+
+            for _ in 0..n {
+                values_list.push((null_indicator & 255) as u8);
+                null_indicator >>= 8;
+            }
+
+            for p in params.iter() {
+                let (v, blr) = p.to_value_and_blr();
+                values_list.write(&v)?;
+                blr_list.write(&blr)?;
+                blr_list.write(&[7, 0])?;
+            }
+
+            blr_list.write(&[255, 76])?;
+            self.param_blr = blr_list;
+            self.param_values = values_list;
+        }
+        Ok(())
     }
 
     fn fetch_records(&self, trans_handle: i32) -> Result<VecDeque<Vec<CellValue>>, Error> {
@@ -93,12 +147,14 @@ impl Statement<'_> {
         Ok(rows)
     }
 
-    pub fn query(&self, params: Vec<Param>) -> Result<Rows<'_>, Error> {
+    pub fn query<P: Params>(&mut self, params: P) -> Result<Rows<'_>, Error> {
+        params.__bind_in(self)?;
         self.conn._execute_statement(
             self.trans_handle,
             self.stmt_handle,
             self.stmt_type,
-            &params,
+            &self.param_blr,
+            &self.param_values,
         )?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
@@ -112,14 +168,15 @@ impl Statement<'_> {
         Ok(Rows::new(self, rows))
     }
 
-    pub fn query_map<T, F>(&mut self, params: Vec<Param>, f: F) -> Result<MappedRows<'_, F>, Error>
+    pub fn query_map<T, P, F>(&mut self, params: P, f: F) -> Result<MappedRows<'_, F>, Error>
     where
+        P: Params,
         F: FnMut(&Row<'_>) -> Result<T, Error>,
     {
         self.query(params).map(|rows| rows.mapped(f))
     }
 
-    pub fn execute(&mut self, params: Vec<Param>) -> Result<(), Error> {
+    pub fn execute<P: Params>(&mut self, params: P) -> Result<(), Error> {
         self.query(params)?;
         Ok(())
     }

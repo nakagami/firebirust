@@ -19,7 +19,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-use super::params;
 use super::Connection;
 use chrono::TimeZone;
 use chrono::{NaiveDate, NaiveTime};
@@ -125,7 +124,7 @@ fn test_timezone() {
         },
     ];
 
-    let stmt = conn.prepare("select * from tz_test").unwrap();
+    let mut stmt = conn.prepare("select * from tz_test").unwrap();
     for (i, row) in stmt.query(params![]).unwrap().enumerate() {
         let r = TzTest {
             id: row.get(0).unwrap(),

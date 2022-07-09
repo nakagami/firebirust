@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 use super::error::Error;
-use super::params::Param;
+use super::params::Params;
 use super::statement::Statement;
 use super::Connection;
 
@@ -40,7 +40,7 @@ impl Transaction<'_> {
         self.conn._execute_batch(query, self.trans_handle)
     }
 
-    pub fn execute(&mut self, query: &str, params: Vec<Param>) -> Result<(), Error> {
+    pub fn execute<P: Params>(&mut self, query: &str, params: P) -> Result<(), Error> {
         self.conn._execute(query, params, self.trans_handle)
     }
 

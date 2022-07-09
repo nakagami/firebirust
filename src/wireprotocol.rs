@@ -31,7 +31,7 @@ use std::io::prelude::*;
 use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::{Error, FirebirdError};
-use super::params::Param;
+use super::param::Param;
 use super::wirechannel::WireChannel;
 use super::xsqlvar::XSQLVar;
 use super::*;
@@ -1206,23 +1206,23 @@ impl WireProtocol {
         &mut self,
         stmt_handle: i32,
         trans_handle: i32,
-        params: &[Param],
+        param_blr: &[u8],
+        param_values: &[u8],
     ) -> Result<(), Error> {
         debug_print!("op_execute()");
         self.pack_u32(OP_EXECUTE);
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(trans_handle as u32);
 
-        if params.len() == 0 {
+        if param_blr.len() == 0 {
             self.pack_u32(0);
             self.pack_u32(0);
             self.pack_u32(0);
         } else {
-            let (blr, values) = self.params_to_blr(params)?;
-            self.pack_bytes(&blr);
+            self.pack_bytes(param_blr);
             self.pack_u32(0);
             self.pack_u32(1);
-            self.append_bytes(&values);
+            self.append_bytes(param_values);
         }
         if self.protocol_version >= 16 {
             // statement timeout
@@ -1237,7 +1237,8 @@ impl WireProtocol {
         &mut self,
         stmt_handle: i32,
         trans_handle: i32,
-        params: &[Param],
+        param_blr: &[u8],
+        param_values: &[u8],
         output_blr: &[u8],
     ) -> Result<(), Error> {
         debug_print!("op_execute2()");
@@ -1245,16 +1246,15 @@ impl WireProtocol {
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(trans_handle as u32);
 
-        if params.len() == 0 {
+        if param_blr.len() == 0 {
             self.pack_u32(0);
             self.pack_u32(0);
             self.pack_u32(0);
         } else {
-            let (blr, values) = self.params_to_blr(params)?;
-            self.pack_bytes(&blr);
+            self.pack_bytes(param_blr);
             self.pack_u32(0);
             self.pack_u32(1);
-            self.append_bytes(&values);
+            self.append_bytes(param_values);
         }
         self.pack_bytes(output_blr);
         self.pack_u32(0);
