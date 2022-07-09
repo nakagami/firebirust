@@ -254,11 +254,10 @@ impl Connection {
         trans_handle: i32,
         stmt_handle: i32,
         stmt_type: u32,
-        param_blr: &[u8],
-        param_values: &[u8],
+        params: &[(Vec<u8>, Vec<u8>, bool)],
     ) -> Result<usize, Error> {
         let mut wp = self.wp.borrow_mut();
-        wp.op_execute(stmt_handle, trans_handle, param_blr, param_values)?;
+        wp.op_execute(stmt_handle, trans_handle, params)?;
         wp.op_response()?;
         Ok(wp.rowcount(stmt_handle, stmt_type)?)
     }

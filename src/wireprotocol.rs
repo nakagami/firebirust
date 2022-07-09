@@ -1204,23 +1204,23 @@ impl WireProtocol {
         &mut self,
         stmt_handle: i32,
         trans_handle: i32,
-        param_blr: &[u8],
-        param_values: &[u8],
+        params: &[(Vec<u8>, Vec<u8>, bool)],
     ) -> Result<(), Error> {
         debug_print!("op_execute()");
         self.pack_u32(OP_EXECUTE);
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(trans_handle as u32);
 
-        if param_blr.len() == 0 {
+        if params.len() == 0 {
             self.pack_u32(0);
             self.pack_u32(0);
             self.pack_u32(0);
         } else {
-            self.pack_bytes(param_blr);
+            let (values, blr) = self.params_to_blr(params)?;
+            self.pack_bytes(&blr);
             self.pack_u32(0);
             self.pack_u32(1);
-            self.append_bytes(param_values);
+            self.append_bytes(&values);
         }
         if self.protocol_version >= 16 {
             // statement timeout
@@ -1235,8 +1235,7 @@ impl WireProtocol {
         &mut self,
         stmt_handle: i32,
         trans_handle: i32,
-        param_blr: &[u8],
-        param_values: &[u8],
+        params: &[(Vec<u8>, Vec<u8>, bool)],
         output_blr: &[u8],
     ) -> Result<(), Error> {
         debug_print!("op_execute2()");
@@ -1244,15 +1243,16 @@ impl WireProtocol {
         self.pack_u32(stmt_handle as u32);
         self.pack_u32(trans_handle as u32);
 
-        if param_blr.len() == 0 {
+        if params.len() == 0 {
             self.pack_u32(0);
             self.pack_u32(0);
             self.pack_u32(0);
         } else {
-            self.pack_bytes(param_blr);
+            let (values, blr) = self.params_to_blr(params)?;
+            self.pack_bytes(&blr);
             self.pack_u32(0);
             self.pack_u32(1);
-            self.append_bytes(param_values);
+            self.append_bytes(&values);
         }
         self.pack_bytes(output_blr);
         self.pack_u32(0);
@@ -1528,6 +1528,47 @@ impl WireProtocol {
         self.op_response()?;
 
         Ok(blob_id)
+    }
+
+    fn params_to_blr(
+        &mut self,
+        params: &[(Vec<u8>, Vec<u8>, bool)],
+    ) -> Result<(Vec<u8>, Vec<u8>), Error> {
+        let mut values_list: Vec<u8> = Vec::new();
+        let mut blr_list: Vec<u8> = Vec::new();
+        let ln = params.len() * 2;
+        let blr = vec![5, 2, 4, 0, (ln & 0xFF) as u8, ((ln >> 8) & 0xFF) as u8];
+        blr_list.write(&blr)?;
+
+        let mut null_indicator: u128 = 0;
+        for (i, (_value, _blr, isnull)) in params.iter().enumerate() {
+            if *isnull {
+                null_indicator |= 1 << i;
+            }
+        }
+
+        let mut n = params.len() / 8;
+        if params.len() % 8 != 0 {
+            n += 1;
+        }
+        if (n % 4) != 0 {
+            // padding
+            n += 4 - n % 4;
+        }
+
+        for _ in 0..n {
+            values_list.push((null_indicator & 255) as u8);
+            null_indicator >>= 8;
+        }
+
+        for p in params.iter() {
+            values_list.write(&p.0)?;
+            blr_list.write(&p.1)?;
+            blr_list.write(&[7, 0])?;
+        }
+
+        blr_list.write(&[255, 76])?;
+        Ok((values_list, blr_list))
     }
 }
 

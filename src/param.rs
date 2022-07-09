@@ -132,24 +132,18 @@ impl From<bool> for Param {
 }
 
 pub trait ToSqlParam {
-    fn is_null(&self) -> bool;
-    fn to_value_and_blr(&self) -> (Vec<u8>, Vec<u8>);
+    fn to_value_blr_isnull(&self) -> (Vec<u8>, Vec<u8>, bool);
 }
 
 impl ToSqlParam for Param {
-    fn is_null(&self) -> bool {
-        match self {
-            Param::Null => true,
-            _ => false,
-        }
-    }
-
-    fn to_value_and_blr(&self) -> (Vec<u8>, Vec<u8>) {
+    fn to_value_blr_isnull(&self) -> (Vec<u8>, Vec<u8>, bool) {
         let mut value: Vec<u8> = Vec::new();
         let mut blr: Vec<u8> = Vec::new();
+        let mut isnull = false;
         match self {
             Param::Null => {
                 blr.write(&[14, 0, 0]).unwrap();
+                isnull = true;
             }
             Param::Text(s) => {
                 let b = s.as_bytes();
@@ -238,6 +232,6 @@ impl ToSqlParam for Param {
                 blr.write(&[23]).unwrap();
             }
         }
-        (value, blr)
+        (value, blr, isnull)
     }
 }
