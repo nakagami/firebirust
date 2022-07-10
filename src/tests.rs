@@ -90,7 +90,7 @@ fn test_connnect() {
 
     conn.execute(
         "insert into foo(a, b, c, h) values (?, ?, ?, ?)",
-        params![1, "a", "b", "This is a pen"],
+        (1, "a", "b", "This is a pen"),
     )
     .unwrap();
 

@@ -235,3 +235,28 @@ impl ToSqlParam for Param {
         (value, blr, isnull)
     }
 }
+
+macro_rules! to_sql_param(
+    ($t:ty) => (
+        impl ToSqlParam for $t {
+            #[inline]
+            fn to_value_blr_isnull(&self) -> (Vec<u8>, Vec<u8>, bool) {
+                Param::from(*self).to_value_blr_isnull()
+            }
+        }
+    )
+);
+
+to_sql_param!(&str);
+to_sql_param!(i16);
+to_sql_param!(i32);
+to_sql_param!(i64);
+to_sql_param!(i128);
+to_sql_param!(chrono::NaiveTime);
+to_sql_param!(chrono::NaiveDate);
+to_sql_param!(f32);
+to_sql_param!(f64);
+to_sql_param!(&[u8]);
+to_sql_param!(chrono::DateTime<chrono_tz::Tz>);
+to_sql_param!(Decimal);
+to_sql_param!(bool);
