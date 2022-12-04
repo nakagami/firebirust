@@ -75,6 +75,7 @@ macro_rules! single_tuple_impl {
     }
 }
 
+single_tuple_impl!(1: (0 A));
 single_tuple_impl!(2: (0 A), (1 B));
 single_tuple_impl!(3: (0 A), (1 B), (2 C));
 single_tuple_impl!(4: (0 A), (1 B), (2 C), (3 D));

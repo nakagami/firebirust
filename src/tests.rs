@@ -95,71 +95,55 @@ fn test_connnect() {
     .unwrap();
 
     conn.execute(
-        "insert into foo(a, b, c, e, g, i, j) values (2, 'A', 'B', '1999-01-25', '00:00:01', 0.1, 0.1)",
-        ()
+        "insert into foo(a, b, c, e, g, i, j) values (?, 'A', 'B', '1999-01-25', '00:00:01', 0.1, 0.1)",
+        (2, )
     )
     .unwrap();
     conn.execute("insert into foo(a, b, c, e, g, i, j) values (3, 'X', 'Y', '2001-07-05', '00:01:02', 0.2, 0.2)", ()).unwrap();
 
-    let expects: [Foo; 3] = [
-        Foo {
-            a: 1,
-            b: "a".to_string(),
-            c: "b".to_string(),
-            d: dec!(-0.123),
-            e: NaiveDate::from_ymd(1967, 8, 11),
-            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-            g: NaiveTime::from_hms(23, 45, 1),
-            h: Some("This is a pen".to_string().into_bytes()),
-            i: 0.0,
-            j: 0.0,
-        },
-        Foo {
-            a: 2,
-            b: "A".to_string(),
-            c: "B".to_string(),
-            d: dec!(-0.123),
-            e: NaiveDate::from_ymd(1999, 1, 25),
-            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-            g: NaiveTime::from_hms(0, 0, 1),
-            h: None,
-            i: 0.1,
-            j: 0.1,
-        },
-        Foo {
-            a: 3,
-            b: "X".to_string(),
-            c: "Y".to_string(),
-            d: dec!(-0.123),
-            e: NaiveDate::from_ymd(2001, 7, 5),
-            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-            g: NaiveTime::from_hms(0, 1, 2),
-            h: None,
-            i: 0.2,
-            j: 0.2,
-        },
-    ];
+    {
+        let expects: [Foo; 3] = [
+            Foo {
+                a: 1,
+                b: "a".to_string(),
+                c: "b".to_string(),
+                d: dec!(-0.123),
+                e: NaiveDate::from_ymd(1967, 8, 11),
+                f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+                g: NaiveTime::from_hms(23, 45, 1),
+                h: Some("This is a pen".to_string().into_bytes()),
+                i: 0.0,
+                j: 0.0,
+            },
+            Foo {
+                a: 2,
+                b: "A".to_string(),
+                c: "B".to_string(),
+                d: dec!(-0.123),
+                e: NaiveDate::from_ymd(1999, 1, 25),
+                f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+                g: NaiveTime::from_hms(0, 0, 1),
+                h: None,
+                i: 0.1,
+                j: 0.1,
+            },
+            Foo {
+                a: 3,
+                b: "X".to_string(),
+                c: "Y".to_string(),
+                d: dec!(-0.123),
+                e: NaiveDate::from_ymd(2001, 7, 5),
+                f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+                g: NaiveTime::from_hms(0, 1, 2),
+                h: None,
+                i: 0.2,
+                j: 0.2,
+            },
+        ];
 
-    let mut stmt = conn.prepare("select * from foo").unwrap();
-    for (i, row) in stmt.query(()).unwrap().enumerate() {
-        let foo = Foo {
-            a: row.get(0).unwrap(),
-            b: row.get(1).unwrap(),
-            c: row.get(2).unwrap(),
-            d: row.get(3).unwrap(),
-            e: row.get(4).unwrap(),
-            f: row.get(5).unwrap(),
-            g: row.get(6).unwrap(),
-            h: row.get(7).unwrap(),
-            i: row.get(8).unwrap(),
-            j: row.get(9).unwrap(),
-        };
-        assert_eq!(foo, expects[i]);
-    }
-
-    let foo_iter = stmt
-        .query_map((), |row| {
-            Ok(Foo {
+        let mut stmt = conn.prepare("select * from foo").unwrap();
+        for (i, row) in stmt.query(()).unwrap().enumerate() {
+            let foo = Foo {
                 a: row.get(0).unwrap(),
                 b: row.get(1).unwrap(),
                 c: row.get(2).unwrap(),
@@ -170,11 +154,81 @@ fn test_connnect() {
                 h: row.get(7).unwrap(),
                 i: row.get(8).unwrap(),
                 j: row.get(9).unwrap(),
+            };
+            assert_eq!(foo, expects[i]);
+        }
+
+        let foo_iter = stmt
+            .query_map((), |row| {
+                Ok(Foo {
+                    a: row.get(0).unwrap(),
+                    b: row.get(1).unwrap(),
+                    c: row.get(2).unwrap(),
+                    d: row.get(3).unwrap(),
+                    e: row.get(4).unwrap(),
+                    f: row.get(5).unwrap(),
+                    g: row.get(6).unwrap(),
+                    h: row.get(7).unwrap(),
+                    i: row.get(8).unwrap(),
+                    j: row.get(9).unwrap(),
+                })
             })
-        })
-        .unwrap();
-    for (i, foo) in foo_iter.enumerate() {
-        assert_eq!(foo.unwrap(), expects[i]);
+            .unwrap();
+        for (i, foo) in foo_iter.enumerate() {
+            assert_eq!(foo.unwrap(), expects[i]);
+        }
+    }
+
+    {
+        let expects: [Foo; 1] = [Foo {
+            a: 2,
+            b: "A".to_string(),
+            c: "B".to_string(),
+            d: dec!(-0.123),
+            e: NaiveDate::from_ymd(1999, 1, 25),
+            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
+            g: NaiveTime::from_hms(0, 0, 1),
+            h: None,
+            i: 0.1,
+            j: 0.1,
+        }];
+
+        let mut stmt = conn.prepare("select * from foo where a=?").unwrap();
+        //        for (i, row) in stmt.query((2,)).unwrap().enumerate() {
+        //            let foo = Foo {
+        //                a: row.get(0).unwrap(),
+        //                b: row.get(1).unwrap(),
+        //                c: row.get(2).unwrap(),
+        //                d: row.get(3).unwrap(),
+        //                e: row.get(4).unwrap(),
+        //                f: row.get(5).unwrap(),
+        //                g: row.get(6).unwrap(),
+        //                h: row.get(7).unwrap(),
+        //                i: row.get(8).unwrap(),
+        //                j: row.get(9).unwrap(),
+        //            };
+        //            assert_eq!(foo, expects[i]);
+        //        }
+
+        let foo_iter = stmt
+            .query_map((2,), |row| {
+                Ok(Foo {
+                    a: row.get(0).unwrap(),
+                    b: row.get(1).unwrap(),
+                    c: row.get(2).unwrap(),
+                    d: row.get(3).unwrap(),
+                    e: row.get(4).unwrap(),
+                    f: row.get(5).unwrap(),
+                    g: row.get(6).unwrap(),
+                    h: row.get(7).unwrap(),
+                    i: row.get(8).unwrap(),
+                    j: row.get(9).unwrap(),
+                })
+            })
+            .unwrap();
+        for (i, foo) in foo_iter.enumerate() {
+            assert_eq!(foo.unwrap(), expects[i]);
+        }
     }
 
     // Transction

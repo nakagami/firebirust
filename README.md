@@ -62,8 +62,6 @@ conn.commit()
 
 Execute Query and get results
 ```
-use firebirust::params;
-
 let mut stmt = conn.prepare("select * from foo").unwrap();
 for row in stmt.query(()).unwrap() {
     let a:i32 = row.get(0).unwrap();
@@ -73,7 +71,6 @@ for row in stmt.query(()).unwrap() {
 
 Execute Query and map
 ```
-use firebirust::params;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use rust_decimal::Decimal;
 
@@ -93,7 +90,7 @@ struct Foo {
 
 let mut stmt = conn.prepare("select * from foo where a=?").unwrap();
 let foo_iter = stmt
-    .query_map(params![1], |row| {
+    .query_map((1,), |row| {
         Ok(Foo {
             a: row.get(0).unwrap(),
             b: row.get(1).unwrap(),
