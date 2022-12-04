@@ -45,11 +45,9 @@ conn.execute_batch(
 
 Execute SQL statement with parameter
 ```
-use firebirust::params;
-
 conn.execute(
     "insert into foo(a, b, c, h) values (?, ?, ?, ?)",
-    params![1, "a", "b", "This is a pen"],
+    (1, "a", "b", "This is a pen"),
 )
 .unwrap();
 
