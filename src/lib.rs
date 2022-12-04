@@ -47,8 +47,8 @@ macro_rules! params {
     () => {
         &[] as &[&dyn $crate::ToSqlParam]
     };
-    ($($param:expr),+ $(,)?) => {
-        &[$(&$crate::Param::from($param) as &dyn $crate::ToSqlParam),+] as &[&dyn $crate::ToSqlParam]
+    ($($param:expr),*) => {
+        &[$(&$crate::Param::from($param) as &dyn $crate::ToSqlParam),*] as &[&dyn $crate::ToSqlParam]
     };
 }
 
