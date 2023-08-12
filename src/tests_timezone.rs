@@ -35,7 +35,6 @@ struct TzTest {
 }
 
 #[test]
-#[ignore]
 fn test_timezone() {
     let user = match env::var("ISC_USER") {
         Ok(val) => val,
@@ -92,34 +91,49 @@ fn test_timezone() {
         TzTest {
             id: 1,
             t: (
-                NaiveTime::from_hms(12, 34, 56),
+                NaiveTime::from_hms_opt(12, 34, 56).unwrap(),
                 chrono_tz::Tz::from_str("Asia/Tokyo").unwrap(),
             ),
             ts: chrono_tz::Tz::from_str("Asia/Tokyo")
                 .unwrap()
-                .from_local_datetime(&NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1))
+                .from_local_datetime(
+                    &NaiveDate::from_ymd_opt(1967, 8, 11)
+                        .unwrap()
+                        .and_hms_opt(23, 45, 1)
+                        .unwrap(),
+                )
                 .unwrap(),
         },
         TzTest {
             id: 2,
             t: (
-                NaiveTime::from_hms(12, 34, 56),
+                NaiveTime::from_hms_opt(12, 34, 56).unwrap(),
                 chrono_tz::Tz::from_str("Asia/Seoul").unwrap(),
             ),
             ts: chrono_tz::Tz::from_str("Asia/Seoul")
                 .unwrap()
-                .from_local_datetime(&NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1))
+                .from_local_datetime(
+                    &NaiveDate::from_ymd_opt(1967, 8, 11)
+                        .unwrap()
+                        .and_hms_opt(23, 45, 1)
+                        .unwrap(),
+                )
                 .unwrap(),
         },
         TzTest {
             id: 3,
             t: (
-                NaiveTime::from_hms(3, 34, 56),
+                NaiveTime::from_hms_opt(3, 34, 56).unwrap(),
                 chrono_tz::Tz::from_str("UTC").unwrap(),
             ),
             ts: chrono_tz::Tz::from_str("UTC")
                 .unwrap()
-                .from_local_datetime(&NaiveDate::from_ymd(1967, 8, 11).and_hms(14, 45, 1))
+                .from_local_datetime(
+                    &NaiveDate::from_ymd_opt(1967, 8, 11)
+                        .unwrap()
+                        .and_hms_opt(14, 45, 1)
+                        .unwrap(),
+                )
                 .unwrap(),
         },
     ];

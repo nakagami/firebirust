@@ -108,9 +108,12 @@ fn test_connnect() {
                 b: "a".to_string(),
                 c: "b".to_string(),
                 d: dec!(-0.123),
-                e: NaiveDate::from_ymd(1967, 8, 11),
-                f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-                g: NaiveTime::from_hms(23, 45, 1),
+                e: NaiveDate::from_ymd_opt(1967, 8, 11).unwrap(),
+                f: NaiveDate::from_ymd_opt(1967, 8, 11)
+                    .unwrap()
+                    .and_hms_opt(23, 45, 1)
+                    .unwrap(),
+                g: NaiveTime::from_hms_opt(23, 45, 1).unwrap(),
                 h: Some("This is a pen".to_string().into_bytes()),
                 i: 0.0,
                 j: 0.0,
@@ -120,9 +123,12 @@ fn test_connnect() {
                 b: "A".to_string(),
                 c: "B".to_string(),
                 d: dec!(-0.123),
-                e: NaiveDate::from_ymd(1999, 1, 25),
-                f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-                g: NaiveTime::from_hms(0, 0, 1),
+                e: NaiveDate::from_ymd_opt(1999, 1, 25).unwrap(),
+                f: NaiveDate::from_ymd_opt(1967, 8, 11)
+                    .unwrap()
+                    .and_hms_opt(23, 45, 1)
+                    .unwrap(),
+                g: NaiveTime::from_hms_opt(0, 0, 1).unwrap(),
                 h: None,
                 i: 0.1,
                 j: 0.1,
@@ -132,9 +138,12 @@ fn test_connnect() {
                 b: "X".to_string(),
                 c: "Y".to_string(),
                 d: dec!(-0.123),
-                e: NaiveDate::from_ymd(2001, 7, 5),
-                f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-                g: NaiveTime::from_hms(0, 1, 2),
+                e: NaiveDate::from_ymd_opt(2001, 7, 5).unwrap(),
+                f: NaiveDate::from_ymd_opt(1967, 8, 11)
+                    .unwrap()
+                    .and_hms_opt(23, 45, 1)
+                    .unwrap(),
+                g: NaiveTime::from_hms_opt(0, 1, 2).unwrap(),
                 h: None,
                 i: 0.2,
                 j: 0.2,
@@ -185,9 +194,12 @@ fn test_connnect() {
             b: "A".to_string(),
             c: "B".to_string(),
             d: dec!(-0.123),
-            e: NaiveDate::from_ymd(1999, 1, 25),
-            f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-            g: NaiveTime::from_hms(0, 0, 1),
+            e: NaiveDate::from_ymd_opt(1999, 1, 25).unwrap(),
+            f: NaiveDate::from_ymd_opt(1967, 8, 11)
+                .unwrap()
+                .and_hms_opt(23, 45, 1)
+                .unwrap(),
+            g: NaiveTime::from_hms_opt(0, 0, 1).unwrap(),
             h: None,
             i: 0.1,
             j: 0.1,
@@ -238,9 +250,12 @@ fn test_connnect() {
         b: "A".to_string(),
         c: "B".to_string(),
         d: dec!(-0.123),
-        e: NaiveDate::from_ymd(1999, 1, 25),
-        f: NaiveDate::from_ymd(1967, 8, 11).and_hms(23, 45, 1),
-        g: NaiveTime::from_hms(0, 0, 1),
+        e: NaiveDate::from_ymd_opt(1999, 1, 25).unwrap(),
+        f: NaiveDate::from_ymd_opt(1967, 8, 11)
+            .unwrap()
+            .and_hms_opt(23, 45, 1)
+            .unwrap(),
+        g: NaiveTime::from_hms_opt(0, 0, 1).unwrap(),
         h: None,
         i: 0.1,
         j: 0.1,

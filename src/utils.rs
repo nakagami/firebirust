@@ -223,7 +223,7 @@ pub fn bytes_to_naive_date(b: &[u8]) -> chrono::NaiveDate {
         year += 1;
     }
 
-    chrono::NaiveDate::from_ymd(year, month, day)
+    chrono::NaiveDate::from_ymd_opt(year, month, day).unwrap()
 }
 
 pub fn bytes_to_naive_time(b: &[u8]) -> chrono::NaiveTime {
@@ -233,7 +233,7 @@ pub fn bytes_to_naive_time(b: &[u8]) -> chrono::NaiveTime {
     let h = m / 60;
     m = m % 60;
     s = s % 60;
-    chrono::NaiveTime::from_hms_micro(h, m, s, (n % 10000) * 100000)
+    chrono::NaiveTime::from_hms_micro_opt(h, m, s, (n % 10000) * 100000).unwrap()
 }
 
 pub fn bytes_to_time_tz(b: &[u8]) -> (chrono::NaiveTime, chrono_tz::Tz) {
@@ -246,7 +246,7 @@ pub fn bytes_to_time_tz(b: &[u8]) -> (chrono::NaiveTime, chrono_tz::Tz) {
         .parse()
         .unwrap();
 
-    let date = chrono::Utc::today().naive_local();
+    let date = chrono::Utc::now().date_naive();
     let dt = chrono::NaiveDateTime::new(date, time);
     let tz_aware = timezone
         .from_local_datetime(&dt)
