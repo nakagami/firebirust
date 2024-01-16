@@ -1,6 +1,6 @@
 [package]
 name = "firebirust"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["Hajime Nakagami <nakagami@gmail.com>"]
 description = "Firebird client library"
 license = "MIT"
