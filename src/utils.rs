@@ -83,6 +83,10 @@ pub fn bytes_to_str(b: &[u8]) -> String {
     str::from_utf8(b).unwrap().to_string()
 }
 
+pub fn bytes_to_rtrim_str(b: &[u8]) -> String {
+    str::from_utf8(b).unwrap().trim_end().to_string()
+}
+
 pub fn bytes_to_int32(b: &[u8]) -> i32 {
     let tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
     let v: i32 = unsafe { transmute::<[u8; 4], i32>(tmp) };
