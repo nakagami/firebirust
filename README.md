@@ -9,6 +9,14 @@ It attempts to expose an interface similar to Rusqlite https://github.com/rusqli
 
 Firebird 3.0+ is supported
 
+## Add dependency
+
+Add `firebirust` to dependencies section of Cargo.toml
+```
+[dependencies]
+firebirust = “0.4”
+```
+
 ## code example
 
 Database connection
