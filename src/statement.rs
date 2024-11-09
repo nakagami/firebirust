@@ -24,10 +24,11 @@ use super::cellvalue::CellValue;
 use super::param::ToSqlParam;
 use super::params::Params;
 use super::row::{MappedRows, Row, Rows};
-use super::wireprotocol::*;
 use super::xsqlvar::*;
 use super::Connection;
 use super::Error;
+use super::*;
+
 use maplit::hashmap;
 use std::collections::VecDeque;
 
