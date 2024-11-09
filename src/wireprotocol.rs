@@ -39,7 +39,6 @@ const BUFFER_LEN: u32 = 1024;
 const MAX_CHAR_LENGTH: usize = 32767;
 const BLOB_SEGMENT_SIZE: usize = 32000;
 
-
 macro_rules! debug_print {
     //    ($( $args:expr ),*) => { println!( $( $args ),* ); }
     ($( $args:expr ),*) => {};
@@ -61,30 +60,6 @@ fn info_sql_select_describe_vars() -> [u8; 13] {
         ISC_INFO_SQL_ALIAS,
         ISC_INFO_SQL_DESCRIBE_END,
     ]
-}
-
-fn get_srp_client_public_bytes(client_public: &BigInt) -> Vec<u8> {
-    let mut v: Vec<u8> = Vec::new();
-
-    let hex_string = hex::encode(&utils::big_int_to_bytes(client_public));
-    let b = &hex_string.as_bytes();
-    if b.len() > 254 {
-        v.push(CNCT_SPECIFIC_DATA);
-        v.push(255);
-        v.push(0);
-        v.write(&b[..254]).unwrap();
-
-        v.push(CNCT_SPECIFIC_DATA);
-        v.push((b.len() - 254 + 1) as u8);
-        v.push(1);
-        v.write(&b[254..]).unwrap();
-    } else {
-        v.push(CNCT_SPECIFIC_DATA);
-        v.push(b.len() as u8 + 1);
-        v.push(0);
-        v.write(&b).unwrap();
-    }
-    v
 }
 
 pub struct WireProtocol {
@@ -156,7 +131,7 @@ impl WireProtocol {
         client_public: &BigInt,
     ) -> Vec<u8> {
         let mut v: Vec<u8> = Vec::new();
-        let specific_data = get_srp_client_public_bytes(client_public);
+        let specific_data = srp::get_srp_client_public_bytes(client_public);
 
         v.push(CNCT_LOGIN);
         v.push(username.len() as u8);

@@ -24,6 +24,8 @@
 
 #![allow(dead_code)]
 
+use std::io::prelude::*;
+
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use crypto::sha2::Sha256;
@@ -219,6 +221,30 @@ pub fn get_client_proof(
     }
 
     (key_m, key_k) // M, K
+}
+
+pub fn get_srp_client_public_bytes(client_public: &BigInt) -> Vec<u8> {
+    let mut v: Vec<u8> = Vec::new();
+
+    let hex_string = hex::encode(&utils::big_int_to_bytes(client_public));
+    let b = &hex_string.as_bytes();
+    if b.len() > 254 {
+        v.push(CNCT_SPECIFIC_DATA);
+        v.push(255);
+        v.push(0);
+        v.write(&b[..254]).unwrap();
+
+        v.push(CNCT_SPECIFIC_DATA);
+        v.push((b.len() - 254 + 1) as u8);
+        v.push(1);
+        v.write(&b[254..]).unwrap();
+    } else {
+        v.push(CNCT_SPECIFIC_DATA);
+        v.push(b.len() as u8 + 1);
+        v.push(0);
+        v.write(&b).unwrap();
+    }
+    v
 }
 
 #[test]
