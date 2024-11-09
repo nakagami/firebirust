@@ -35,6 +35,7 @@ mod statement;
 mod transaction;
 mod tz_map;
 mod utils;
+mod crypt_translater;
 mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;
