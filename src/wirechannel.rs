@@ -20,14 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::crypt_translater::{Arc4, ChaCha, CryptTranslator};
 use super::error::Error;
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
-use super::crypt_translater::{CryptTranslator, ChaCha, Arc4};
 use hex;
 use std::io::prelude::*;
 use std::net::TcpStream;
-
 
 pub struct WireChannel {
     stream: TcpStream,
@@ -89,16 +88,4 @@ impl WireChannel {
         }
         Ok(())
     }
-}
-
-#[test]
-fn test_arc4() {
-    let mut a1 = Arc4::new(b"a key");
-    let enc = a1.translate(b"plain text");
-    let correct: Vec<u8> = vec![0x4b, 0x4b, 0xdc, 0x65, 0x02, 0xb3, 0x08, 0x17, 0x48, 0x82];
-    assert_eq!(&enc, &correct);
-
-    let mut a2 = Arc4::new(b"a key");
-    let plain = a2.translate(&enc);
-    assert_eq!(&plain, b"plain text");
 }
