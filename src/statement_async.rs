@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 Hajime Nakagami<nakagami@gmail.com>
+// Copyright (c) 2021-2024 Hajime Nakagami<nakagami@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,18 +25,19 @@ use super::param::ToSqlParam;
 use super::params::Params;
 use super::row::{MappedRows, Row, Rows};
 use super::xsqlvar::*;
-use super::Connection;
+use super::ConnectionAsync;
 use super::Error;
 use super::*;
 
+use async_std::task;
 use maplit::hashmap;
 use std::collections::VecDeque;
 
 const DSQL_CLOSE: i32 = 1;
 const DSQL_DROP: i32 = 2;
 
-pub struct Statement<'conn> {
-    conn: &'conn Connection,
+pub struct StatementAsync<'conn> {
+    conn: &'conn ConnectionAsync,
     pub(crate) trans_handle: i32,
     pub(crate) stmt_handle: i32,
     stmt_type: u32,
@@ -45,16 +46,16 @@ pub struct Statement<'conn> {
     params: Vec<(Vec<u8>, Vec<u8>, bool)>,
 }
 
-impl Statement<'_> {
+impl StatementAsync<'_> {
     pub(super) fn new(
-        conn: &Connection,
+        conn: &ConnectionAsync,
         trans_handle: i32,
         stmt_handle: i32,
         stmt_type: u32,
         xsqlda: Vec<XSQLVar>,
         autocommit: bool,
-    ) -> Statement {
-        Statement {
+    ) -> StatementAsync {
+        StatementAsync {
             conn,
             trans_handle,
             stmt_handle,
@@ -84,13 +85,15 @@ impl Statement<'_> {
         Ok(())
     }
 
-    fn fetch_records(&self, trans_handle: i32) -> Result<VecDeque<Vec<CellValue>>, Error> {
+    async fn fetch_records(&self, trans_handle: i32) -> Result<VecDeque<Vec<CellValue>>, Error> {
         let mut rows = VecDeque::new();
         let blr = self.calc_blr();
 
         loop {
-            let (rows_segment, more_data) =
-                self.conn._fetch(self.stmt_handle, &blr, &self.xsqlda)?;
+            let (rows_segment, more_data) = self
+                .conn
+                ._fetch(self.stmt_handle, &blr, &self.xsqlda)
+                .await?;
             rows.extend(rows_segment);
             if !more_data {
                 break;
@@ -101,11 +104,11 @@ impl Statement<'_> {
             for cell in row.iter_mut() {
                 match cell {
                     CellValue::BlobBinary(blob_id) => {
-                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle);
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle).await;
                         *cell = CellValue::BlobBinary(blob.unwrap());
                     }
                     CellValue::BlobText(blob_id) => {
-                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle);
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle).await;
                         *cell = CellValue::BlobText(blob.unwrap());
                     }
                     _ => {}
@@ -116,36 +119,40 @@ impl Statement<'_> {
         Ok(rows)
     }
 
-    pub fn query<P: Params>(&mut self, params: P) -> Result<Rows, Error> {
-        params.__bind_in(self)?;
-        self.conn._execute_statement(
-            self.trans_handle,
-            self.stmt_handle,
-            self.stmt_type,
-            self.params.as_slice(),
-        )?;
+    pub async fn query<P: Params>(&mut self, params: P) -> Result<Rows, Error> {
+        params.__bind_in_async(self)?;
+        self.conn
+            ._execute_statement(
+                self.trans_handle,
+                self.stmt_handle,
+                self.stmt_type,
+                self.params.as_slice(),
+            )
+            .await?;
         let mut rows: VecDeque<Vec<CellValue>> = VecDeque::new();
         if self.stmt_type == ISC_INFO_SQL_STMT_SELECT {
-            rows = self.fetch_records(self.trans_handle)?;
-            self.conn._free_statement(self.stmt_handle, DSQL_CLOSE);
+            rows = self.fetch_records(self.trans_handle).await?;
+            self.conn
+                ._free_statement(self.stmt_handle, DSQL_CLOSE)
+                .await;
         } else if self.autocommit {
             // commit automatically
-            self.conn.commit()?;
+            self.conn.commit().await?;
         }
 
         Ok(Rows::new(rows))
     }
 
-    pub fn query_map<T, P, F>(&mut self, params: P, f: F) -> Result<MappedRows<F>, Error>
+    pub async fn query_map<T, P, F>(&mut self, params: P, f: F) -> Result<MappedRows<F>, Error>
     where
         P: Params,
         F: FnMut(&Row) -> Result<T, Error>,
     {
-        self.query(params).map(|rows| rows.mapped(f))
+        self.query(params).await.map(|rows| rows.mapped(f))
     }
 
-    pub fn execute<P: Params>(&mut self, params: P) -> Result<(), Error> {
-        self.query(params)?;
+    pub async fn execute<P: Params>(&mut self, params: P) -> Result<(), Error> {
+        self.query(params).await?;
         Ok(())
     }
 
@@ -186,8 +193,8 @@ impl Statement<'_> {
     }
 }
 
-impl Drop for Statement<'_> {
+impl Drop for StatementAsync<'_> {
     fn drop(&mut self) {
-        self.conn._free_statement(self.stmt_handle, DSQL_DROP);
+        task::block_on(self.conn._free_statement(self.stmt_handle, DSQL_DROP));
     }
 }

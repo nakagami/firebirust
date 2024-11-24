@@ -19,6 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+#![feature(async_drop)]
 #![allow(dead_code)]
 
 mod cellvalue;
@@ -40,7 +41,14 @@ mod wirechannel;
 mod wireprotocol;
 mod xsqlvar;
 
+mod connection_async;
+mod statement_async;
+mod transaction_async;
+mod wirechannel_async;
+mod wireprotocol_async;
+
 pub use crate::connection::Connection;
+pub use crate::connection_async::ConnectionAsync;
 pub use crate::error::Error;
 pub use crate::param::Param;
 pub use crate::param::ToSqlParam;
@@ -351,6 +359,8 @@ macro_rules! params {
     };
 }
 
+#[cfg(test)]
+mod test_async;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

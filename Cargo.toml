@@ -24,3 +24,6 @@ chrono = "0.4"
 chrono-tz = "0.6"
 urlencoding = "2.1"
 chacha20 = "0.8"
+
+[dependencies.async-std]
+version = "1.13.0"
