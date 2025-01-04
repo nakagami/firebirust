@@ -243,13 +243,19 @@ pub fn bytes_to_naive_time(b: &[u8]) -> chrono::NaiveTime {
 pub fn bytes_to_time_tz(b: &[u8]) -> (chrono::NaiveTime, chrono_tz::Tz) {
     // https://stackoverflow.com/questions/56050292/is-there-a-way-to-parse-a-timezone-abbreviation-into-a-timezone-offset-in-rust
     let time = bytes_to_naive_time(&b[..4]);
-    let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_buint16(&b[4..6]))
-        .parse()
-        .unwrap();
-    let offset: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_buint16(&b[6..8]))
-        .parse()
-        .unwrap();
-
+    let timezone: chrono_tz::Tz;
+    let offset: chrono_tz::Tz;
+    if &b[4..6] == b"\x00\x00" {
+        timezone = "UTC".parse().unwrap();
+        offset = timezone;
+    } else {
+        timezone = tz_map::timezone_name_by_id(bytes_to_buint16(&b[4..6]))
+            .parse()
+            .unwrap();
+        offset = tz_map::timezone_name_by_id(bytes_to_buint16(&b[6..8]))
+            .parse()
+            .unwrap();
+    }
     let date = chrono::Utc::now().date_naive();
     let dt = chrono::NaiveDateTime::new(date, time);
     let tz_aware = timezone
@@ -268,6 +274,10 @@ pub fn bytes_to_naive_date_time(b: &[u8]) -> chrono::NaiveDateTime {
 
 pub fn bytes_to_date_time_tz(b: &[u8]) -> chrono::DateTime<chrono_tz::Tz> {
     let dt = bytes_to_naive_date_time(&b[..8]);
+    if &b[8..10] == b"\x00\x00" {
+        let timezone: chrono_tz::Tz = "UTC".parse().unwrap();
+        return timezone.from_local_datetime(&dt).unwrap();
+    }
     let timezone: chrono_tz::Tz = tz_map::timezone_name_by_id(bytes_to_buint16(&b[8..10]))
         .parse()
         .unwrap();
