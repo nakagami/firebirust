@@ -21,6 +21,7 @@
 use super::error::Error;
 use super::param::ToSqlParam;
 use super::statement::Statement;
+use super::statement_async::StatementAsync;
 
 mod sealed {
     /// This trait exists just to ensure that the only impls of `trait Params`
@@ -32,6 +33,8 @@ use sealed::Sealed;
 pub trait Params: Sealed {
     #[doc(hidden)]
     fn __bind_in(self, stmt: &mut Statement<'_>) -> Result<(), Error>;
+    #[doc(hidden)]
+    fn __bind_in_async(self, stmt: &mut StatementAsync<'_>) -> Result<(), Error>;
 }
 
 impl Sealed for [&(dyn ToSqlParam + Send + Sync); 0] {}
@@ -40,12 +43,20 @@ impl Params for [&(dyn ToSqlParam + Send + Sync); 0] {
     fn __bind_in(self, stmt: &mut Statement<'_>) -> Result<(), Error> {
         stmt.bind_parameters(&[])
     }
+    #[inline]
+    fn __bind_in_async(self, stmt: &mut StatementAsync<'_>) -> Result<(), Error> {
+        stmt.bind_parameters(&[])
+    }
 }
 
 impl Sealed for &[&dyn ToSqlParam] {}
 impl Params for &[&dyn ToSqlParam] {
     #[inline]
     fn __bind_in(self, stmt: &mut Statement<'_>) -> Result<(), Error> {
+        stmt.bind_parameters(self)
+    }
+    #[inline]
+    fn __bind_in_async(self, stmt: &mut StatementAsync<'_>) -> Result<(), Error> {
         stmt.bind_parameters(self)
     }
 }
@@ -58,6 +69,10 @@ impl Params for () {
     fn __bind_in(self, stmt: &mut Statement<'_>) -> Result<(), Error> {
         stmt.bind_parameters(&[])
     }
+    #[inline]
+    fn __bind_in_async(self, stmt: &mut StatementAsync<'_>) -> Result<(), Error> {
+        stmt.bind_parameters(&[])
+    }
 }
 
 macro_rules! single_tuple_impl {
@@ -65,6 +80,13 @@ macro_rules! single_tuple_impl {
         impl<$($ftype,)*> Sealed for ($($ftype,)*) where $($ftype: ToSqlParam,)* {}
         impl<$($ftype,)*> Params for ($($ftype,)*) where $($ftype: ToSqlParam,)* {
             fn __bind_in(self, stmt: &mut Statement<'_>) -> Result<(), Error> {
+                stmt.reset_parameter($count)?;
+                $({
+                    stmt.put_parameter(self.$field)?;
+                })+
+                Ok(())
+            }
+            fn __bind_in_async(self, stmt: &mut StatementAsync<'_>) -> Result<(), Error> {
                 stmt.reset_parameter($count)?;
                 $({
                     stmt.put_parameter(self.$field)?;

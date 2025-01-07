@@ -21,51 +21,42 @@
 // SOFTWARE.
 use super::cellvalue::{CellValue, CellValueToVal};
 use super::error::{Error, ValueError};
-use super::statement::Statement;
 use std::collections::VecDeque;
 use std::result::Result;
 
-#[derive(PartialEq)]
-pub struct ResultSetMetaData {}
-
-pub struct Rows<'stmt> {
-    pub(crate) stmt: &'stmt Statement<'stmt>,
+pub struct Rows {
     rows: VecDeque<Vec<CellValue>>,
 }
 
-impl<'stmt> Rows<'stmt> {
-    pub(crate) fn new<'a>(stmt: &'a Statement, rows: VecDeque<Vec<CellValue>>) -> Rows<'a> {
-        Rows { stmt, rows }
+impl Rows {
+    pub(crate) fn new(rows: VecDeque<Vec<CellValue>>) -> Rows {
+        Rows { rows }
     }
 
-    pub fn mapped<F, B>(self, f: F) -> MappedRows<'stmt, F>
+    pub fn mapped<F, B>(self, f: F) -> MappedRows<F>
     where
-        F: FnMut(&Row<'_>) -> Result<B, Error>,
+        F: FnMut(&Row) -> Result<B, Error>,
     {
         MappedRows { rows: self, map: f }
     }
 }
 
-impl<'stmt> Iterator for Rows<'stmt> {
-    type Item = Row<'stmt>;
+impl Iterator for Rows {
+    type Item = Row;
 
-    fn next(&mut self) -> Option<Row<'stmt>> {
+    fn next(&mut self) -> Option<Row> {
         match self.rows.pop_front() {
-            Some(row) => Some(Row {
-                _stmt: self.stmt,
-                row: row,
-            }),
+            Some(row) => Some(Row { row: row }),
             None => None,
         }
     }
 }
 
-pub struct Row<'stmt> {
-    _stmt: &'stmt Statement<'stmt>,
+pub struct Row {
     row: Vec<CellValue>,
 }
 
-impl<'stmt> Row<'stmt> {
+impl Row {
     pub fn get<T>(&self, idx: usize) -> Result<T, Error>
     where
         CellValue: CellValueToVal<T>,
@@ -80,14 +71,14 @@ impl<'stmt> Row<'stmt> {
     }
 }
 
-pub struct MappedRows<'stmt, F> {
-    rows: Rows<'stmt>,
+pub struct MappedRows<F> {
+    rows: Rows,
     map: F,
 }
 
-impl<T, F> Iterator for MappedRows<'_, F>
+impl<T, F> Iterator for MappedRows<F>
 where
-    F: FnMut(&Row<'_>) -> Result<T, Error>,
+    F: FnMut(&Row) -> Result<T, Error>,
 {
     type Item = Result<T, Error>;
 
