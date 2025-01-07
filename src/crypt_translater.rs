@@ -112,3 +112,17 @@ fn test_arc4() {
     let plain = a2.translate(&enc);
     assert_eq!(&plain, b"plain text");
 }
+
+#[test]
+fn test_chacha() {
+    use hex;
+    let key =
+        hex::decode("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+    let nonce = hex::decode("000000000000000000000000").unwrap();
+    let mut a1 = ChaCha::new(&key, &nonce);
+    let enc = a1.translate(b"plain text");
+
+    let mut a2 = ChaCha::new(&key, &nonce);
+    let plain = a2.translate(&enc);
+    assert_eq!(&plain, b"plain text");
+}
