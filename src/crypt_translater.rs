@@ -35,7 +35,7 @@ pub(crate) struct ChaCha {
 impl ChaCha {
     pub fn new(key: &[u8], nonce: &[u8]) -> ChaCha {
         let key = Key::from_slice(key);
-        let nonce = Nonce::from_slice(&nonce[..nonce.len() - 4]);
+        let nonce = Nonce::from_slice(&nonce);
         let cipher = ChaCha20::new(&key, &nonce);
 
         ChaCha { cipher }

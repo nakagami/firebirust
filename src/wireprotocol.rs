@@ -368,7 +368,7 @@ impl WireProtocol {
         if options["wire_crypt"] == "true" {
             self.op_crypt(&encrypt_plugin)?;
             self.channel
-                .set_crypt_key(&encrypt_plugin, &session_key, &nonce);
+                .set_crypt_key(&encrypt_plugin, &session_key, &nonce[..nonce.len() - 4]);
             self.op_response()?;
         } else {
             self.auth_data = Some(auth_data); // use in op_attach(), op_create()
