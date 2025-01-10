@@ -23,6 +23,26 @@
 use chacha20::cipher::{NewCipher, StreamCipher};
 use chacha20::{ChaCha20, Key, Nonce};
 
+fn quaterround_u32(a: u32, b: u32, c: u32, d: u32) -> (u32, u32, u32, u32) {
+    let mut a = a;
+    let mut b = b;
+    let mut c = c;
+    let mut d = d;
+    a = a.wrapping_add(b);
+    d ^= a;
+    d = d.rotate_left(16);
+    c = c.wrapping_add(d);
+    b ^= c;
+    b = b.rotate_left(12);
+    a = a.wrapping_add(b);
+    d ^= a;
+    d = d.rotate_left(8);
+    c = c.wrapping_add(d);
+    b ^= c;
+    b = b.rotate_left(7);
+    (a, b, c, d)
+}
+
 pub(crate) trait CryptTranslator {
     fn translate(&mut self, plain: &[u8]) -> Vec<u8>;
 }
