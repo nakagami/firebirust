@@ -57,6 +57,13 @@ pub(crate) struct ChaCha {
 
 impl ChaCha {
     pub fn new(key_bytes: &[u8], nonce_bytes: &[u8]) -> ChaCha {
+        if key_bytes.len() != 32 {
+            panic!("chacha key is 32 bytes length");
+        }
+        if nonce_bytes.len() != 8 && nonce_bytes.len() != 12 {
+            panic!("chacha nonce is 8 bytes or 12  bytes length");
+        }
+
         let cipher = ChaCha20::new(&Key::from_slice(key_bytes), &Nonce::from_slice(&nonce_bytes));
 
         let key = key_bytes.chunks_exact(4)
