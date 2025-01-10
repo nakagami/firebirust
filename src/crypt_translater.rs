@@ -66,17 +66,15 @@ impl ChaCha {
 
         let cipher = ChaCha20::new(&Key::from_slice(key), &Nonce::from_slice(&nonce));
 
-        let key = key.chunks_exact(4)
-        .map(|chunk| {
-            u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
-        })
-        .collect::<Vec<u32>>();
+        let key = key
+            .chunks_exact(4)
+            .map(|chunk| u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+            .collect::<Vec<u32>>();
 
-        let nonce = nonce.chunks_exact(4)
-        .map(|chunk| {
-            u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
-        })
-        .collect::<Vec<u32>>();
+        let nonce = nonce
+            .chunks_exact(4)
+            .map(|chunk| u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+            .collect::<Vec<u32>>();
 
         if key.len() != 8 {
             panic!("Invalid key length.");
