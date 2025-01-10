@@ -56,27 +56,34 @@ pub(crate) struct ChaCha {
 }
 
 impl ChaCha {
-    pub fn new(key_bytes: &[u8], nonce_bytes: &[u8]) -> ChaCha {
-        if key_bytes.len() != 32 {
-            panic!("chacha key is 32 bytes length");
+    pub fn new(key: &[u8], nonce: &[u8]) -> ChaCha {
+        if key.len() != 32 {
+            panic!("ChaCha key is 32 bytes length");
         }
-        if nonce_bytes.len() != 8 && nonce_bytes.len() != 12 {
-            panic!("chacha nonce is 8 bytes or 12  bytes length");
+        if nonce.len() != 8 && nonce.len() != 12 {
+            panic!("ChaCha nonce is 8 bytes or 12 bytes length");
         }
 
-        let cipher = ChaCha20::new(&Key::from_slice(key_bytes), &Nonce::from_slice(&nonce_bytes));
+        let cipher = ChaCha20::new(&Key::from_slice(key), &Nonce::from_slice(&nonce));
 
-        let key = key_bytes.chunks_exact(4)
+        let key = key.chunks_exact(4)
         .map(|chunk| {
             u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
         })
         .collect::<Vec<u32>>();
 
-        let nonce = nonce_bytes.chunks_exact(4)
+        let nonce = nonce.chunks_exact(4)
         .map(|chunk| {
             u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
         })
         .collect::<Vec<u32>>();
+
+        if key.len() != 8 {
+            panic!("Invalid key length.");
+        }
+        if nonce.len() != 2 && nonce.len() != 3 {
+            panic!("Invalid nonce length.");
+        }
 
         let counter = 0u64;
 
