@@ -50,15 +50,20 @@ pub(crate) trait CryptTranslator {
 #[derive(Debug)]
 pub(crate) struct ChaCha {
     cipher: ChaCha20,
+    //    key: [u32; 32],
+    //    nonce: Vec<u32>,
+    counter: u64,
 }
 
 impl ChaCha {
     pub fn new(key: &[u8], nonce: &[u8]) -> ChaCha {
-        let key = Key::from_slice(key);
-        let nonce = Nonce::from_slice(&nonce);
-        let cipher = ChaCha20::new(&key, &nonce);
+        let cipher = ChaCha20::new(&Key::from_slice(key), &Nonce::from_slice(&nonce));
+        // TODO: key and nonce from &[u8] to [u32; 32] and vector
+        ChaCha {
+            cipher: cipher,
 
-        ChaCha { cipher }
+            counter: 0u64,
+        }
     }
 }
 
