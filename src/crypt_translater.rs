@@ -50,19 +50,34 @@ pub(crate) trait CryptTranslator {
 #[derive(Debug)]
 pub(crate) struct ChaCha {
     cipher: ChaCha20,
-    //    key: [u32; 32],
-    //    nonce: Vec<u32>,
+    key: Vec<u32>,
+    nonce: Vec<u32>,
     counter: u64,
 }
 
 impl ChaCha {
-    pub fn new(key: &[u8], nonce: &[u8]) -> ChaCha {
-        let cipher = ChaCha20::new(&Key::from_slice(key), &Nonce::from_slice(&nonce));
-        // TODO: key and nonce from &[u8] to [u32; 32] and vector
-        ChaCha {
-            cipher: cipher,
+    pub fn new(key_bytes: &[u8], nonce_bytes: &[u8]) -> ChaCha {
+        let cipher = ChaCha20::new(&Key::from_slice(key_bytes), &Nonce::from_slice(&nonce_bytes));
 
-            counter: 0u64,
+        let key = key_bytes.chunks_exact(4)
+        .map(|chunk| {
+            u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
+        })
+        .collect::<Vec<u32>>();
+
+        let nonce = nonce_bytes.chunks_exact(4)
+        .map(|chunk| {
+            u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
+        })
+        .collect::<Vec<u32>>();
+
+        let counter = 0u64;
+
+        ChaCha {
+            cipher,
+            key,
+            nonce,
+            counter,
         }
     }
 }
