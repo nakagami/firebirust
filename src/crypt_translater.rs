@@ -62,7 +62,7 @@ fn chacha20_round(state: &[u32]) -> [u32; 16] {
     }
 
     for i in 0..16 {
-        block[i] = c.wrapping_add(state[i]);
+        block[i] = block[i].wrapping_add(state[i]);
     }
 
     block
