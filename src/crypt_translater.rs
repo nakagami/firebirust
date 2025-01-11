@@ -23,7 +23,7 @@
 use chacha20::cipher::{NewCipher, StreamCipher};
 use chacha20::{ChaCha20, Key, Nonce};
 
-fn quaterround_u32(state: &mut [u32], i: usize, j: usize, k: usize, l: usize) {
+fn quaterround_u32(state: &mut [u32; 16], i: usize, j: usize, k: usize, l: usize) {
     let mut a = state[i];
     let mut b = state[j];
     let mut c = state[k];
@@ -44,6 +44,28 @@ fn quaterround_u32(state: &mut [u32], i: usize, j: usize, k: usize, l: usize) {
     state[j] = b;
     state[k] = c;
     state[l] = d;
+}
+
+fn chacha20_round(state: &[u32]) -> [u32; 16] {
+    let mut block = [0u32; 16];
+    block.copy_from_slice(state);
+    for _ in 0..10 {
+        quaterround_u32(&mut block, 0, 4, 8, 12);
+        quaterround_u32(&mut block, 1, 5, 9, 13);
+        quaterround_u32(&mut block, 2, 6, 10, 14);
+        quaterround_u32(&mut block, 3, 7, 11, 15);
+
+        quaterround_u32(&mut block, 0, 5, 10, 15);
+        quaterround_u32(&mut block, 1, 6, 11, 12);
+        quaterround_u32(&mut block, 2, 7, 8, 13);
+        quaterround_u32(&mut block, 3, 4, 9, 14);
+    }
+
+    for i in 0..16 {
+        block[i] = c.wrapping_add(state[i]);
+    }
+
+    block
 }
 
 pub(crate) trait CryptTranslator {
