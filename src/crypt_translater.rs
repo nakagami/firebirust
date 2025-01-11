@@ -23,11 +23,11 @@
 use chacha20::cipher::{NewCipher, StreamCipher};
 use chacha20::{ChaCha20, Key, Nonce};
 
-fn quaterround_u32(a: u32, b: u32, c: u32, d: u32) -> (u32, u32, u32, u32) {
-    let mut a = a;
-    let mut b = b;
-    let mut c = c;
-    let mut d = d;
+fn quaterround_u32(state: &mut [u32], i: usize, j: usize, k: usize, l: usize) {
+    let mut a = state[i];
+    let mut b = state[j];
+    let mut c = state[k];
+    let mut d = state[l];
     a = a.wrapping_add(b);
     d ^= a;
     d = d.rotate_left(16);
@@ -40,7 +40,10 @@ fn quaterround_u32(a: u32, b: u32, c: u32, d: u32) -> (u32, u32, u32, u32) {
     c = c.wrapping_add(d);
     b ^= c;
     b = b.rotate_left(7);
-    (a, b, c, d)
+    state[i] = a;
+    state[j] = b;
+    state[k] = c;
+    state[l] = d;
 }
 
 pub(crate) trait CryptTranslator {
@@ -53,6 +56,7 @@ pub(crate) struct ChaCha {
     key: Vec<u32>,
     nonce: Vec<u32>,
     counter: u64,
+    state: [u32; 16],
 }
 
 impl ChaCha {
@@ -85,11 +89,33 @@ impl ChaCha {
 
         let counter = 0u64;
 
+        let mut state = [0u32; 16];
+        state[0] = 0x61707865;
+        state[1] = 0x3320646e;
+        state[2] = 0x79622d32;
+        state[3] = 0x6b206574;
+        (0..key.len()).into_iter().for_each(|i| {
+            state[4 + i] = key[i];
+        });
+
+        if nonce.len() == 2 {
+            state[12] = counter as u32;
+            state[13] = (counter >> 32) as u32;
+            state[14] = nonce[0];
+            state[15] = nonce[1];
+        } else {
+            state[12] = counter as u32;
+            state[13] = nonce[0];
+            state[14] = nonce[1];
+            state[15] = nonce[2];
+        }
+
         ChaCha {
             cipher,
             key,
             nonce,
             counter,
+            state,
         }
     }
 }
