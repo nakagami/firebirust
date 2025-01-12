@@ -46,28 +46,6 @@ fn quaterround_u32(state: &mut [u32; 16], i: usize, j: usize, k: usize, l: usize
     state[l] = d;
 }
 
-fn chacha20_round(state: &[u32]) -> [u32; 16] {
-    let mut block = [0u32; 16];
-    block.copy_from_slice(state);
-    for _ in 0..10 {
-        quaterround_u32(&mut block, 0, 4, 8, 12);
-        quaterround_u32(&mut block, 1, 5, 9, 13);
-        quaterround_u32(&mut block, 2, 6, 10, 14);
-        quaterround_u32(&mut block, 3, 7, 11, 15);
-
-        quaterround_u32(&mut block, 0, 5, 10, 15);
-        quaterround_u32(&mut block, 1, 6, 11, 12);
-        quaterround_u32(&mut block, 2, 7, 8, 13);
-        quaterround_u32(&mut block, 3, 4, 9, 14);
-    }
-
-    for i in 0..16 {
-        block[i] = block[i].wrapping_add(state[i]);
-    }
-
-    block
-}
-
 pub(crate) trait CryptTranslator {
     fn translate(&mut self, plain: &[u8]) -> Vec<u8>;
 }
@@ -138,6 +116,26 @@ impl ChaCha {
             nonce,
             counter,
             state,
+        }
+    }
+
+    fn set_chacha20_round_block(&mut self) {
+        let mut state = [0u32; 16];
+        state.copy_from_slice(&self.state);
+        for _ in 0..10 {
+            quaterround_u32(&mut state, 0, 4, 8, 12);
+            quaterround_u32(&mut state, 1, 5, 9, 13);
+            quaterround_u32(&mut state, 2, 6, 10, 14);
+            quaterround_u32(&mut state, 3, 7, 11, 15);
+
+            quaterround_u32(&mut state, 0, 5, 10, 15);
+            quaterround_u32(&mut state, 1, 6, 11, 12);
+            quaterround_u32(&mut state, 2, 7, 8, 13);
+            quaterround_u32(&mut state, 3, 4, 9, 14);
+        }
+
+        for i in 0..16 {
+            state[i] = state[i].wrapping_add(state[i]);
         }
     }
 }
