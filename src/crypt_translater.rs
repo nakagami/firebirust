@@ -91,7 +91,7 @@ impl ChaCha {
             block: [0; 64],
             block_pos: 0,
         };
-        chacha.set_round_block();
+        chacha.set_chacha20_round_block();
         chacha
     }
 
@@ -119,7 +119,7 @@ impl ChaCha {
         state
     }
 
-    fn set_round_block(&mut self) {
+    fn set_chacha20_round_block(&mut self) {
         let state = self.to_state();
 
         let mut x = [0u32; 16];
@@ -157,7 +157,7 @@ impl CryptTranslator for ChaCha {
             self.block_pos += 1;
             if self.block.len() == self.block_pos {
                 self.counter += 1;
-                self.set_round_block()
+                self.set_chacha20_round_block()
             }
         }
         enc
