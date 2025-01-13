@@ -20,9 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use chacha20::cipher::{NewCipher, StreamCipher};
-use chacha20::{ChaCha20, Key, Nonce};
-
 fn quaterround_u32(state: &mut [u32; 16], i: usize, j: usize, k: usize, l: usize) {
     let mut a = state[i];
     let mut b = state[j];
@@ -52,7 +49,6 @@ pub(crate) trait CryptTranslator {
 
 #[derive(Debug)]
 pub(crate) struct ChaCha {
-    cipher: ChaCha20,
     key: Vec<u32>,
     nonce: Vec<u32>,
     counter: u64,
@@ -69,8 +65,6 @@ impl ChaCha {
         if nonce.len() != 8 && nonce.len() != 12 {
             panic!("ChaCha nonce is 8 bytes or 12 bytes length");
         }
-
-        let cipher = ChaCha20::new(&Key::from_slice(key), &Nonce::from_slice(&nonce));
 
         let key = key
             .chunks_exact(4)
@@ -113,7 +107,6 @@ impl ChaCha {
         }
 
         let mut chacha = ChaCha {
-            cipher,
             key,
             nonce,
             counter,
@@ -153,9 +146,20 @@ impl ChaCha {
 
 impl CryptTranslator for ChaCha {
     fn translate(&mut self, plain: &[u8]) -> Vec<u8> {
-        let mut enc: Vec<u8> = Vec::new();
-        enc.extend_from_slice(&plain);
-        self.cipher.apply_keystream(&mut enc);
+        let mut enc = vec![0u8; plain.len()];
+
+        for i in 0..plain.len() {
+            enc[i] = plain[i] ^ self.block[self.block_pos];
+            self.block_pos += 1;
+            if self.block.len() == self.block_pos {
+                self.counter += 1;
+                self.state[12] = self.counter as u32;
+                if self.nonce.len() == 2 {
+                    self.state[13] = (self.counter >> 32) as u32;
+                }
+                self.set_round_block()
+            }
+        }
         enc
     }
 }
