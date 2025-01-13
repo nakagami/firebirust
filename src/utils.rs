@@ -22,6 +22,7 @@
 
 #![allow(dead_code)]
 
+use std::collections::HashMap;
 use std::io::prelude::*;
 use std::mem::transmute;
 use std::str;
@@ -367,4 +368,25 @@ pub fn convert_time(hour: u32, minute: u32, second: u32, nanosecond: u32) -> [u8
     // Convert time to BLR format time
     let n = (hour * 3600 + minute * 60 + second) * 10000 + nanosecond * 10;
     bint32_to_bytes(n as i32)
+}
+
+pub fn guess_wire_crypt(buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
+    let mut params = HashMap::new();
+    let mut i: usize = 0;
+
+    while i < buf.len() {
+        let k = buf[i];
+        i += 1;
+        let ln = buf[i] as usize;
+        i += 1;
+        let v = &buf[i..i + ln];
+        i += ln;
+        params.insert(k, v);
+    }
+    if let Some(chacha) = params.get(&3) {
+        if &chacha[0..7] == b"ChaCha\x00" {
+            return (b"ChaCha".to_vec(), chacha[7..].to_vec());
+        }
+    }
+    return (b"Arc4".to_vec(), vec![]);
 }
