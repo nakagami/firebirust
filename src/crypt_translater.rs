@@ -57,6 +57,8 @@ pub(crate) struct ChaCha {
     nonce: Vec<u32>,
     counter: u64,
     state: [u32; 16],
+    block: [u8; 64],
+    block_pos: usize,
 }
 
 impl ChaCha {
@@ -110,16 +112,20 @@ impl ChaCha {
             state[15] = nonce[2];
         }
 
-        ChaCha {
+        let mut chacha = ChaCha {
             cipher,
             key,
             nonce,
             counter,
             state,
-        }
+            block: [0; 64],
+            block_pos: 0,
+        };
+        chacha.set_round_block();
+        chacha
     }
 
-    fn set_chacha20_round_block(&mut self) {
+    fn set_round_block(&mut self) {
         let mut state = [0u32; 16];
         state.copy_from_slice(&self.state);
         for _ in 0..10 {
@@ -133,10 +139,15 @@ impl ChaCha {
             quaterround_u32(&mut state, 2, 7, 8, 13);
             quaterround_u32(&mut state, 3, 4, 9, 14);
         }
-
         for i in 0..16 {
-            state[i] = state[i].wrapping_add(state[i]);
+            state[i] = state[i].wrapping_add(self.state[i]);
         }
+        let key_stream = state.iter()
+          .flat_map(|state| state.to_le_bytes())
+          .collect::<Vec<u8>>();
+
+        self.block.copy_from_slice(&key_stream);
+        self.block_pos = 0;
     }
 }
 
