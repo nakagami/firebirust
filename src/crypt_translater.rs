@@ -52,7 +52,6 @@ pub(crate) struct ChaCha {
     key: Vec<u32>,
     nonce: Vec<u32>,
     counter: u64,
-    state: [u32; 16],
     block: [u8; 64],
     block_pos: usize,
 }
@@ -85,32 +84,10 @@ impl ChaCha {
 
         let counter = 0u64;
 
-        let mut state = [0u32; 16];
-        state[0] = 0x61707865;
-        state[1] = 0x3320646e;
-        state[2] = 0x79622d32;
-        state[3] = 0x6b206574;
-        (0..key.len()).into_iter().for_each(|i| {
-            state[4 + i] = key[i];
-        });
-
-        if nonce.len() == 3 {
-            state[12] = counter as u32;
-            state[13] = nonce[0];
-            state[14] = nonce[1];
-            state[15] = nonce[2];
-        } else {
-            state[12] = counter as u32;
-            state[13] = (counter >> 32) as u32;
-            state[14] = nonce[0];
-            state[15] = nonce[1];
-        }
-
         let mut chacha = ChaCha {
             key,
             nonce,
             counter,
-            state,
             block: [0; 64],
             block_pos: 0,
         };
@@ -118,26 +95,53 @@ impl ChaCha {
         chacha
     }
 
-    fn set_round_block(&mut self) {
+    fn to_state(&self) -> [u32; 16] {
         let mut state = [0u32; 16];
-        state.copy_from_slice(&self.state);
-        for _ in 0..10 {
-            quaterround_u32(&mut state, 0, 4, 8, 12);
-            quaterround_u32(&mut state, 1, 5, 9, 13);
-            quaterround_u32(&mut state, 2, 6, 10, 14);
-            quaterround_u32(&mut state, 3, 7, 11, 15);
+        state[0] = 0x61707865;
+        state[1] = 0x3320646e;
+        state[2] = 0x79622d32;
+        state[3] = 0x6b206574;
+        (0..self.key.len()).into_iter().for_each(|i| {
+            state[4 + i] = self.key[i];
+        });
 
-            quaterround_u32(&mut state, 0, 5, 10, 15);
-            quaterround_u32(&mut state, 1, 6, 11, 12);
-            quaterround_u32(&mut state, 2, 7, 8, 13);
-            quaterround_u32(&mut state, 3, 4, 9, 14);
+        if self.nonce.len() == 3 {
+            state[12] = self.counter as u32;
+            state[13] = self.nonce[0];
+            state[14] = self.nonce[1];
+            state[15] = self.nonce[2];
+        } else {
+            state[12] = self.counter as u32;
+            state[13] = (self.counter >> 32) as u32;
+            state[14] = self.nonce[0];
+            state[15] = self.nonce[1];
+        }
+        state
+    }
+
+    fn set_round_block(&mut self) {
+        let state = self.to_state();
+
+        let mut x = [0u32; 16];
+        x.copy_from_slice(&state);
+        for _ in 0..10 {
+            quaterround_u32(&mut x, 0, 4, 8, 12);
+            quaterround_u32(&mut x, 1, 5, 9, 13);
+            quaterround_u32(&mut x, 2, 6, 10, 14);
+            quaterround_u32(&mut x, 3, 7, 11, 15);
+
+            quaterround_u32(&mut x, 0, 5, 10, 15);
+            quaterround_u32(&mut x, 1, 6, 11, 12);
+            quaterround_u32(&mut x, 2, 7, 8, 13);
+            quaterround_u32(&mut x, 3, 4, 9, 14);
         }
         for i in 0..16 {
-            state[i] = state[i].wrapping_add(self.state[i]);
+            x[i] = x[i].wrapping_add(state[i]);
         }
-        let key_stream = state.iter()
-          .flat_map(|state| state.to_le_bytes())
-          .collect::<Vec<u8>>();
+        let key_stream = x
+            .iter()
+            .flat_map(|state| state.to_le_bytes())
+            .collect::<Vec<u8>>();
 
         self.block.copy_from_slice(&key_stream);
         self.block_pos = 0;
@@ -153,10 +157,6 @@ impl CryptTranslator for ChaCha {
             self.block_pos += 1;
             if self.block.len() == self.block_pos {
                 self.counter += 1;
-                self.state[12] = self.counter as u32;
-                if self.nonce.len() == 2 {
-                    self.state[13] = (self.counter >> 32) as u32;
-                }
                 self.set_round_block()
             }
         }
