@@ -100,16 +100,16 @@ impl ChaCha {
             state[4 + i] = key[i];
         });
 
-        if nonce.len() == 2 {
-            state[12] = counter as u32;
-            state[13] = (counter >> 32) as u32;
-            state[14] = nonce[0];
-            state[15] = nonce[1];
-        } else {
+        if nonce.len() == 3 {
             state[12] = counter as u32;
             state[13] = nonce[0];
             state[14] = nonce[1];
             state[15] = nonce[2];
+        } else {
+            state[12] = counter as u32;
+            state[13] = (counter >> 32) as u32;
+            state[14] = nonce[0];
+            state[15] = nonce[1];
         }
 
         let mut chacha = ChaCha {
