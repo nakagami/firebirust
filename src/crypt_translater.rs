@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 Hajime Nakagami<nakagami@gmail.com>
+// Copyright (c) 2021-2025 Hajime Nakagami<nakagami@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use chacha20::cipher::{NewCipher, StreamCipher};
-use chacha20::{ChaCha20, Key, Nonce};
+fn quaterround_u32(state: &mut [u32; 16], i: usize, j: usize, k: usize, l: usize) {
+    let mut a = state[i];
+    let mut b = state[j];
+    let mut c = state[k];
+    let mut d = state[l];
+    a = a.wrapping_add(b);
+    d ^= a;
+    d = d.rotate_left(16);
+    c = c.wrapping_add(d);
+    b ^= c;
+    b = b.rotate_left(12);
+    a = a.wrapping_add(b);
+    d ^= a;
+    d = d.rotate_left(8);
+    c = c.wrapping_add(d);
+    b ^= c;
+    b = b.rotate_left(7);
+    state[i] = a;
+    state[j] = b;
+    state[k] = c;
+    state[l] = d;
+}
 
 pub(crate) trait CryptTranslator {
     fn translate(&mut self, plain: &[u8]) -> Vec<u8>;
@@ -29,24 +49,117 @@ pub(crate) trait CryptTranslator {
 
 #[derive(Debug)]
 pub(crate) struct ChaCha {
-    cipher: ChaCha20,
+    key: Vec<u32>,
+    nonce: Vec<u32>,
+    counter: u64,
+    block: [u8; 64],
+    block_pos: usize,
 }
 
 impl ChaCha {
     pub fn new(key: &[u8], nonce: &[u8]) -> ChaCha {
-        let key = Key::from_slice(key);
-        let nonce = Nonce::from_slice(&nonce);
-        let cipher = ChaCha20::new(&key, &nonce);
+        if key.len() != 32 {
+            panic!("ChaCha key is 32 bytes length");
+        }
+        if nonce.len() != 8 && nonce.len() != 12 {
+            panic!("ChaCha nonce is 8 bytes or 12 bytes length");
+        }
 
-        ChaCha { cipher }
+        let key = key
+            .chunks_exact(4)
+            .map(|chunk| u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+            .collect::<Vec<u32>>();
+
+        let nonce = nonce
+            .chunks_exact(4)
+            .map(|chunk| u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+            .collect::<Vec<u32>>();
+
+        if key.len() != 8 {
+            panic!("Invalid key length.");
+        }
+        if nonce.len() != 2 && nonce.len() != 3 {
+            panic!("Invalid nonce length.");
+        }
+
+        let counter = 0u64;
+
+        let mut chacha = ChaCha {
+            key,
+            nonce,
+            counter,
+            block: [0; 64],
+            block_pos: 0,
+        };
+        chacha.set_chacha20_round_block();
+        chacha
+    }
+
+    fn to_state(&self) -> [u32; 16] {
+        let mut state = [0u32; 16];
+        state[0] = 0x61707865;
+        state[1] = 0x3320646e;
+        state[2] = 0x79622d32;
+        state[3] = 0x6b206574;
+        (0..self.key.len()).into_iter().for_each(|i| {
+            state[4 + i] = self.key[i];
+        });
+
+        if self.nonce.len() == 3 {
+            state[12] = self.counter as u32;
+            state[13] = self.nonce[0];
+            state[14] = self.nonce[1];
+            state[15] = self.nonce[2];
+        } else {
+            state[12] = self.counter as u32;
+            state[13] = (self.counter >> 32) as u32;
+            state[14] = self.nonce[0];
+            state[15] = self.nonce[1];
+        }
+        state
+    }
+
+    fn set_chacha20_round_block(&mut self) {
+        let state = self.to_state();
+
+        let mut x = [0u32; 16];
+        x.copy_from_slice(&state);
+        for _ in 0..10 {
+            quaterround_u32(&mut x, 0, 4, 8, 12);
+            quaterround_u32(&mut x, 1, 5, 9, 13);
+            quaterround_u32(&mut x, 2, 6, 10, 14);
+            quaterround_u32(&mut x, 3, 7, 11, 15);
+
+            quaterround_u32(&mut x, 0, 5, 10, 15);
+            quaterround_u32(&mut x, 1, 6, 11, 12);
+            quaterround_u32(&mut x, 2, 7, 8, 13);
+            quaterround_u32(&mut x, 3, 4, 9, 14);
+        }
+        for i in 0..16 {
+            x[i] = x[i].wrapping_add(state[i]);
+        }
+        let key_stream = x
+            .iter()
+            .flat_map(|state| state.to_le_bytes())
+            .collect::<Vec<u8>>();
+
+        self.block.copy_from_slice(&key_stream);
+        self.block_pos = 0;
     }
 }
 
 impl CryptTranslator for ChaCha {
     fn translate(&mut self, plain: &[u8]) -> Vec<u8> {
-        let mut enc: Vec<u8> = Vec::new();
-        enc.extend_from_slice(&plain);
-        self.cipher.apply_keystream(&mut enc);
+        let mut enc = vec![0u8; plain.len()];
+
+        for i in 0..plain.len() {
+            enc[i] = plain[i] ^ self.block[self.block_pos];
+            self.block_pos += 1;
+            if self.block.len() == self.block_pos {
+                self.counter += 1;
+                self.set_chacha20_round_block()
+            }
+        }
         enc
     }
 }
