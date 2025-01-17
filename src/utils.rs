@@ -388,7 +388,13 @@ pub fn guess_wire_crypt(buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
             plugin_nonce.push(v);
         }
     }
-    if available_plugins.contains(&"ChaCha") {
+    if available_plugins.contains(&"ChaCha64") {
+        for nonce in &plugin_nonce {
+            if &nonce[0..9] == b"ChaCha64\x00" {
+                return (b"ChaCha64".to_vec(), nonce[9..].to_vec());
+            }
+        }
+    } else if available_plugins.contains(&"ChaCha") {
         for nonce in &plugin_nonce {
             if &nonce[0..7] == b"ChaCha\x00" {
                 return (b"ChaCha".to_vec(), nonce[7..(7+12)].to_vec());
