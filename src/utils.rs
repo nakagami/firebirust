@@ -22,7 +22,6 @@
 
 #![allow(dead_code)]
 
-use std::collections::HashMap;
 use std::io::prelude::*;
 use std::mem::transmute;
 use std::str;
@@ -371,9 +370,10 @@ pub fn convert_time(hour: u32, minute: u32, second: u32, nanosecond: u32) -> [u8
 }
 
 pub fn guess_wire_crypt(buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
-    let mut params = HashMap::new();
-    let mut i: usize = 0;
+    let mut available_plugins = vec![];
+    let mut plugin_nonce = vec![];
 
+    let mut i: usize = 0;
     while i < buf.len() {
         let k = buf[i];
         i += 1;
@@ -381,12 +381,21 @@ pub fn guess_wire_crypt(buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
         i += 1;
         let v = &buf[i..i + ln];
         i += ln;
-        params.insert(k, v);
-    }
-    if let Some(chacha) = params.get(&3) {
-        if &chacha[0..7] == b"ChaCha\x00" {
-            return (b"ChaCha".to_vec(), chacha[7..].to_vec());
+        if k == 1 {
+            let s = str::from_utf8(v).unwrap();
+            available_plugins = s.split(' ').collect();
+        } else if k == 3 {
+            plugin_nonce.push(v);
         }
     }
-    return (b"Arc4".to_vec(), vec![]);
+    if available_plugins.contains(&"ChaCha") {
+        for nonce in &plugin_nonce {
+            if &nonce[0..7] == b"ChaCha\x00" {
+                return (b"ChaCha".to_vec(), nonce[7..(7+12)].to_vec());
+            }
+        }
+    } else if available_plugins.contains(&"Arc4") {
+        return (b"Arc4".to_vec(), vec![]);
+    }
+    return (vec![], vec![])
 }

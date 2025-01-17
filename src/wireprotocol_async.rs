@@ -348,11 +348,10 @@ impl WireProtocolAsync {
         } else {
             (Vec::new(), Vec::new())
         };
-
-        if options["wire_crypt"] == "true" {
+        if encrypt_plugin != b"" && options["wire_crypt"] == "true" && session_key != b"" {
             self.op_crypt(&encrypt_plugin).await?;
             self.channel
-                .set_crypt_key(&encrypt_plugin, &session_key, &nonce[..nonce.len() - 4]);
+                .set_crypt_key(&encrypt_plugin, &session_key, &nonce);
             self.op_response().await?;
         } else {
             self.auth_data = Some(auth_data); // use in op_attach(), op_create()
