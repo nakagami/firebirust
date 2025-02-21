@@ -14,7 +14,7 @@ Firebird 3.0+ is supported
 Add `firebirust` to dependencies section of Cargo.toml
 ```
 [dependencies]
-firebirust = “0.4”
+firebirust = “0.5”
 ```
 
 ## code example
@@ -127,3 +127,7 @@ trans.execute(
 .unwrap();
 trans.commit()
 ```
+
+## Experimental implementation of asynchronous/standby
+
+Async/await is possible by using AsyncConnection instead of Connection since version 0.5.
