@@ -131,3 +131,5 @@ trans.commit()
 ## Experimental implementation of asynchronous/standby
 
 Async/await is possible by using AsyncConnection instead of Connection since version 0.5.
+
+https://github.com/nakagami/firebirust/blob/master/src/test_async.rs
