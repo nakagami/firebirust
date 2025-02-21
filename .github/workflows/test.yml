@@ -31,4 +31,5 @@ jobs:
     - name: Run tests
       run: |
         source test_user.env
-        cargo test -- --ignored
+        cargo test
+#        cargo test -- --ignored
