@@ -397,11 +397,11 @@ pub fn guess_wire_crypt(buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
     } else if available_plugins.contains(&"ChaCha") {
         for nonce in &plugin_nonce {
             if &nonce[0..7] == b"ChaCha\x00" {
-                return (b"ChaCha".to_vec(), nonce[7..(7+12)].to_vec());
+                return (b"ChaCha".to_vec(), nonce[7..(7 + 12)].to_vec());
             }
         }
     } else if available_plugins.contains(&"Arc4") {
         return (b"Arc4".to_vec(), vec![]);
     }
-    return (vec![], vec![])
+    return (vec![], vec![]);
 }

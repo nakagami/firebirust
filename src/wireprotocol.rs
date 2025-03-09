@@ -73,7 +73,7 @@ pub struct WireProtocol {
 
     protocol_version: i32,
     accept_architecture: i32,
-    pub(crate) accept_type: i32,
+    pub(crate) accept_type: u32,
     pub(crate) lazy_response_count: i32,
 
     accept_plugin_name: String,
@@ -96,7 +96,7 @@ impl WireProtocol {
             db_handle: -1,
             protocol_version: -1,
             accept_architecture: -1,
-            accept_type: -1,
+            accept_type: 0,
             lazy_response_count: 0,
             accept_plugin_name: "".to_string(),
             auth_data: None,
@@ -282,7 +282,7 @@ impl WireProtocol {
         self.recv_packets(3)?;
         self.protocol_version = self.recv_packets(1)?[0] as i32;
         self.accept_architecture = utils::bytes_to_buint32(&self.recv_packets(4)?) as i32;
-        self.accept_type = utils::bytes_to_buint32(&self.recv_packets(4)?) as i32;
+        self.accept_type = utils::bytes_to_buint32(&self.recv_packets(4)?);
 
         assert!(opcode == OP_COND_ACCEPT || opcode == OP_ACCEPT_DATA);
 

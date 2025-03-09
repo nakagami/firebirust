@@ -53,9 +53,12 @@ pub use crate::param::Param;
 pub use crate::param::ToSqlParam;
 
 // Protocol Types (accept_type)
-const PTYPE_BATCH_SEND: i32 = 3; // Batch sends, no asynchrony
-const PTYPE_OUT_OF_BAND: i32 = 4; // Batch sends w/ out of band notification
-const PTYPE_LAZY_SEND: i32 = 5; // Deferred packets delivery
+const PTYPE_BATCH_SEND: u32 = 3; // Batch sends, no asynchrony
+const PTYPE_OUT_OF_BAND: u32 = 4; // Batch sends w/ out of band notification
+const PTYPE_LAZY_SEND: u32 = 5; // Deferred packets delivery
+const PTYPE_MASK: u32 = 0xFF;
+const PFLAG_COMPRESS: u32 = 0x100;
+const PFLAG_WIN_SSPI_NEGO: u32 = 0x200;
 
 const ISC_ARG_END: u32 = 0;
 const ISC_ARG_GDS: u32 = 1;
