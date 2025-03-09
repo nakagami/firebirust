@@ -160,7 +160,7 @@ impl ConnectionAsync {
             let mut wp = self.wp.borrow_mut();
             wp.op_allocate_statement().await?;
 
-            let mut stmt_handle = if wp.accept_type == PTYPE_LAZY_SEND {
+            let mut stmt_handle = if (wp.accept_type & PTYPE_MASK) == PTYPE_LAZY_SEND {
                 wp.lazy_response_count += 1;
                 -1
             } else {
@@ -170,7 +170,7 @@ impl ConnectionAsync {
 
             wp.op_prepare_statement(stmt_handle, trans_handle, query)
                 .await?;
-            if wp.accept_type == PTYPE_LAZY_SEND && wp.lazy_response_count > 0 {
+            if (wp.accept_type & PTYPE_MASK) == PTYPE_LAZY_SEND && wp.lazy_response_count > 0 {
                 wp.lazy_response_count -= 1;
                 let (h, _, _) = wp.op_response().await?;
                 stmt_handle = h;
@@ -227,7 +227,7 @@ impl ConnectionAsync {
         let mut wp = self.wp.borrow_mut();
         wp.op_allocate_statement().await?;
 
-        let mut stmt_handle = if wp.accept_type == PTYPE_LAZY_SEND {
+        let mut stmt_handle = if (wp.accept_type & PTYPE_MASK) == PTYPE_LAZY_SEND {
             wp.lazy_response_count += 1;
             -1
         } else {
@@ -237,7 +237,7 @@ impl ConnectionAsync {
 
         wp.op_prepare_statement(stmt_handle, trans_handle, query)
             .await?;
-        if wp.accept_type == PTYPE_LAZY_SEND && wp.lazy_response_count > 0 {
+        if (wp.accept_type & PTYPE_MASK) == PTYPE_LAZY_SEND && wp.lazy_response_count > 0 {
             wp.lazy_response_count -= 1;
             let (h, _, _) = wp.op_response().await?;
             stmt_handle = h;
@@ -301,7 +301,7 @@ impl ConnectionAsync {
     pub(crate) async fn _free_statement(&self, stmt_handle: i32, drop_type: i32) -> () {
         let mut wp = self.wp.borrow_mut();
         wp.op_free_statement(stmt_handle, drop_type).await.unwrap();
-        if wp.accept_type == PTYPE_LAZY_SEND {
+        if (wp.accept_type & PTYPE_MASK) == PTYPE_LAZY_SEND {
             wp.lazy_response_count += 1;
         } else {
             wp.op_response().await.unwrap();

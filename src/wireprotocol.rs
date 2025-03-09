@@ -525,7 +525,7 @@ impl WireProtocol {
         }
 
         self.op_close_blob(blob_handle)?;
-        if self.accept_type == PTYPE_LAZY_SEND {
+        if (self.accept_type & PTYPE_MASK) == PTYPE_LAZY_SEND {
             self.lazy_response_count += 1;
         } else {
             self.op_response()?;
