@@ -53,9 +53,10 @@ async fn test_connnect_async() {
 
     let mut conn;
     let conn_string = format!(
-        "firebird://{}:{}@localhost/tmp/rust-firebird-test-async.fdb",
+        "firebird://{}:{}@localhost{}/rust-firebird-test-async.fdb",
         &user,
-        urlencoding::encode(&password)
+        urlencoding::encode(&password),
+        env::temp_dir().display(),
     );
 
     match ConnectionAsync::create_database(&conn_string).await {
