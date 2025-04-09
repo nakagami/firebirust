@@ -516,7 +516,7 @@ impl WireProtocolAsync {
         let buf = self.suspend_buffer();
 
         let mut blob: Vec<u8> = Vec::new();
-        self.op_open_blob(blob_id, trans_handle).await?;
+        self.op_open_blob2(blob_id, trans_handle).await?;
         let (blob_handle, _, _) = self.op_response().await?;
         let mut more_data: i32 = 1;
         while more_data != 2 {
@@ -1035,6 +1035,20 @@ impl WireProtocolAsync {
     ) -> Result<(), Error> {
         debug_print!("op_open_blob()");
         self.pack_u32(OP_OPEN_BLOB).await;
+        self.pack_u32(trans_handle as u32).await;
+        self.append_bytes(blob_id).await;
+        self.send_packets().await?;
+        Ok(())
+    }
+
+    pub async fn op_open_blob2(
+        &mut self,
+        blob_id: &Vec<u8>,
+        trans_handle: i32,
+    ) -> Result<(), Error> {
+        debug_print!("op_open_blob2()");
+        self.pack_u32(OP_OPEN_BLOB2).await;
+        self.pack_u32(0).await;
         self.pack_u32(trans_handle as u32).await;
         self.append_bytes(blob_id).await;
         self.send_packets().await?;

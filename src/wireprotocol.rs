@@ -509,7 +509,7 @@ impl WireProtocol {
         let buf = self.suspend_buffer();
 
         let mut blob: Vec<u8> = Vec::new();
-        self.op_open_blob(blob_id, trans_handle)?;
+        self.op_open_blob2(blob_id, trans_handle)?;
         let (blob_handle, _, _) = self.op_response()?;
         let mut more_data: i32 = 1;
         while more_data != 2 {
@@ -1019,6 +1019,16 @@ impl WireProtocol {
     pub fn op_open_blob(&mut self, blob_id: &Vec<u8>, trans_handle: i32) -> Result<(), Error> {
         debug_print!("op_open_blob()");
         self.pack_u32(OP_OPEN_BLOB);
+        self.pack_u32(trans_handle as u32);
+        self.append_bytes(blob_id);
+        self.send_packets()?;
+        Ok(())
+    }
+
+    pub fn op_open_blob2(&mut self, blob_id: &Vec<u8>, trans_handle: i32) -> Result<(), Error> {
+        debug_print!("op_open_blob2()");
+        self.pack_u32(OP_OPEN_BLOB2);
+        self.pack_u32(0);
         self.pack_u32(trans_handle as u32);
         self.append_bytes(blob_id);
         self.send_packets()?;
