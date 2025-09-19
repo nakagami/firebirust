@@ -54,7 +54,7 @@ impl StatementAsync<'_> {
         stmt_type: u32,
         xsqlda: Vec<XSQLVar>,
         autocommit: bool,
-    ) -> StatementAsync {
+    ) -> StatementAsync<'_> {
         StatementAsync {
             conn,
             trans_handle,

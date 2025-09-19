@@ -208,7 +208,7 @@ impl Connection {
         self._rollback(self.trans_handle)
     }
 
-    pub fn _prepare(&mut self, query: &str, trans_handle: i32) -> Result<Statement, Error> {
+    pub fn _prepare(&mut self, query: &str, trans_handle: i32) -> Result<Statement<'_>, Error> {
         let mut wp = self.wp.borrow_mut();
         wp.op_allocate_statement()?;
 
@@ -239,11 +239,11 @@ impl Connection {
         ))
     }
 
-    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+    pub fn prepare(&mut self, query: &str) -> Result<Statement<'_>, Error> {
         self._prepare(query, self.trans_handle)
     }
 
-    pub fn transaction(&mut self) -> Result<Transaction, Error> {
+    pub fn transaction(&mut self) -> Result<Transaction<'_>, Error> {
         Transaction::new(self)
     }
 

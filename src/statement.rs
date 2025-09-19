@@ -53,7 +53,7 @@ impl Statement<'_> {
         stmt_type: u32,
         xsqlda: Vec<XSQLVar>,
         autocommit: bool,
-    ) -> Statement {
+    ) -> Statement<'_> {
         Statement {
             conn,
             trans_handle,

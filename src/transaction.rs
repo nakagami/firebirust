@@ -31,7 +31,7 @@ pub struct Transaction<'conn> {
 }
 
 impl Transaction<'_> {
-    pub fn new(conn: &mut Connection) -> Result<Transaction, Error> {
+    pub fn new(conn: &mut Connection) -> Result<Transaction<'_>, Error> {
         let trans_handle = conn._begin_trans()?;
         Ok(Transaction { conn, trans_handle })
     }
@@ -52,7 +52,7 @@ impl Transaction<'_> {
         self.conn._rollback(self.trans_handle)
     }
 
-    pub fn prepare(&mut self, query: &str) -> Result<Statement, Error> {
+    pub fn prepare(&mut self, query: &str) -> Result<Statement<'_>, Error> {
         self.conn._prepare(query, self.trans_handle)
     }
 }

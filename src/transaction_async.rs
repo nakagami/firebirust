@@ -33,7 +33,7 @@ pub struct TransactionAsync<'conn> {
 }
 
 impl TransactionAsync<'_> {
-    pub async fn new(conn: &mut ConnectionAsync) -> Result<TransactionAsync, Error> {
+    pub async fn new(conn: &mut ConnectionAsync) -> Result<TransactionAsync<'_>, Error> {
         let trans_handle = conn._begin_trans().await?;
         Ok(TransactionAsync { conn, trans_handle })
     }
@@ -54,7 +54,7 @@ impl TransactionAsync<'_> {
         self.conn._rollback(self.trans_handle).await
     }
 
-    pub async fn prepare(&mut self, query: &str) -> Result<StatementAsync, Error> {
+    pub async fn prepare(&mut self, query: &str) -> Result<StatementAsync<'_>, Error> {
         self.conn._prepare(query, self.trans_handle).await
     }
 }

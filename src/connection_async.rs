@@ -223,7 +223,7 @@ impl ConnectionAsync {
         &mut self,
         query: &str,
         trans_handle: i32,
-    ) -> Result<StatementAsync, Error> {
+    ) -> Result<StatementAsync<'_>, Error> {
         let mut wp = self.wp.borrow_mut();
         wp.op_allocate_statement().await?;
 
@@ -255,11 +255,11 @@ impl ConnectionAsync {
         ))
     }
 
-    pub async fn prepare(&mut self, query: &str) -> Result<StatementAsync, Error> {
+    pub async fn prepare(&mut self, query: &str) -> Result<StatementAsync<'_>, Error> {
         self._prepare(query, self.trans_handle).await
     }
 
-    pub async fn transaction(&mut self) -> Result<TransactionAsync, Error> {
+    pub async fn transaction(&mut self) -> Result<TransactionAsync<'_>, Error> {
         TransactionAsync::new(self).await
     }
 
