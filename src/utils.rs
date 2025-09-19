@@ -23,7 +23,6 @@
 #![allow(dead_code)]
 
 use std::io::prelude::*;
-use std::mem::transmute;
 use std::str;
 
 use chrono;
@@ -38,37 +37,37 @@ use super::tz_map;
 
 pub fn int32_to_bytes(i: i32) -> [u8; 4] {
     // little endian i32 to Vec<u8>
-    unsafe { transmute(i.to_le()) }
+    i32::to_ne_bytes(i.to_le())
 }
 
 pub fn uint32_to_bytes(i: u32) -> [u8; 4] {
     // little endian u32 to Vec<u8>
-    unsafe { transmute(i.to_le()) }
+    u32::to_ne_bytes(i.to_le())
 }
 
 pub fn bint128_to_bytes(i: i128) -> [u8; 16] {
     // big endian i128 to Vec<u8>
-    unsafe { transmute(i.to_be()) }
+    i128::to_ne_bytes(i.to_be())
 }
 
 pub fn bint64_to_bytes(i: i64) -> [u8; 8] {
     // big endian i64 to Vec<u8>
-    unsafe { transmute(i.to_be()) }
+    i64::to_ne_bytes(i.to_be())
 }
 
 pub fn bint32_to_bytes(i: i32) -> [u8; 4] {
     // big endian i32 to Vec<u8>
-    unsafe { transmute(i.to_be()) }
+    i32::to_ne_bytes(i.to_be())
 }
 
 pub fn ubint32_to_bytes(i: u32) -> [u8; 4] {
     // big endian u32 to Vec<u8>
-    unsafe { transmute(i.to_be()) }
+    u32::to_ne_bytes(i.to_be())
 }
 
 pub fn int16_to_bytes(i: u16) -> [u8; 2] {
     // little endian u16 to Vec<u8>
-    unsafe { transmute(i.to_le()) }
+    u16::to_ne_bytes(i.to_le())
 }
 
 pub fn f32_to_bytes(f: f32) -> [u8; 4] {
@@ -89,14 +88,12 @@ pub fn bytes_to_rtrim_str(b: &[u8]) -> String {
 
 pub fn bytes_to_int32(b: &[u8]) -> i32 {
     let tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
-    let v: i32 = unsafe { transmute::<[u8; 4], i32>(tmp) };
-    v
+    i32::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_bint32(b: &[u8]) -> i32 {
     let tmp: [u8; 4] = [b[3], b[2], b[1], b[0]];
-    let v: i32 = unsafe { transmute::<[u8; 4], i32>(tmp) };
-    v
+    i32::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_uint32(b: &[u8]) -> u32 {
@@ -111,14 +108,12 @@ pub fn bytes_to_buint32(b: &[u8]) -> u32 {
 
 pub fn bytes_to_int16(b: &[u8]) -> i16 {
     let tmp: [u8; 2] = [b[0], b[1]];
-    let v: i16 = unsafe { transmute::<[u8; 2], i16>(tmp) };
-    v
+    i16::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_bint16(b: &[u8]) -> i16 {
     let tmp: [u8; 2] = [b[1], b[0]];
-    let v: i16 = unsafe { transmute::<[u8; 2], i16>(tmp) };
-    v
+    i16::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_uint16(b: &[u8]) -> u16 {
@@ -133,14 +128,12 @@ pub fn bytes_to_buint16(b: &[u8]) -> u16 {
 
 pub fn bytes_to_int64(b: &[u8]) -> i64 {
     let tmp: [u8; 8] = [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]];
-    let v: i64 = unsafe { transmute::<[u8; 8], i64>(tmp) };
-    v
+    i64::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_bint64(b: &[u8]) -> i64 {
     let tmp: [u8; 8] = [b[7], b[6], b[5], b[4], b[3], b[2], b[1], b[0]];
-    let v: i64 = unsafe { transmute::<[u8; 8], i64>(tmp) };
-    v
+    i64::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_uint128(b: &[u8]) -> u128 {
@@ -148,8 +141,7 @@ pub fn bytes_to_uint128(b: &[u8]) -> u128 {
         b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13],
         b[14], b[15],
     ];
-    let v: u128 = unsafe { transmute::<[u8; 16], u128>(tmp) };
-    v
+    u128::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_int128(b: &[u8]) -> i128 {
@@ -157,8 +149,7 @@ pub fn bytes_to_int128(b: &[u8]) -> i128 {
         b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13],
         b[14], b[15],
     ];
-    let v: i128 = unsafe { transmute::<[u8; 16], i128>(tmp) };
-    v
+    i128::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_bint128(b: &[u8]) -> i128 {
@@ -166,8 +157,7 @@ pub fn bytes_to_bint128(b: &[u8]) -> i128 {
         b[15], b[14], b[13], b[12], b[11], b[10], b[9], b[8], b[7], b[6], b[5], b[4], b[3], b[2],
         b[1], b[0],
     ];
-    let v: i128 = unsafe { transmute::<[u8; 16], i128>(tmp) };
-    v
+    i128::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_uint64(b: &[u8]) -> u64 {
@@ -196,14 +186,12 @@ pub fn bytes_to_buint64(b: &[u8]) -> u64 {
 
 pub fn bytes_to_f32(b: &[u8]) -> f32 {
     let tmp: [u8; 4] = [b[3], b[2], b[1], b[0]];
-    let v: f32 = unsafe { transmute::<[u8; 4], f32>(tmp) };
-    v
+    f32::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_f64(b: &[u8]) -> f64 {
     let tmp: [u8; 8] = [b[7], b[6], b[5], b[4], b[3], b[2], b[1], b[0]];
-    let v: f64 = unsafe { transmute::<[u8; 8], f64>(tmp) };
-    v
+    f64::from_ne_bytes(tmp)
 }
 
 pub fn bytes_to_naive_date(b: &[u8]) -> chrono::NaiveDate {
