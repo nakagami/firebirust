@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/nakagami/firebirust"
 keywords = ["database", "sql"]
 categories = ["database"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 num-bigint = "0.2"
@@ -25,4 +25,4 @@ chrono-tz = "0.6"
 urlencoding = "2.1"
 
 [dependencies.async-std]
-version = "1.13.0"
+version = "1.13"
