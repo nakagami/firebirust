@@ -336,7 +336,6 @@ fn test_connnect() {
     let mut stmt = conn.prepare("select * from FPI_MOVTO_MOVIMIENTOS").unwrap();
     assert_eq!(stmt.query(()).unwrap().count(), 1);
 
-
     // Transction
     let mut conn = Connection::connect(&conn_string).unwrap();
     let expects: [Foo; 1] = [Foo {
@@ -380,5 +379,4 @@ fn test_connnect() {
     for (i, foo) in foo_iter.enumerate() {
         assert_eq!(foo.unwrap(), expects[i]);
     }
-
 }

@@ -26,11 +26,7 @@ use super::utils::*;
 use super::error::ValueError;
 
 fn dpd_bit_to_int(dpd: u16, mask: u16) -> u16 {
-    if (dpd & mask) != 0 {
-        1
-    } else {
-        0
-    }
+    if (dpd & mask) != 0 { 1 } else { 0 }
 }
 
 fn dpd_to_int(dpd: u16) -> Result<u16, ValueError> {

@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::Connection;
 use super::error::Error;
 use super::params::Params;
 use super::statement::Statement;
-use super::Connection;
 
 pub struct Transaction<'conn> {
     conn: &'conn mut Connection,

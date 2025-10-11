@@ -20,13 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #![allow(dead_code)]
+use super::Connection;
+use super::Error;
 use super::cellvalue::CellValue;
 use super::param::ToSqlParam;
 use super::params::Params;
 use super::row::{MappedRows, Row, Rows};
 use super::xsqlvar::*;
-use super::Connection;
-use super::Error;
 use super::*;
 
 use maplit::hashmap;

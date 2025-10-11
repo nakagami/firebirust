@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use super::ConnectionAsync;
 use super::error::Error;
 use super::params::Params;
 use super::statement_async::StatementAsync;
-use super::ConnectionAsync;
 
 use async_std::task;
 
