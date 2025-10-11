@@ -473,7 +473,7 @@ impl WireProtocol {
                     vars.write(&info_sql_select_describe_vars())?;
                     self.op_info_sql(stmt_handle, &vars)?;
                     let (_, _, buf) = self.op_response()?;
-                    let ln: usize = utils::bytes_to_uint16(&buf[0..4]) as usize;
+                    let ln: usize = utils::bytes_to_uint16(&buf[2..4]) as usize;
                     next_index = self.parse_select_items(&buf[4 + ln..], &mut xsqlda)? as i16;
                 }
             } else {

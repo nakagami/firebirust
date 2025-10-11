@@ -244,6 +244,99 @@ fn test_connnect() {
         }
     }
 
+    // select many columns
+    conn.execute_batch(
+        r#"
+        CREATE TABLE FPI_MOVTO_MOVIMIENTOS(
+            RFCEMPRESA varchar(20) NOT NULL,
+            NOSUCURSAL integer NOT NULL,
+            TIPO integer NOT NULL,
+            SERIE varchar(5) NOT NULL,
+            NODOCTO integer NOT NULL,
+            LINEA integer NOT NULL,
+            CODART varchar(20),
+            NOMART varchar(80),
+            CLAVEPRODSERV varchar(10),
+            UNIDADCLAVE varchar(10),
+            UNIDADNOMBRE varchar(80),
+            CANT1 double precision,
+            CATN2 double precision,
+            PUNIT double precision,
+            MONTO double precision,
+            IMPTO1 double precision,
+            IMPTO2 double precision,
+            PIMPTO1 double precision,
+            PIMPTO2 double precision,
+            TIMPTO1 varchar(10),
+            TIMPTO2 varchar(10),
+            TFIMPTO1 varchar(10),
+            TFIMPTO2 varchar(10),
+            PDESCTO double precision,
+            IDESCTO double precision,
+            CONSTRAINT PXFPI_MOVTO_MOVIMIENTOS PRIMARY KEY (RFCEMPRESA,NOSUCURSAL,TIPO,SERIE,NODOCTO,LINEA)
+        )"#,
+    )
+    .unwrap();
+
+    conn.execute_batch(
+        r#"
+       INSERT INTO FPI_MOVTO_MOVIMIENTOS (
+           RFCEMPRESA,
+           NOSUCURSAL,
+           TIPO,
+           SERIE,
+           NODOCTO,
+           LINEA,
+           CODART,
+           NOMART,
+           CLAVEPRODSERV,
+           UNIDADCLAVE,
+           UNIDADNOMBRE,
+           CANT1,
+           CATN2,
+           PUNIT,
+           MONTO,
+           IMPTO1,
+           IMPTO2,
+           PIMPTO1,
+           PIMPTO2,
+           TIMPTO1,
+           TIMPTO2,
+           TFIMPTO1,
+           TFIMPTO2,
+           PDESCTO,
+           IDESCTO) VALUES (
+           'p2',
+           '0',
+           '700',
+           'X',
+           '1',
+           '1',
+           'ART-001',
+           'PRUEBA DE ARTICULO',
+           '01010101',
+           'ACT',
+           'Actividad',
+           '10.000000',
+           '0.000000',
+           '2.500000',
+           '25.000000',
+           '4.000000',
+           '0.000000',
+           '16.000000',
+           '0.000000',
+           '002',
+           '',
+           'Tasa',
+           '',
+           '0.000000',
+           '0.000000')"#,
+    )
+    .unwrap();
+    let mut stmt = conn.prepare("select * from FPI_MOVTO_MOVIMIENTOS").unwrap();
+    assert_eq!(stmt.query(()).unwrap().count(), 1);
+
+
     // Transction
     let mut conn = Connection::connect(&conn_string).unwrap();
     let expects: [Foo; 1] = [Foo {
@@ -287,4 +380,5 @@ fn test_connnect() {
     for (i, foo) in foo_iter.enumerate() {
         assert_eq!(foo.unwrap(), expects[i]);
     }
+
 }
