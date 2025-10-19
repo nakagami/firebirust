@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-use super::ConnectionAsync;
+use super::*;
 use async_std::task;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use rust_decimal::Decimal;
@@ -154,11 +154,19 @@ async fn test_connnect_async() {
         ];
 
         let mut stmt = conn.prepare("select * from foo").await.unwrap();
+
         assert_eq!(stmt.column_count(), 10);
         assert_eq!(
             stmt.column_names(),
             vec!["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
         );
+        assert_eq!(stmt.column_metadata(0), (
+            Some((SQL_TYPE_LONG, 0, 0, 4, false, "A", "FOO", "SYSDBA"))
+        ));
+        assert_eq!(stmt.column_metadata(1), (
+            Some((SQL_TYPE_VARYING, 0, 4, 120, false, "B", "FOO", "SYSDBA"))
+        ));
+
         for (i, row) in stmt.query(()).await.unwrap().enumerate() {
             let foo = Foo {
                 a: row.get(0).unwrap(),
