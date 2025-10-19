@@ -28,7 +28,7 @@ use maplit::hashmap;
 use rust_decimal;
 
 
-pub struct XSQLVar {
+pub(crate) struct XSQLVar {
     pub sqltype: u32,
     pub sqlscale: i32,
     pub sqlsubtype: i32,
