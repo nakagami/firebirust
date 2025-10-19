@@ -170,13 +170,14 @@ impl StatementAsync<'_> {
         &self,
         col: usize,
     ) -> Option<(
-        &str, // ownname
-        &str, // relname
-        &str, // fieldname
         u32,  // sqltype
         i32,  // sqlscale
         i32,  // sqlsubtype
+        i32,  // sqllen
         bool, // null_ok
+        &str, // fieldname
+        &str, // relname
+        &str, // ownname
     )> {
         // TODO:
         None
