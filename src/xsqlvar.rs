@@ -23,7 +23,6 @@
 use super::cellvalue::CellValue;
 use super::decfloat;
 use super::error::ValueError;
-use super::utils::*;
 use super::*;
 use maplit::hashmap;
 use rust_decimal;
@@ -87,43 +86,43 @@ impl XSQLVar {
 
     pub fn value(&self, raw_value: &[u8]) -> Result<CellValue, ValueError> {
         match self.sqltype {
-            SQL_TYPE_TEXT => Ok(CellValue::Text(bytes_to_rtrim_str(raw_value))),
-            SQL_TYPE_VARYING => Ok(CellValue::Varying(bytes_to_str(raw_value))),
-            SQL_TYPE_SHORT => Ok(CellValue::Short(bytes_to_bint16(raw_value))),
-            SQL_TYPE_LONG => Ok(CellValue::Long(bytes_to_bint32(raw_value))),
+            SQL_TYPE_TEXT => Ok(CellValue::Text(utils::bytes_to_rtrim_str(raw_value))),
+            SQL_TYPE_VARYING => Ok(CellValue::Varying(utils::bytes_to_str(raw_value))),
+            SQL_TYPE_SHORT => Ok(CellValue::Short(utils::bytes_to_bint16(raw_value))),
+            SQL_TYPE_LONG => Ok(CellValue::Long(utils::bytes_to_bint32(raw_value))),
             SQL_TYPE_INT64 => Ok(if self.sqlscale < 0 {
                 CellValue::Decimal(rust_decimal::Decimal::new(
-                    bytes_to_bint64(raw_value),
+                    utils::bytes_to_bint64(raw_value),
                     (self.sqlscale * -1) as u32,
                 ))
             } else if self.sqlscale > 0 {
                 CellValue::Decimal(rust_decimal::Decimal::new(
-                    bytes_to_bint64(raw_value) * (self.sqlscale as i64),
+                    utils::bytes_to_bint64(raw_value) * (self.sqlscale as i64),
                     0,
                 ))
             } else {
-                CellValue::Int64(bytes_to_bint64(raw_value))
+                CellValue::Int64(utils::bytes_to_bint64(raw_value))
             }),
             SQL_TYPE_INT128 => Ok(if self.sqlscale < 0 {
                 CellValue::Decimal(rust_decimal::Decimal::new(
-                    bytes_to_bint64(raw_value),
+                    utils::bytes_to_bint64(raw_value),
                     (self.sqlscale * -1) as u32,
                 ))
             } else if self.sqlscale > 0 {
                 CellValue::Decimal(rust_decimal::Decimal::new(
-                    (bytes_to_bint128(raw_value) as i64) * (self.sqlscale as i64),
+                    (utils::bytes_to_bint128(raw_value) as i64) * (self.sqlscale as i64),
                     0,
                 ))
             } else {
-                CellValue::Int128(bytes_to_bint128(raw_value))
+                CellValue::Int128(utils::bytes_to_bint128(raw_value))
             }),
-            SQL_TYPE_DATE => Ok(CellValue::Date(bytes_to_naive_date(raw_value))),
-            SQL_TYPE_TIME => Ok(CellValue::Time(bytes_to_naive_time(raw_value))),
-            SQL_TYPE_TIMESTAMP => Ok(CellValue::TimeStamp(bytes_to_naive_date_time(raw_value))),
-            SQL_TYPE_TIME_TZ => Ok(CellValue::TimeTz(bytes_to_time_tz(raw_value))),
-            SQL_TYPE_TIMESTAMP_TZ => Ok(CellValue::TimeStampTz(bytes_to_date_time_tz(raw_value))),
-            SQL_TYPE_FLOAT => Ok(CellValue::Float(bytes_to_f32(raw_value))),
-            SQL_TYPE_DOUBLE => Ok(CellValue::Double(bytes_to_f64(raw_value))),
+            SQL_TYPE_DATE => Ok(CellValue::Date(utils::bytes_to_naive_date(raw_value))),
+            SQL_TYPE_TIME => Ok(CellValue::Time(utils::bytes_to_naive_time(raw_value))),
+            SQL_TYPE_TIMESTAMP => Ok(CellValue::TimeStamp(utils::bytes_to_naive_date_time(raw_value))),
+            SQL_TYPE_TIME_TZ => Ok(CellValue::TimeTz(utils::bytes_to_time_tz(raw_value))),
+            SQL_TYPE_TIMESTAMP_TZ => Ok(CellValue::TimeStampTz(utils::bytes_to_date_time_tz(raw_value))),
+            SQL_TYPE_FLOAT => Ok(CellValue::Float(utils::bytes_to_f32(raw_value))),
+            SQL_TYPE_DOUBLE => Ok(CellValue::Double(utils::bytes_to_f64(raw_value))),
             SQL_TYPE_BOOLEAN => Ok(CellValue::Boolean(raw_value[0] != 0)),
             SQL_TYPE_BLOB => Ok(if self.sqlsubtype == 1 {
                 CellValue::BlobText(raw_value.to_vec())

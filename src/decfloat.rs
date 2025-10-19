@@ -21,7 +21,7 @@
 // SOFTWARE.
 use rust_decimal;
 
-use super::utils::*;
+use super::*;
 
 use super::error::ValueError;
 
@@ -155,7 +155,7 @@ fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), Valu
     }
     exponent -= 6176;
 
-    let dpd_bits = bytes_to_uint128(&b);
+    let dpd_bits = utils::bytes_to_uint128(&b);
     let mask: u128 = 0x3fffffffffffffffffffffffffff;
     let digits = calc_significand(prefix, dpd_bits & mask, 110)?;
 
@@ -180,7 +180,7 @@ pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueErro
 
     let cf = ((b[0] as u32) >> 2) & 0x1f;
 
-    let dpd_bits = bytes_to_uint128(&b);
+    let dpd_bits = utils::bytes_to_uint128(&b);
     let mask: u128 = 0x3fffffffffffffffffffffffffff;
 
     if cf == 0x1f {
