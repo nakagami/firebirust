@@ -154,6 +154,11 @@ async fn test_connnect_async() {
         ];
 
         let mut stmt = conn.prepare("select * from foo").await.unwrap();
+        assert_eq!(stmt.column_count(), 10);
+        assert_eq!(
+            stmt.column_names(),
+            vec!["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        );
         for (i, row) in stmt.query(()).await.unwrap().enumerate() {
             let foo = Foo {
                 a: row.get(0).unwrap(),
