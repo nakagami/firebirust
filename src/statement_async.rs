@@ -26,7 +26,7 @@ use super::cellvalue::CellValue;
 use super::param::ToSqlParam;
 use super::params::Params;
 use super::row::{MappedRows, Row, Rows};
-use super::xsqlvar::*;
+use super::xsqlvar::XSQLVar;
 use super::*;
 
 use async_std::task;
@@ -154,6 +154,45 @@ impl StatementAsync<'_> {
     pub async fn execute<P: Params>(&mut self, params: P) -> Result<(), Error> {
         self.query(params).await?;
         Ok(())
+    }
+
+    pub fn column_count(&self) -> usize {
+        self.xsqlda.len()
+    }
+
+    pub fn column_names(&self) -> Vec<&str> {
+        self.xsqlda.iter().map(|x| x.aliasname.as_str()).collect()
+    }
+
+    pub fn column_metadata(
+        &self,
+        col: usize,
+    ) -> Option<(
+        u32,  // sqltype
+        i32,  // sqlscale
+        i32,  // sqlsubtype
+        i32,  // sqllen
+        bool, // null_ok
+        &str, // fieldname
+        &str, // relname
+        &str, // ownname
+    )> {
+        if col < self.xsqlda.len() {
+            let x = &self.xsqlda[col];
+            let meta_data = (
+                x.sqltype,
+                x.sqlscale,
+                x.sqlsubtype,
+                x.sqllen,
+                x.null_ok,
+                x.fieldname.as_str(),
+                x.relname.as_str(),
+                x.ownname.as_str(),
+            );
+            Some(meta_data)
+        } else {
+            None
+        }
     }
 
     fn calc_blr(&self) -> Vec<u8> {
