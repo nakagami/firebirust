@@ -154,8 +154,7 @@ impl Statement<'_> {
     }
 
     pub fn column_names(&self) -> Vec<&str> {
-        // TODO:
-        vec![]
+        self.xsqlda.iter().map(|x| x.aliasname.as_str()).collect()
     }
 
     pub fn column_metadata(
