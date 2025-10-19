@@ -150,8 +150,7 @@ impl Statement<'_> {
     }
 
     pub fn column_count(&self) -> usize {
-        // TODO:
-        0
+        self.xsqlda.len()
     }
 
     pub fn column_names(&self) -> Vec<&str> {
@@ -172,8 +171,22 @@ impl Statement<'_> {
         &str, // relname
         &str, // ownname
     )> {
-        // TODO:
-        None
+        if col < self.xsqlda.len() {
+            let x = &self.xsqlda[col];
+            let meta_data = (
+                x.sqltype,
+                x.sqlscale,
+                x.sqlsubtype,
+                x.sqllen,
+                x.null_ok,
+                x.fieldname.as_str(),
+                x.relname.as_str(),
+                x.ownname.as_str(),
+            );
+            Some(meta_data)
+        } else {
+            None
+        }
     }
 
     fn calc_blr(&self) -> Vec<u8> {
