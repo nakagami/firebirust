@@ -159,9 +159,20 @@ impl Statement<'_> {
         vec![]
     }
 
-    pub fn column_metadata(&self, col: usize) -> Result<(), Error> {
+    pub fn column_metadata(
+        &self,
+        col: usize,
+    ) -> Option<(
+        &str, // ownname
+        &str, // relname
+        &str, // fieldname
+        u32,  // sqltype
+        i32,  // sqlscale
+        i32,  // sqlsubtype
+        bool, // null_ok
+    )> {
         // TODO:
-        Ok(())
+        None
     }
 
     fn calc_blr(&self) -> Vec<u8> {
