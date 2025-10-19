@@ -27,7 +27,6 @@ use super::*;
 use maplit::hashmap;
 use rust_decimal;
 
-
 pub(crate) struct XSQLVar {
     pub sqltype: u32,
     pub sqlscale: i32,
@@ -118,9 +117,13 @@ impl XSQLVar {
             }),
             SQL_TYPE_DATE => Ok(CellValue::Date(utils::bytes_to_naive_date(raw_value))),
             SQL_TYPE_TIME => Ok(CellValue::Time(utils::bytes_to_naive_time(raw_value))),
-            SQL_TYPE_TIMESTAMP => Ok(CellValue::TimeStamp(utils::bytes_to_naive_date_time(raw_value))),
+            SQL_TYPE_TIMESTAMP => Ok(CellValue::TimeStamp(utils::bytes_to_naive_date_time(
+                raw_value,
+            ))),
             SQL_TYPE_TIME_TZ => Ok(CellValue::TimeTz(utils::bytes_to_time_tz(raw_value))),
-            SQL_TYPE_TIMESTAMP_TZ => Ok(CellValue::TimeStampTz(utils::bytes_to_date_time_tz(raw_value))),
+            SQL_TYPE_TIMESTAMP_TZ => Ok(CellValue::TimeStampTz(utils::bytes_to_date_time_tz(
+                raw_value,
+            ))),
             SQL_TYPE_FLOAT => Ok(CellValue::Float(utils::bytes_to_f32(raw_value))),
             SQL_TYPE_DOUBLE => Ok(CellValue::Double(utils::bytes_to_f64(raw_value))),
             SQL_TYPE_BOOLEAN => Ok(CellValue::Boolean(raw_value[0] != 0)),

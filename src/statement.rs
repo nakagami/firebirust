@@ -149,6 +149,21 @@ impl Statement<'_> {
         Ok(())
     }
 
+    pub fn column_count(&self) -> usize {
+        // TODO:
+        0
+    }
+
+    pub fn column_names(&self) -> Vec<&str> {
+        // TODO:
+        vec![]
+    }
+
+    pub fn column_metadata(&self, col: usize) -> Result<(), Error> {
+        // TODO:
+        Ok(())
+    }
+
     fn calc_blr(&self) -> Vec<u8> {
         let ln = self.xsqlda.len() * 2;
         let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
