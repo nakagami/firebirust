@@ -23,7 +23,6 @@
 #![allow(dead_code)]
 
 use async_std::io::prelude::*;
-use async_std::task;
 use hex;
 use num_bigint::BigInt;
 use std::collections::{HashMap, HashSet};
@@ -1260,12 +1259,5 @@ impl WireProtocolAsync {
 
         blr_list.write(&[255, 76]).await?;
         Ok((values_list, blr_list))
-    }
-}
-
-impl Drop for WireProtocolAsync {
-    fn drop(&mut self) {
-        let _ = task::block_on(self.op_detach());
-        let _ = task::block_on(self.op_response());
     }
 }

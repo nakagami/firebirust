@@ -25,8 +25,6 @@ use super::error::Error;
 use super::params::Params;
 use super::statement_async::StatementAsync;
 
-use async_std::task;
-
 pub struct TransactionAsync<'conn> {
     conn: &'conn mut ConnectionAsync,
     trans_handle: i32,
@@ -56,11 +54,5 @@ impl TransactionAsync<'_> {
 
     pub async fn prepare(&mut self, query: &str) -> Result<StatementAsync<'_>, Error> {
         self.conn._prepare(query, self.trans_handle).await
-    }
-}
-
-impl Drop for TransactionAsync<'_> {
-    fn drop(&mut self) {
-        task::block_on(self.conn.drop_transaction(self.trans_handle));
     }
 }

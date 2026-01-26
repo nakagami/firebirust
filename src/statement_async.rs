@@ -29,7 +29,6 @@ use super::row::{MappedRows, Row, Rows};
 use super::xsqlvar::XSQLVar;
 use super::*;
 
-use async_std::task;
 use maplit::hashmap;
 use std::collections::VecDeque;
 
@@ -229,11 +228,5 @@ impl StatementAsync<'_> {
         blr.extend(vec![255, 76]);
 
         blr
-    }
-}
-
-impl Drop for StatementAsync<'_> {
-    fn drop(&mut self) {
-        task::block_on(self.conn._free_statement(self.stmt_handle, DSQL_DROP));
     }
 }
