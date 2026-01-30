@@ -38,26 +38,29 @@ use super::*;
 pub struct ConnectionAsync {
     wp: RefCell<WireProtocolAsync>,
     trans_handle: i32, // transaction for operating from connection methods
-    conn_params: ConnParams,
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub password: String,
+    pub db_name: String,
     conn_options: HashMap<String, String>,
 }
 
 impl ConnectionAsync {
-    pub async fn connect(conn_string: &str) -> Result<ConnectionAsync, Error> {
-        let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
-        let mut wp = WireProtocolAsync::new(&conn_params, &conn_options).await?;
+    pub async fn connect(host: &str, port: u16, db_name: &str, username: &str, password: &str, conn_options: &HashMap<String, String>) -> Result<ConnectionAsync, Error> {
+        let mut wp = WireProtocolAsync::new(host, port, &conn_options["timezone"]).await?;
         let (client_public, client_secret) = srp::get_client_seed();
         wp.op_connect(
-            &conn_params.db_name,
-            &conn_params.username,
-            &conn_params.password,
+            db_name,
+            username,
+            password,
             &conn_options,
             &client_public,
         )
         .await?;
         wp.parse_connect_response(
-            &conn_params.username,
-            &conn_params.password,
+            username,
+            password,
             &conn_options,
             &client_public,
             &client_secret,
@@ -65,9 +68,9 @@ impl ConnectionAsync {
         .await?;
 
         wp.op_attach(
-            &conn_params.db_name,
-            &conn_params.username,
-            &conn_params.password,
+            db_name,
+            username,
+            password,
             &conn_options["role"],
         )
         .await?;
@@ -80,14 +83,35 @@ impl ConnectionAsync {
         Ok(ConnectionAsync {
             wp: RefCell::new(wp),
             trans_handle,
-            conn_params,
-            conn_options,
+            host: host.to_string(),
+            port,
+            username: username.to_string(),
+            password: password.to_string(),
+            db_name: db_name.to_string(),
+            conn_options: conn_options.clone(),
         })
     }
 
-    pub async fn create_database(conn_string: &str) -> Result<ConnectionAsync, Error> {
+    pub async fn connect_url(conn_string: &str) -> Result<ConnectionAsync, Error> {
         let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
-        let mut wp = WireProtocolAsync::new(&conn_params, &conn_options).await?;
+        ConnectionAsync::connect(
+            &conn_params.host,
+            conn_params.port,
+            &conn_params.db_name,
+            &conn_params.username,
+            &conn_params.password,
+            &conn_options
+        ).await
+    }
+
+    pub async fn create_database_url(conn_string: &str) -> Result<ConnectionAsync, Error> {
+        let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
+        let mut wp = WireProtocolAsync::new(
+            &conn_params.host,
+            conn_params.port,
+            &conn_options["timezone"],
+        ).await?;
+
         let (client_public, client_secret) = srp::get_client_seed();
         wp.op_connect(
             &conn_params.db_name,
@@ -125,7 +149,11 @@ impl ConnectionAsync {
         Ok(ConnectionAsync {
             wp: RefCell::new(wp),
             trans_handle,
-            conn_params,
+            host: conn_params.host,
+            port: conn_params.port,
+            username: conn_params.username,
+            password: conn_params.password,
+            db_name: conn_params.db_name,
             conn_options,
         })
     }

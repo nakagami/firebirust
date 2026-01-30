@@ -59,7 +59,7 @@ async fn test_connnect_async() {
         env::temp_dir().display(),
     );
 
-    match ConnectionAsync::create_database(&conn_string).await {
+    match ConnectionAsync::create_database_url(&conn_string).await {
         Ok(c) => {
             conn = c;
         }
@@ -264,7 +264,7 @@ async fn test_connnect_async() {
     }
 
     // Transction
-    let mut conn = ConnectionAsync::connect(&conn_string).await.unwrap();
+    let mut conn = ConnectionAsync::connect_url(&conn_string).await.unwrap();
     let expects: [Foo; 1] = [Foo {
         a: 2,
         b: "A".to_string(),

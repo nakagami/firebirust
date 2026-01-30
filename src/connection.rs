@@ -38,38 +38,41 @@ use super::*;
 pub struct Connection {
     wp: RefCell<WireProtocol>,
     trans_handle: i32, // transaction for operating from connection methods
-    conn_params: ConnParams,
-    conn_options: HashMap<String, String>,
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub password: String,
+    pub db_name: String,
+    pub conn_options: HashMap<String, String>
 }
 
 impl Connection {
-    pub fn connect(conn_string: &str) -> Result<Connection, Error> {
-        let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
+    pub fn connect(host: &str, port: u16, db_name: &str, username: &str, password: &str, conn_options: &HashMap<String, String>) -> Result<Connection, Error> {
         let mut wp = WireProtocol::new(
-            &conn_params.host,
-            conn_params.port,
+            host,
+            port,
             &conn_options["timezone"],
         )?;
         let (client_public, client_secret) = srp::get_client_seed();
         wp.op_connect(
-            &conn_params.db_name,
-            &conn_params.username,
-            &conn_params.password,
+            db_name,
+            username,
+            password,
             &conn_options,
             &client_public,
         )?;
         wp.parse_connect_response(
-            &conn_params.username,
-            &conn_params.password,
+            username,
+            password,
             &conn_options,
             &client_public,
             &client_secret,
         )?;
 
         wp.op_attach(
-            &conn_params.db_name,
-            &conn_params.username,
-            &conn_params.password,
+            db_name,
+            username,
+            password,
             &conn_options["role"],
         )?;
         let (db_handle, _, _) = wp.op_response()?;
@@ -81,12 +84,29 @@ impl Connection {
         Ok(Connection {
             wp: RefCell::new(wp),
             trans_handle,
-            conn_params,
-            conn_options,
+            host: host.to_string(),
+            port,
+            username: username.to_string(),
+            password: password.to_string(),
+            db_name: db_name.to_string(),
+            conn_options: conn_options.clone()
         })
     }
 
-    pub fn create_database(conn_string: &str) -> Result<Connection, Error> {
+    pub fn connect_url(conn_string: &str) -> Result<Connection, Error> {
+        let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
+        Connection::connect(
+            &conn_params.host,
+            conn_params.port,
+            &conn_params.db_name,
+            &conn_params.username,
+            &conn_params.password,
+            &conn_options
+        )
+
+    }
+
+    pub fn create_database_url(conn_string: &str) -> Result<Connection, Error> {
         let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
         let mut wp = WireProtocol::new(
             &conn_params.host,
@@ -127,8 +147,12 @@ impl Connection {
         Ok(Connection {
             wp: RefCell::new(wp),
             trans_handle,
-            conn_params,
-            conn_options,
+            host: conn_params.host,
+            port: conn_params.port,
+            username: conn_params.username,
+            password: conn_params.password,
+            db_name: conn_params.db_name,
+            conn_options
         })
     }
 

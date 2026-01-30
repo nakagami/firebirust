@@ -53,7 +53,7 @@ fn test_timezone() {
         urlencoding::encode(&password)
     );
 
-    match Connection::create_database(&conn_string) {
+    match Connection::create_database_url(&conn_string) {
         Ok(c) => {
             conn = c;
         }

@@ -59,7 +59,7 @@ fn test_connnect() {
         env::temp_dir().display(),
     );
 
-    match Connection::create_database(&conn_string) {
+    match Connection::create_database_url(&conn_string) {
         Ok(c) => {
             conn = c;
         }
@@ -352,7 +352,7 @@ fn test_connnect() {
     assert_eq!(stmt.query(()).unwrap().count(), 1);
 
     // Transction
-    let mut conn = Connection::connect(&conn_string).unwrap();
+    let mut conn = Connection::connect_url(&conn_string).unwrap();
     let expects: [Foo; 1] = [Foo {
         a: 2,
         b: "A".to_string(),

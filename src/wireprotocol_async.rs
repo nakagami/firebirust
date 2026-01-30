@@ -28,7 +28,6 @@ use num_bigint::BigInt;
 use std::collections::{HashMap, HashSet};
 
 use super::cellvalue::CellValue;
-use super::conn_params::ConnParams;
 use super::error::{Error, FirebirdError};
 use super::wirechannel_async::WireChannelAsync;
 use super::xsqlvar::XSQLVar;
@@ -84,15 +83,12 @@ pub struct WireProtocolAsync {
 }
 
 impl WireProtocolAsync {
-    pub async fn new(
-        params: &ConnParams,
-        option_params: &HashMap<String, String>,
-    ) -> Result<WireProtocolAsync, Error> {
+    pub async fn new(host: &str, port: u16, timezone: &str) -> Result<WireProtocolAsync, Error> {
         Ok(WireProtocolAsync {
             write_buf: Vec::new(),
-            channel: WireChannelAsync::new(&params.host, params.port).await?,
-            host: params.host.to_string(),
-            port: params.port,
+            channel: WireChannelAsync::new(host, port).await?,
+            host: host.to_string(),
+            port: port,
             db_handle: -1,
             protocol_version: -1,
             accept_architecture: -1,
@@ -100,7 +96,7 @@ impl WireProtocolAsync {
             lazy_response_count: 0,
             accept_plugin_name: "".to_string(),
             auth_data: None,
-            timezone: option_params["timezone"].to_string(),
+            timezone: timezone.to_string(),
         })
     }
 
