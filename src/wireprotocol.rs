@@ -28,7 +28,6 @@ use std::collections::{HashMap, HashSet};
 use std::io::prelude::*;
 
 use super::cellvalue::CellValue;
-use super::conn_params::ConnParams;
 use super::error::{Error, FirebirdError};
 use super::wirechannel::WireChannel;
 use super::xsqlvar::XSQLVar;
@@ -84,15 +83,12 @@ pub struct WireProtocol {
 }
 
 impl WireProtocol {
-    pub fn new(
-        params: &ConnParams,
-        option_params: &HashMap<String, String>,
-    ) -> Result<WireProtocol, Error> {
+    pub fn new(host: &str, port: u16, timezone: &str) -> Result<WireProtocol, Error> {
         Ok(WireProtocol {
             write_buf: Vec::new(),
-            channel: WireChannel::new(&params.host, params.port)?,
-            host: params.host.to_string(),
-            port: params.port,
+            channel: WireChannel::new(host, port)?,
+            host: host.to_string(),
+            port: port,
             db_handle: -1,
             protocol_version: -1,
             accept_architecture: -1,
@@ -100,7 +96,7 @@ impl WireProtocol {
             lazy_response_count: 0,
             accept_plugin_name: "".to_string(),
             auth_data: None,
-            timezone: option_params["timezone"].to_string(),
+            timezone: timezone.to_string(),
         })
     }
 

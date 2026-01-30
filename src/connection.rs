@@ -45,7 +45,11 @@ pub struct Connection {
 impl Connection {
     pub fn connect(conn_string: &str) -> Result<Connection, Error> {
         let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
-        let mut wp = WireProtocol::new(&conn_params, &conn_options)?;
+        let mut wp = WireProtocol::new(
+            &conn_params.host,
+            conn_params.port,
+            &conn_options["timezone"],
+        )?;
         let (client_public, client_secret) = srp::get_client_seed();
         wp.op_connect(
             &conn_params.db_name,
@@ -84,7 +88,11 @@ impl Connection {
 
     pub fn create_database(conn_string: &str) -> Result<Connection, Error> {
         let (conn_params, conn_options) = ConnParams::from_url(conn_string)?;
-        let mut wp = WireProtocol::new(&conn_params, &conn_options)?;
+        let mut wp = WireProtocol::new(
+            &conn_params.host,
+            conn_params.port,
+            &conn_options["timezone"],
+        )?;
         let (client_public, client_secret) = srp::get_client_seed();
         wp.op_connect(
             &conn_params.db_name,

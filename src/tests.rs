@@ -158,12 +158,14 @@ fn test_connnect() {
             stmt.column_names(),
             vec!["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
         );
-        assert_eq!(stmt.column_metadata(0), (
-            Some((SQL_TYPE_LONG, 0, 0, 4, false, "A", "FOO", "SYSDBA"))
-        ));
-        assert_eq!(stmt.column_metadata(1), (
-            Some((SQL_TYPE_VARYING, 0, 4, 120, false, "B", "FOO", "SYSDBA"))
-        ));
+        assert_eq!(
+            stmt.column_metadata(0),
+            (Some((SQL_TYPE_LONG, 0, 0, 4, false, "A", "FOO", "SYSDBA")))
+        );
+        assert_eq!(
+            stmt.column_metadata(1),
+            (Some((SQL_TYPE_VARYING, 0, 4, 120, false, "B", "FOO", "SYSDBA")))
+        );
 
         for (i, row) in stmt.query(()).unwrap().enumerate() {
             let foo = Foo {
