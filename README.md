@@ -24,7 +24,7 @@ Database connection
 use firebirust::Connection;
 
 let mut conn =
-    Connection::connect("firebird://SYSDBA:masterkey@localhost/tmp/rust-firebird-test.fdb")
+    Connection::connect_url("firebird://SYSDBA:masterkey@localhost/tmp/rust-firebird-test.fdb")
         .unwrap();
 ```
 
