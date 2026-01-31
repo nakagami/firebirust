@@ -25,7 +25,7 @@ use super::Error;
 use super::cellvalue::CellValue;
 use super::param::ToSqlParam;
 use super::params::Params;
-use super::query_result::{MappedRows, Row, Rows};
+use super::query_result::{MappedRows, Row, QueryResult};
 use super::xsqlvar::XSQLVar;
 use super::*;
 
@@ -116,7 +116,7 @@ impl Statement<'_> {
         Ok(rows)
     }
 
-    pub fn query<P: Params>(&mut self, params: P) -> Result<Rows, Error> {
+    pub fn query<P: Params>(&mut self, params: P) -> Result<QueryResult, Error> {
         params.__bind_in(self)?;
         let affected_rows = self.conn._execute_statement(
             self.trans_handle,
@@ -133,7 +133,7 @@ impl Statement<'_> {
             self.conn.commit()?;
         }
 
-        Ok(Rows::new(rows, affected_rows))
+        Ok(QueryResult::new(rows, affected_rows))
     }
 
     pub fn query_map<T, P, F>(&mut self, params: P, f: F) -> Result<MappedRows<F>, Error>

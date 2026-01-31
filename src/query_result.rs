@@ -24,14 +24,14 @@ use super::error::{Error, ValueError};
 use std::collections::VecDeque;
 use std::result::Result;
 
-pub struct Rows {
+pub struct QueryResult {
     rows: VecDeque<Vec<CellValue>>,
     rows_affected: usize,
 }
 
-impl Rows {
-    pub(crate) fn new(rows: VecDeque<Vec<CellValue>>, rows_affected: usize) -> Rows {
-        Rows {
+impl QueryResult {
+    pub(crate) fn new(rows: VecDeque<Vec<CellValue>>, rows_affected: usize) -> QueryResult {
+        QueryResult {
             rows,
             rows_affected,
         }
@@ -41,11 +41,11 @@ impl Rows {
     where
         F: FnMut(&Row) -> Result<B, Error>,
     {
-        MappedRows { rows: self, map: f }
+        MappedRows { result: self, map: f }
     }
 }
 
-impl Iterator for Rows {
+impl Iterator for QueryResult {
     type Item = Row;
 
     fn next(&mut self) -> Option<Row> {
@@ -76,7 +76,7 @@ impl Row {
 }
 
 pub struct MappedRows<F> {
-    rows: Rows,
+    result: QueryResult,
     map: F,
 }
 
@@ -88,7 +88,7 @@ where
 
     fn next(&mut self) -> Option<Result<T, Error>> {
         let map = &mut self.map;
-        let row = self.rows.next();
+        let row = self.result.next();
         match row {
             Some(r) => Some(map(&r)),
             None => None,
