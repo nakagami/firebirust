@@ -43,24 +43,21 @@ pub struct Connection {
     pub username: String,
     pub password: String,
     pub db_name: String,
-    pub conn_options: HashMap<String, String>
+    pub conn_options: HashMap<String, String>,
 }
 
 impl Connection {
-    pub fn connect(host: &str, port: u16, db_name: &str, username: &str, password: &str, conn_options: &HashMap<String, String>) -> Result<Connection, Error> {
-        let mut wp = WireProtocol::new(
-            host,
-            port,
-            &conn_options["timezone"],
-        )?;
+    pub fn connect(
+        host: &str,
+        port: u16,
+        db_name: &str,
+        username: &str,
+        password: &str,
+        conn_options: &HashMap<String, String>,
+    ) -> Result<Connection, Error> {
+        let mut wp = WireProtocol::new(host, port, &conn_options["timezone"])?;
         let (client_public, client_secret) = srp::get_client_seed();
-        wp.op_connect(
-            db_name,
-            username,
-            password,
-            &conn_options,
-            &client_public,
-        )?;
+        wp.op_connect(db_name, username, password, &conn_options, &client_public)?;
         wp.parse_connect_response(
             username,
             password,
@@ -69,12 +66,7 @@ impl Connection {
             &client_secret,
         )?;
 
-        wp.op_attach(
-            db_name,
-            username,
-            password,
-            &conn_options["role"],
-        )?;
+        wp.op_attach(db_name, username, password, &conn_options["role"])?;
         let (db_handle, _, _) = wp.op_response()?;
         wp.db_handle = db_handle;
 
@@ -89,7 +81,7 @@ impl Connection {
             username: username.to_string(),
             password: password.to_string(),
             db_name: db_name.to_string(),
-            conn_options: conn_options.clone()
+            conn_options: conn_options.clone(),
         })
     }
 
@@ -101,9 +93,8 @@ impl Connection {
             &conn_params.db_name,
             &conn_params.username,
             &conn_params.password,
-            &conn_options
+            &conn_options,
         )
-
     }
 
     pub fn create_database_url(conn_string: &str) -> Result<Connection, Error> {
@@ -152,7 +143,7 @@ impl Connection {
             username: conn_params.username,
             password: conn_params.password,
             db_name: conn_params.db_name,
-            conn_options
+            conn_options,
         })
     }
 

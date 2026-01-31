@@ -47,17 +47,18 @@ pub struct ConnectionAsync {
 }
 
 impl ConnectionAsync {
-    pub async fn connect(host: &str, port: u16, db_name: &str, username: &str, password: &str, conn_options: &HashMap<String, String>) -> Result<ConnectionAsync, Error> {
+    pub async fn connect(
+        host: &str,
+        port: u16,
+        db_name: &str,
+        username: &str,
+        password: &str,
+        conn_options: &HashMap<String, String>,
+    ) -> Result<ConnectionAsync, Error> {
         let mut wp = WireProtocolAsync::new(host, port, &conn_options["timezone"]).await?;
         let (client_public, client_secret) = srp::get_client_seed();
-        wp.op_connect(
-            db_name,
-            username,
-            password,
-            &conn_options,
-            &client_public,
-        )
-        .await?;
+        wp.op_connect(db_name, username, password, &conn_options, &client_public)
+            .await?;
         wp.parse_connect_response(
             username,
             password,
@@ -67,13 +68,8 @@ impl ConnectionAsync {
         )
         .await?;
 
-        wp.op_attach(
-            db_name,
-            username,
-            password,
-            &conn_options["role"],
-        )
-        .await?;
+        wp.op_attach(db_name, username, password, &conn_options["role"])
+            .await?;
         let (db_handle, _, _) = wp.op_response().await?;
         wp.db_handle = db_handle;
 
@@ -100,8 +96,9 @@ impl ConnectionAsync {
             &conn_params.db_name,
             &conn_params.username,
             &conn_params.password,
-            &conn_options
-        ).await
+            &conn_options,
+        )
+        .await
     }
 
     pub async fn create_database_url(conn_string: &str) -> Result<ConnectionAsync, Error> {
@@ -110,7 +107,8 @@ impl ConnectionAsync {
             &conn_params.host,
             conn_params.port,
             &conn_options["timezone"],
-        ).await?;
+        )
+        .await?;
 
         let (client_public, client_secret) = srp::get_client_seed();
         wp.op_connect(

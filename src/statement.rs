@@ -118,7 +118,7 @@ impl Statement<'_> {
 
     pub fn query<P: Params>(&mut self, params: P) -> Result<Rows, Error> {
         params.__bind_in(self)?;
-        self.conn._execute_statement(
+        let affected_rows = self.conn._execute_statement(
             self.trans_handle,
             self.stmt_handle,
             self.stmt_type,
@@ -133,7 +133,7 @@ impl Statement<'_> {
             self.conn.commit()?;
         }
 
-        Ok(Rows::new(rows))
+        Ok(Rows::new(rows, affected_rows))
     }
 
     pub fn query_map<T, P, F>(&mut self, params: P, f: F) -> Result<MappedRows<F>, Error>

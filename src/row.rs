@@ -26,11 +26,15 @@ use std::result::Result;
 
 pub struct Rows {
     rows: VecDeque<Vec<CellValue>>,
+    rows_affected: usize,
 }
 
 impl Rows {
-    pub(crate) fn new(rows: VecDeque<Vec<CellValue>>) -> Rows {
-        Rows { rows }
+    pub(crate) fn new(rows: VecDeque<Vec<CellValue>>, rows_affected: usize) -> Rows {
+        Rows {
+            rows,
+            rows_affected,
+        }
     }
 
     pub fn mapped<F, B>(self, f: F) -> MappedRows<F>

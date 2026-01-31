@@ -120,7 +120,8 @@ impl StatementAsync<'_> {
 
     pub async fn query<P: Params>(&mut self, params: P) -> Result<Rows, Error> {
         params.__bind_in_async(self)?;
-        self.conn
+        let affected_rows = self
+            .conn
             ._execute_statement(
                 self.trans_handle,
                 self.stmt_handle,
@@ -139,7 +140,7 @@ impl StatementAsync<'_> {
             self.conn.commit().await?;
         }
 
-        Ok(Rows::new(rows))
+        Ok(Rows::new(rows, affected_rows))
     }
 
     pub async fn query_map<T, P, F>(&mut self, params: P, f: F) -> Result<MappedRows<F>, Error>
