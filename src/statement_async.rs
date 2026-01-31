@@ -25,7 +25,7 @@ use super::Error;
 use super::cellvalue::CellValue;
 use super::param::ToSqlParam;
 use super::params::Params;
-use super::row::{MappedRows, Row, Rows};
+use super::query_result::{MappedRows, Row, Rows};
 use super::xsqlvar::XSQLVar;
 use super::*;
 

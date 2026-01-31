@@ -30,7 +30,7 @@ mod errmsgs;
 mod error;
 mod param;
 mod params;
-mod row;
+mod query_result;
 mod srp;
 mod statement;
 mod transaction;
