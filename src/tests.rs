@@ -97,7 +97,7 @@ fn test_connnect() {
 
     conn.execute(
         "insert into foo(a, b, c, e, g, i, j) values (?, ?, ?, '1999-01-25', '00:00:01', 0.1, 0.1)",
-        params![2, "A", "B"]
+        params![2, "A", "B"],
     )
     .unwrap();
     conn.execute("insert into foo(a, b, c, e, g, i, j) values (3, 'X', 'Y', '2001-07-05', '00:01:02', 0.2, 0.2)", ()).unwrap();
