@@ -41,7 +41,10 @@ impl QueryResult {
     where
         F: FnMut(&Row) -> Result<B, Error>,
     {
-        MappedRows { result: self, map: f }
+        MappedRows {
+            result: self,
+            map: f,
+        }
     }
 }
 

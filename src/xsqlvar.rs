@@ -53,6 +53,7 @@ impl XSQLVar {
             aliasname: "".to_string(),
         }
     }
+
     pub fn io_length(&self) -> isize {
         if self.sqltype == SQL_TYPE_TEXT {
             self.sqllen as isize
@@ -81,6 +82,32 @@ impl XSQLVar {
             };
             map[&self.sqltype]
         }
+    }
+
+    pub fn name(&self) -> &str {
+        let map = hashmap! {
+            SQL_TYPE_TEXT=>         "TEXT",
+            SQL_TYPE_VARYING=>      "VARCHR",
+            SQL_TYPE_SHORT=>        "SHORT",
+            SQL_TYPE_LONG=>         "LONG",
+            SQL_TYPE_FLOAT=>        "FLOAT",
+            SQL_TYPE_TIME=>         "TIME",
+            SQL_TYPE_DATE=>         "DATE",
+            SQL_TYPE_DOUBLE=>       "DOUBLE",
+            SQL_TYPE_TIMESTAMP=>    "TIMESTAMP",
+            SQL_TYPE_BLOB=>         "BLOB",
+            SQL_TYPE_ARRAY=>        "ARRAY",
+            SQL_TYPE_QUAD=>         "QUAD",
+            SQL_TYPE_INT64=>        "INT64",
+            SQL_TYPE_INT128=>       "INT128",
+            SQL_TYPE_TIMESTAMP_TZ=> "TIMESTAMP WITH TIMEZONE",
+            SQL_TYPE_TIME_TZ=>      "TIME WITH TIMEZONE",
+            SQL_TYPE_DEC64=>        "DEC64",
+            SQL_TYPE_DEC128=>       "DEC128",
+            SQL_TYPE_DEC_FIXED=>    "DEC_FIXED",
+            SQL_TYPE_BOOLEAN=>      "BOOLEAN",
+        };
+        map[&self.sqltype]
     }
 
     pub fn value(&self, raw_value: &[u8]) -> Result<CellValue, ValueError> {
