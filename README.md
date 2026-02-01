@@ -14,7 +14,7 @@ Firebird 3.0+ is supported
 Add `firebirust` to dependencies section of Cargo.toml
 ```
 [dependencies]
-firebirust = “0.5”
+firebirust = “0.6”
 ```
 
 ## code example
