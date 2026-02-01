@@ -397,7 +397,10 @@ fn test_params() {
     assert_eq!(param!(1), Param::from(1));
     assert_eq!(param!("abc"), Param::from("abc"));
 
-    assert_eq!(params![1, "abc"], &[&crate::Param::from(1), &crate::Param::from("abc")])
+    let params_slice = &[&param!(1), &param!("abc")];
+    assert_eq!(params![1, "abc"], params_slice);
+    let params_slice = &[&param!(2), &param!("ABC"), &param!(1.0)];
+    assert_eq!(params![2, "ABC", 1.0], params_slice)
 }
 
 #[cfg(test)]
