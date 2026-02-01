@@ -49,8 +49,7 @@ mod wireprotocol_async;
 pub use crate::connection::Connection;
 pub use crate::connection_async::ConnectionAsync;
 pub use crate::error::Error;
-pub use crate::param::Param;
-pub use crate::param::ToSqlParam;
+pub use crate::param::{Param, ToSqlParam};
 
 // Column type
 pub const SQL_TYPE_TEXT: u32 = 452;
@@ -375,14 +374,30 @@ pub(crate) const ISC_INFO_TRA_OLDEST_ACTIVE: u32 = 7;
 pub(crate) const ISC_INFO_TRA_ISOLATION: u32 = 8;
 pub(crate) const ISC_INFO_TRA_ACCESS: u32 = 9;
 pub(crate) const ISC_INFO_TRA_LOCK_TIMEOUT: u32 = 10;
+
+#[macro_export]
+macro_rules! param {
+    ($p:expr) => {
+        $crate::Param::from($p)
+    };
+}
+
 #[macro_export]
 macro_rules! params {
     () => {
-        &[] as &[&dyn $crate::ToSqlParam]
+        &[]
     };
     ($($param:expr),*) => {
-        &[$(&$crate::Param::from($param) as &dyn $crate::ToSqlParam),*] as &[&dyn $crate::ToSqlParam]
+        &[$(&$crate::Param::from($param)),*]
     };
+}
+
+#[test]
+fn test_params() {
+    assert_eq!(param!(1), Param::from(1));
+    assert_eq!(param!("abc"), Param::from("abc"));
+
+    assert_eq!(params![1, "abc"], &[&crate::Param::from(1), &crate::Param::from("abc")])
 }
 
 #[cfg(test)]
