@@ -89,6 +89,7 @@ fn test_connnect() {
     )
     .unwrap();
 
+    // param!("b") eq "b"
     conn.execute(
         "insert into foo(a, b, c, h) values (?, ?, ?, ?)",
         (1, "a", param!("b"), "This is a pen"),
