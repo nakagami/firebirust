@@ -23,7 +23,7 @@
 use super::Connection;
 use super::Error;
 use super::cellvalue::CellValue;
-use super::param::ToSqlParam;
+use super::param::{Param, ToSqlParam};
 use super::params::Params;
 use super::query_result::{MappedRows, QueryResult, Row};
 use super::xsqlvar::XSQLVar;
@@ -116,8 +116,7 @@ impl Statement<'_> {
         Ok(rows)
     }
 
-    pub fn query<P: Params>(&mut self, params: P) -> Result<QueryResult, Error> {
-        params.__bind_in(self)?;
+    fn __query(&mut self) -> Result<QueryResult, Error> {
         let affected_rows = self.conn._execute_statement(
             self.trans_handle,
             self.stmt_handle,
@@ -134,6 +133,18 @@ impl Statement<'_> {
         }
 
         Ok(QueryResult::new(rows, affected_rows))
+    }
+
+    pub fn query_with_param_slice(&mut self, param_slice: &[&Param]) -> Result<QueryResult, Error> {
+        for p in param_slice {
+            self.params.push(p.to_value_blr_isnull());
+        }
+        self.__query()
+    }
+
+    pub fn query<P: Params>(&mut self, params: P) -> Result<QueryResult, Error> {
+        params.__bind_in(self)?;
+        self.__query()
     }
 
     pub fn query_map<T, P, F>(&mut self, params: P, f: F) -> Result<MappedRows<F>, Error>
