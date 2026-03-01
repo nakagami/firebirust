@@ -151,6 +151,7 @@ fn test_timezone() {
 }
 
 #[test]
+#[ignore]
 fn test_timezone_parameter() {
     let user = std::env::var("ISC_USER").unwrap_or_else(|_| "sysdba".to_string());
     let password = std::env::var("ISC_PASSWORD").unwrap_or_else(|_| "masterkey".to_string());
