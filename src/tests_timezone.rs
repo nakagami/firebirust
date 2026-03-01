@@ -149,3 +149,59 @@ fn test_timezone() {
         assert_eq!(r, expects[i]);
     }
 }
+
+#[test]
+fn test_timezone_parameter() {
+    let user = std::env::var("ISC_USER").unwrap_or_else(|_| "sysdba".to_string());
+    let password = std::env::var("ISC_PASSWORD").unwrap_or_else(|_| "masterkey".to_string());
+
+    let conn_string = format!(
+        "firebird://{}:{}@localhost/tmp/rust-firebird-test-tz-param.fdb?timezone=Asia/Tokyo",
+        &user,
+        urlencoding::encode(&password)
+    );
+
+    let mut conn = Connection::create_database_url(&conn_string).expect("Can't create database");
+
+    conn.execute_batch(
+        r#"
+        CREATE TABLE tz_param_test (
+            id INTEGER NOT NULL,
+            ts TIMESTAMP WITH TIME ZONE,
+            PRIMARY KEY (id)
+        )
+    "#,
+    ).unwrap();
+
+    let dt_tokyo = chrono_tz::Asia::Tokyo
+        .with_ymd_and_hms(2023, 10, 27, 12, 34, 56)
+        .unwrap();
+    let dt_seoul = chrono_tz::Asia::Seoul
+        .with_ymd_and_hms(2023, 10, 27, 12, 34, 56)
+        .unwrap();
+
+    conn.execute(
+        "insert into tz_param_test (id, ts) values (1, ?)",
+        (dt_tokyo,)
+    ).unwrap();
+
+    conn.execute(
+        "insert into tz_param_test (id, ts) values (2, ?)",
+        (dt_seoul,)
+    ).unwrap();
+
+    let mut stmt = conn.prepare("SELECT id, ts FROM tz_param_test ORDER BY id").unwrap();
+    let mut rows = stmt.query(()).unwrap();
+
+    let row1 = rows.next().unwrap();
+    let id1: i32 = row1.get(0).unwrap();
+    let ts1: chrono::DateTime<chrono_tz::Tz> = row1.get(1).unwrap();
+    assert_eq!(id1, 1);
+    assert_eq!(ts1, dt_tokyo);
+
+    let row2 = rows.next().unwrap();
+    let id2: i32 = row2.get(0).unwrap();
+    let ts2: chrono::DateTime<chrono_tz::Tz> = row2.get(1).unwrap();
+    assert_eq!(id2, 2);
+    assert_eq!(ts2, dt_seoul);
+}

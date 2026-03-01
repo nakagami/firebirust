@@ -3,7 +3,7 @@
 use maplit::hashmap;
 
 #[allow(dead_code)]
-pub fn timezone_id_by_name(s: &str) -> u16 {
+pub fn timezone_id_by_name(s: &str) -> i32 {
     let map = hashmap! {
         "GMT" => 65535,
         "ACT" => 65534,

@@ -192,7 +192,7 @@ impl ToSqlParam for Param {
                     .unwrap();
                 value
                     .write(&utils::convert_time(
-                        t.hour() as u32,
+                        t.hour(),
                         t.minute(),
                         t.second(),
                         t.nanosecond(),
@@ -213,8 +213,24 @@ impl ToSqlParam for Param {
                 value.write(&v).unwrap();
                 blr.write(&b).unwrap();
             }
-            Param::TimeStampTZ(_dt_tz) => {
-                // TODO:
+            Param::TimeStampTZ(dt_tz) => {
+                let tz_id = tz_map::timezone_id_by_name(dt_tz.timezone().name());
+                let dt = dt_tz.naive_utc();
+                let d = dt.date();
+                let t = dt.time();
+                value
+                    .write(&utils::convert_date(d.year(), d.month(), d.day()))
+                    .unwrap();
+                value
+                    .write(&utils::convert_time(
+                        t.hour(),
+                        t.minute(),
+                        t.second(),
+                        t.nanosecond(),
+                    ))
+                    .unwrap();
+                value.write(&tz_id.to_be_bytes()).unwrap();
+                blr.write(&[29]).unwrap();
             }
             Param::Decimal(d) => {
                 let s = d.to_string();
