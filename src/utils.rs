@@ -393,3 +393,59 @@ pub fn guess_wire_crypt(buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
     }
     return (vec![], vec![]);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bint32_roundtrip() {
+        for v in [0i32, 1, -1, 127, -128, 255, 256, 32767, -32768, i32::MAX, i32::MIN] {
+            let bytes = bint32_to_bytes(v);
+            assert_eq!(bytes_to_bint32(&bytes), v, "bint32 roundtrip failed for {}", v);
+        }
+    }
+
+    #[test]
+    fn test_bint64_roundtrip() {
+        for v in [0i64, 1, -1, i64::MAX, i64::MIN] {
+            let bytes = bint64_to_bytes(v);
+            assert_eq!(bytes_to_bint64(&bytes), v, "bint64 roundtrip failed for {}", v);
+        }
+    }
+
+    #[test]
+    fn test_bint128_roundtrip() {
+        for v in [0i128, 1, -1, i128::MAX, i128::MIN] {
+            let bytes = bint128_to_bytes(v);
+            assert_eq!(bytes_to_bint128(&bytes), v, "bint128 roundtrip failed for {}", v);
+        }
+    }
+
+    /// SQL_TYPE_SHORT is sent as 4-byte big-endian i32 on the wire.
+    /// bytes_to_bint32 should be used (then truncated to i16),
+    /// NOT bytes_to_bint16 which only reads the first 2 bytes.
+    #[test]
+    fn test_smallint_wire_format() {
+        // Firebird sends SMALLINT as 4-byte big-endian i32 (io_length=4).
+        for v in [0i16, 1, -1, 127, -128, 255, 256, 32767, -32768] {
+            let wire_bytes = bint32_to_bytes(v as i32);
+
+            // Correct: read as bint32, truncate to i16
+            let correct = bytes_to_bint32(&wire_bytes) as i16;
+            assert_eq!(correct, v, "bint32-to-i16 failed for {}", v);
+
+            // Bug: bytes_to_bint16 reads only first 2 bytes (high bytes of big-endian i32)
+            let buggy = bytes_to_bint16(&wire_bytes);
+            // For values where high 2 bytes differ from the i16 value, this is wrong
+            if v != 0 && v != -1 {
+                assert_ne!(
+                    buggy, v,
+                    "bytes_to_bint16 unexpectedly correct for {} - \
+                     it reads high bytes of big-endian i32",
+                    v
+                );
+            }
+        }
+    }
+}

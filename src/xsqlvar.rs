@@ -114,7 +114,7 @@ impl XSQLVar {
         match self.sqltype {
             SQL_TYPE_TEXT => Ok(CellValue::Text(utils::bytes_to_rtrim_str(raw_value))),
             SQL_TYPE_VARYING => Ok(CellValue::Varying(utils::bytes_to_str(raw_value))),
-            SQL_TYPE_SHORT => Ok(CellValue::Short(utils::bytes_to_bint16(raw_value))),
+            SQL_TYPE_SHORT => Ok(CellValue::Short(utils::bytes_to_bint32(raw_value) as i16)),
             SQL_TYPE_LONG => Ok(CellValue::Long(utils::bytes_to_bint32(raw_value))),
             SQL_TYPE_INT64 => Ok(if self.sqlscale < 0 {
                 CellValue::Decimal(rust_decimal::Decimal::new(
