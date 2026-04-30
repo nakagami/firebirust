@@ -22,7 +22,6 @@
 
 #![allow(dead_code)]
 
-use futures_lite::AsyncReadExt;
 use futures_lite::AsyncWriteExt;
 use hex;
 use num_bigint::BigInt;
