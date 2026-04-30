@@ -22,7 +22,8 @@
 
 #![allow(dead_code)]
 
-use async_std::io::prelude::*;
+use futures_lite::AsyncReadExt;
+use futures_lite::AsyncWriteExt;
 use hex;
 use num_bigint::BigInt;
 use std::collections::{HashMap, HashSet};

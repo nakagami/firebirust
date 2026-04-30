@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 use super::*;
-use async_std::task;
+use smol;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -312,5 +312,5 @@ async fn test_connnect_async() {
 
 #[test]
 fn test_connnect() {
-    task::block_on(test_connnect_async())
+    smol::block_on(test_connnect_async())
 }

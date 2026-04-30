@@ -22,8 +22,9 @@
 
 use super::crypt_translater::{Arc4, ChaCha, CryptTranslator};
 use super::error::Error;
-use async_std::io::prelude::*;
-use async_std::net::TcpStream;
+use futures_lite::AsyncReadExt;
+use futures_lite::AsyncWriteExt;
+use async_net::TcpStream;
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use hex;

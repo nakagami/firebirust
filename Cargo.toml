@@ -23,6 +23,6 @@ percent-encoding = "2.1"
 chrono = "0.4"
 chrono-tz = "0.6"
 urlencoding = "2.1"
-
-[dependencies.async-std]
-version = "1.13"
+async-net = "1.8"
+futures-lite = "2.6"
+smol = "1.2"
