@@ -960,8 +960,13 @@ impl WireProtocol {
         }
 
         if opcode != OP_FETCH_RESPONSE {
-            self.parse_op_response()?;
-            panic!("op fetch response error"); // not reach
+            if opcode == OP_RESPONSE {
+                self.parse_op_response()?;
+            }
+            return Err(Error::FirebirdError(FirebirdError::new(
+                "opFetchResponse:Internal Error",
+                0,
+            )));
         }
 
         let mut status = utils::bytes_to_buint32(&self.recv_packets(4)?);
@@ -996,7 +1001,23 @@ impl WireProtocol {
                 }
             }
             rows.push(row);
-            let _op_code = utils::bytes_to_buint32(&self.recv_packets(4)?);
+
+            // Read next opcode before committing to a full continuation header read.
+            // Firebird may send op_response (an error) instead of op_fetch_response.
+            let next_op = utils::bytes_to_buint32(&self.recv_packets(4)?);
+            if next_op == OP_RESPONSE {
+                self.parse_op_response()?;
+                return Err(Error::FirebirdError(FirebirdError::new(
+                    "opFetchResponse:Internal Error",
+                    0,
+                )));
+            }
+            if next_op != OP_FETCH_RESPONSE {
+                return Err(Error::FirebirdError(FirebirdError::new(
+                    &format!("opFetchResponse: unexpected op {}", next_op),
+                    0,
+                )));
+            }
             status = utils::bytes_to_buint32(&self.recv_packets(4)?);
             count = utils::bytes_to_buint32(&self.recv_packets(4)?);
         }

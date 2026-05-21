@@ -352,7 +352,7 @@ fn test_connnect() {
     let mut stmt = conn.prepare("select * from FPI_MOVTO_MOVIMIENTOS").unwrap();
     assert_eq!(stmt.query(()).unwrap().count(), 1);
 
-    // Transction
+    // Transaction
     let mut conn = Connection::connect_url(&conn_string).unwrap();
     let expects: [Foo; 1] = [Foo {
         a: 2,
@@ -395,4 +395,73 @@ fn test_connnect() {
     for (i, foo) in foo_iter.enumerate() {
         assert_eq!(foo.unwrap(), expects[i]);
     }
+}
+
+// test_issue264 verifies that when a server-side error occurs after at least
+// one row has been returned, the actual Firebird error message is propagated
+// to the caller instead of the opaque "opFetchResponse:Internal Error".
+#[test]
+fn test_issue264() {
+    let user = match env::var("ISC_USER") {
+        Ok(val) => val,
+        Err(_) => "sysdba".to_string(),
+    };
+    let password = match env::var("ISC_PASSWORD") {
+        Ok(val) => val,
+        Err(_) => "masterkey".to_string(),
+    };
+
+    let conn_string = format!(
+        "firebird://{}:{}@localhost{}/rust-firebird-test-issue264.fdb",
+        &user,
+        urlencoding::encode(&password),
+        env::temp_dir().display(),
+    );
+
+    let mut conn = match Connection::create_database_url(&conn_string) {
+        Ok(c) => c,
+        Err(err) => {
+            println!("{:#?}", err);
+            panic!("Can't connect");
+        }
+    };
+
+    conn.execute_batch("CREATE EXCEPTION EX_ISSUE264 'issue264 error message'")
+        .unwrap();
+
+    // Selectable procedure: returns one row successfully, then raises an exception.
+    // Firebird sends op_response (the exception) directly after the row data without
+    // a separate count=0 op_fetch_response trailer.
+    conn.execute_batch(
+        r#"
+        CREATE PROCEDURE PROC_ISSUE264
+        RETURNS (N INTEGER)
+        AS
+        BEGIN
+          N = 1;
+          SUSPEND;
+          EXCEPTION EX_ISSUE264 'issue264 error message';
+        END"#,
+    )
+    .unwrap();
+
+    let mut stmt = conn.prepare("SELECT * FROM PROC_ISSUE264").unwrap();
+    // The error surfaces during fetch_records(), so query() itself returns Err.
+    let result = stmt.query(());
+
+    assert!(
+        result.is_err(),
+        "expected an error after server exception, but query() succeeded"
+    );
+    let err_msg = format!("{:?}", result.err().unwrap());
+    assert!(
+        !err_msg.contains("opFetchResponse:Internal Error"),
+        "error should not be the generic fallback: {}",
+        err_msg
+    );
+    assert!(
+        err_msg.contains("issue264 error message"),
+        "error should contain the Firebird exception message: {}",
+        err_msg
+    );
 }
