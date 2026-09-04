@@ -36,46 +36,39 @@ use num_bigint::{BigInt, BigUint, Sign};
 use super::tz_map;
 
 pub fn int32_to_bytes(i: i32) -> [u8; 4] {
-    // little endian i32 to Vec<u8>
-    i32::to_ne_bytes(i.to_le())
+    i.to_le_bytes()
 }
 
 pub fn uint32_to_bytes(i: u32) -> [u8; 4] {
-    // little endian u32 to Vec<u8>
-    u32::to_ne_bytes(i.to_le())
+    i.to_le_bytes()
 }
 
 pub fn bint128_to_bytes(i: i128) -> [u8; 16] {
-    // big endian i128 to Vec<u8>
-    i128::to_ne_bytes(i.to_be())
+    i.to_be_bytes()
 }
 
 pub fn bint64_to_bytes(i: i64) -> [u8; 8] {
-    // big endian i64 to Vec<u8>
-    i64::to_ne_bytes(i.to_be())
+    i.to_be_bytes()
 }
 
 pub fn bint32_to_bytes(i: i32) -> [u8; 4] {
-    // big endian i32 to Vec<u8>
-    i32::to_ne_bytes(i.to_be())
+    i.to_be_bytes()
 }
 
 pub fn ubint32_to_bytes(i: u32) -> [u8; 4] {
-    // big endian u32 to Vec<u8>
-    u32::to_ne_bytes(i.to_be())
+    i.to_be_bytes()
 }
 
 pub fn int16_to_bytes(i: u16) -> [u8; 2] {
-    // little endian u16 to Vec<u8>
-    u16::to_ne_bytes(i.to_le())
+    i.to_le_bytes()
 }
 
 pub fn f32_to_bytes(f: f32) -> [u8; 4] {
-    f.to_le_bytes()
+    f.to_be_bytes()
 }
 
 pub fn f64_to_bytes(f: f64) -> [u8; 8] {
-    f.to_le_bytes()
+    f.to_be_bytes()
 }
 
 pub fn bytes_to_str(b: &[u8]) -> String {
@@ -87,111 +80,122 @@ pub fn bytes_to_rtrim_str(b: &[u8]) -> String {
 }
 
 pub fn bytes_to_int32(b: &[u8]) -> i32 {
-    let tmp: [u8; 4] = [b[0], b[1], b[2], b[3]];
-    i32::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 4];
+    let len = b.len().min(4);
+    tmp[..len].copy_from_slice(&b[..len]);
+    i32::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_bint32(b: &[u8]) -> i32 {
-    let tmp: [u8; 4] = [b[3], b[2], b[1], b[0]];
-    i32::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 4];
+    let len = b.len().min(4);
+    tmp[4 - len..].copy_from_slice(&b[..len]);
+    i32::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_uint32(b: &[u8]) -> u32 {
-    // little endian u32
-    ((b[0] as u32) << 0) + ((b[1] as u32) << 8) + ((b[2] as u32) << 16) + ((b[3] as u32) << 24)
+    let mut tmp = [0u8; 4];
+    let len = b.len().min(4);
+    tmp[..len].copy_from_slice(&b[..len]);
+    u32::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_buint32(b: &[u8]) -> u32 {
-    // big endian u32
-    ((b[0] as u32) << 24) + ((b[1] as u32) << 16) + ((b[2] as u32) << 8) + ((b[3] as u32) << 0)
+    let mut tmp = [0u8; 4];
+    let len = b.len().min(4);
+    tmp[4 - len..].copy_from_slice(&b[..len]);
+    u32::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_int16(b: &[u8]) -> i16 {
-    let tmp: [u8; 2] = [b[0], b[1]];
-    i16::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 2];
+    let len = b.len().min(2);
+    tmp[..len].copy_from_slice(&b[..len]);
+    i16::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_bint16(b: &[u8]) -> i16 {
-    let tmp: [u8; 2] = [b[1], b[0]];
-    i16::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 2];
+    let len = b.len().min(2);
+    tmp[2 - len..].copy_from_slice(&b[..len]);
+    i16::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_uint16(b: &[u8]) -> u16 {
-    // little endian u16
-    ((b[0] as u16) << 0) + ((b[1] as u16) << 8)
+    let mut tmp = [0u8; 2];
+    let len = b.len().min(2);
+    tmp[..len].copy_from_slice(&b[..len]);
+    u16::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_buint16(b: &[u8]) -> u16 {
-    // big endian u16
-    ((b[0] as u16) << 8) + ((b[1] as u16) << 0)
+    let mut tmp = [0u8; 2];
+    let len = b.len().min(2);
+    tmp[2 - len..].copy_from_slice(&b[..len]);
+    u16::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_int64(b: &[u8]) -> i64 {
-    let tmp: [u8; 8] = [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]];
-    i64::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 8];
+    let len = b.len().min(8);
+    tmp[..len].copy_from_slice(&b[..len]);
+    i64::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_bint64(b: &[u8]) -> i64 {
-    let tmp: [u8; 8] = [b[7], b[6], b[5], b[4], b[3], b[2], b[1], b[0]];
-    i64::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 8];
+    let len = b.len().min(8);
+    tmp[8 - len..].copy_from_slice(&b[..len]);
+    i64::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_uint128(b: &[u8]) -> u128 {
-    let tmp: [u8; 16] = [
-        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13],
-        b[14], b[15],
-    ];
-    u128::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 16];
+    let len = b.len().min(16);
+    tmp[..len].copy_from_slice(&b[..len]);
+    u128::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_int128(b: &[u8]) -> i128 {
-    let tmp: [u8; 16] = [
-        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13],
-        b[14], b[15],
-    ];
-    i128::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 16];
+    let len = b.len().min(16);
+    tmp[..len].copy_from_slice(&b[..len]);
+    i128::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_bint128(b: &[u8]) -> i128 {
-    let tmp: [u8; 16] = [
-        b[15], b[14], b[13], b[12], b[11], b[10], b[9], b[8], b[7], b[6], b[5], b[4], b[3], b[2],
-        b[1], b[0],
-    ];
-    i128::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 16];
+    let len = b.len().min(16);
+    tmp[16 - len..].copy_from_slice(&b[..len]);
+    i128::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_uint64(b: &[u8]) -> u64 {
-    // little endian u64
-    ((b[0] as u64) << 0)
-        + ((b[1] as u64) << 8)
-        + ((b[2] as u64) << 16)
-        + ((b[3] as u64) << 24)
-        + ((b[4] as u64) << 32)
-        + ((b[5] as u64) << 40)
-        + ((b[6] as u64) << 48)
-        + ((b[7] as u64) << 56)
+    let mut tmp = [0u8; 8];
+    let len = b.len().min(8);
+    tmp[..len].copy_from_slice(&b[..len]);
+    u64::from_le_bytes(tmp)
 }
 
 pub fn bytes_to_buint64(b: &[u8]) -> u64 {
-    // big endian u64
-    ((b[0] as u64) << 56)
-        + ((b[1] as u64) << 48)
-        + ((b[2] as u64) << 40)
-        + ((b[3] as u64) << 32)
-        + ((b[4] as u64) << 24)
-        + ((b[5] as u64) << 16)
-        + ((b[6] as u64) << 8)
-        + ((b[7] as u64) << 0)
+    let mut tmp = [0u8; 8];
+    let len = b.len().min(8);
+    tmp[8 - len..].copy_from_slice(&b[..len]);
+    u64::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_f32(b: &[u8]) -> f32 {
-    let tmp: [u8; 4] = [b[3], b[2], b[1], b[0]];
-    f32::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 4];
+    let len = b.len().min(4);
+    tmp[4 - len..].copy_from_slice(&b[..len]);
+    f32::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_f64(b: &[u8]) -> f64 {
-    let tmp: [u8; 8] = [b[7], b[6], b[5], b[4], b[3], b[2], b[1], b[0]];
-    f64::from_ne_bytes(tmp)
+    let mut tmp = [0u8; 8];
+    let len = b.len().min(8);
+    tmp[8 - len..].copy_from_slice(&b[..len]);
+    f64::from_be_bytes(tmp)
 }
 
 pub fn bytes_to_naive_date(b: &[u8]) -> chrono::NaiveDate {
@@ -358,40 +362,49 @@ pub fn convert_time(hour: u32, minute: u32, second: u32, nanosecond: u32) -> [u8
 }
 
 pub fn guess_wire_crypt(buf: &[u8]) -> (Vec<u8>, Vec<u8>) {
-    let mut available_plugins = vec![];
+    let mut available_plugins: Vec<&str> = vec![];
     let mut plugin_nonce = vec![];
 
     let mut i: usize = 0;
     while i < buf.len() {
         let k = buf[i];
         i += 1;
+        if i >= buf.len() {
+            break;
+        }
         let ln = buf[i] as usize;
         i += 1;
+        if i + ln > buf.len() {
+            break;
+        }
         let v = &buf[i..i + ln];
         i += ln;
         if k == 1 {
-            let s = str::from_utf8(v).unwrap();
-            available_plugins = s.split(' ').collect();
+            if let Ok(s) = str::from_utf8(v) {
+                available_plugins = s.split(' ').collect();
+            }
         } else if k == 3 {
             plugin_nonce.push(v);
         }
     }
     if available_plugins.contains(&"ChaCha64") {
         for nonce in &plugin_nonce {
-            if &nonce[0..9] == b"ChaCha64\x00" {
+            if nonce.len() >= 9 && &nonce[0..9] == b"ChaCha64\x00" {
                 return (b"ChaCha64".to_vec(), nonce[9..].to_vec());
             }
         }
-    } else if available_plugins.contains(&"ChaCha") {
+    }
+    if available_plugins.contains(&"ChaCha") {
         for nonce in &plugin_nonce {
-            if &nonce[0..7] == b"ChaCha\x00" {
-                return (b"ChaCha".to_vec(), nonce[7..(7 + 12)].to_vec());
+            if nonce.len() >= 19 && &nonce[0..7] == b"ChaCha\x00" {
+                return (b"ChaCha".to_vec(), nonce[7..19].to_vec());
             }
         }
-    } else if available_plugins.contains(&"Arc4") {
+    }
+    if available_plugins.contains(&"Arc4") {
         return (b"Arc4".to_vec(), vec![]);
     }
-    return (vec![], vec![]);
+    (vec![], vec![])
 }
 
 #[cfg(test)]
@@ -447,5 +460,41 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_float_roundtrip() {
+        for v in [0.0f32, 1.0, -1.0, 3.14159, f32::MAX, f32::MIN] {
+            let bytes = f32_to_bytes(v);
+            assert_eq!(bytes_to_f32(&bytes), v);
+        }
+        for v in [0.0f64, 1.0, -1.0, 3.141592653589793, f64::MAX, f64::MIN] {
+            let bytes = f64_to_bytes(v);
+            assert_eq!(bytes_to_f64(&bytes), v);
+        }
+    }
+
+    #[test]
+    fn test_guess_wire_crypt_malformed() {
+        // Empty buffer
+        assert_eq!(guess_wire_crypt(&[]), (vec![], vec![]));
+        // Dangling tag byte with no length
+        assert_eq!(guess_wire_crypt(&[1]), (vec![], vec![]));
+        // Length exceeds buffer
+        assert_eq!(guess_wire_crypt(&[1, 10, b'C', b'h', b'a']), (vec![], vec![]));
+        // ChaCha truncated nonce
+        let mut buf = vec![1, 6, b'C', b'h', b'a', b'C', b'h', b'a', 3, 10];
+        buf.extend(b"ChaCha\x00sho");
+        assert_eq!(guess_wire_crypt(&buf), (vec![], vec![]));
+    }
+
+    #[test]
+    fn test_guess_wire_crypt_valid() {
+        // ChaCha with valid 19-byte nonce (7 prefix + 12 IV)
+        let mut buf = vec![1, 6, b'C', b'h', b'a', b'C', b'h', b'a', 3, 19];
+        buf.extend(b"ChaCha\x000123456789ab");
+        let (plugin, nonce) = guess_wire_crypt(&buf);
+        assert_eq!(plugin, b"ChaCha");
+        assert_eq!(nonce, b"0123456789ab");
     }
 }

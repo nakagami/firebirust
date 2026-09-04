@@ -64,6 +64,12 @@ impl WireChannel {
 
         while self.read_buf.len() < n {
             let ln = self.stream.read(&mut input_buf)?;
+            if ln == 0 {
+                return Err(Error::IoError(std::io::Error::new(
+                    std::io::ErrorKind::UnexpectedEof,
+                    "unexpected EOF while reading from socket",
+                )));
+            }
             self.read_buf.extend(input_buf[..ln].iter().copied());
         }
 

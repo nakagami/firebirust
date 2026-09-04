@@ -465,3 +465,92 @@ fn test_issue264() {
         err_msg
     );
 }
+
+#[test]
+fn test_select_untyped_null() {
+    let user = match env::var("ISC_USER") {
+        Ok(val) => val,
+        Err(_) => "sysdba".to_string(),
+    };
+    let password = match env::var("ISC_PASSWORD") {
+        Ok(val) => val,
+        Err(_) => "masterkey".to_string(),
+    };
+
+    let conn_string = format!(
+        "firebird://{}:{}@localhost{}/rust-firebird-test-null.fdb",
+        &user,
+        urlencoding::encode(&password),
+        env::temp_dir().display(),
+    );
+
+    let mut conn = match Connection::create_database_url(&conn_string) {
+        Ok(c) => c,
+        Err(err) => {
+            println!("{:#?}", err);
+            panic!("Can't connect");
+        }
+    };
+
+    let mut stmt = conn.prepare("SELECT NULL, 42 FROM RDB$DATABASE").unwrap();
+    let mut rows = stmt.query(()).unwrap();
+    let row = rows.next().unwrap();
+    let null_val: Option<i32> = row.get(0).unwrap();
+    let num_val: i32 = row.get(1).unwrap();
+    assert_eq!(null_val, None);
+    assert_eq!(num_val, 42);
+}
+
+#[test]
+fn test_numeric_scaled_live() {
+    let user = match env::var("ISC_USER") {
+        Ok(val) => val,
+        Err(_) => "sysdba".to_string(),
+    };
+    let password = match env::var("ISC_PASSWORD") {
+        Ok(val) => val,
+        Err(_) => "masterkey".to_string(),
+    };
+
+    let conn_string = format!(
+        "firebird://{}:{}@localhost{}/rust-firebird-test-scaled.fdb",
+        &user,
+        urlencoding::encode(&password),
+        env::temp_dir().display(),
+    );
+
+    let mut conn = match Connection::create_database_url(&conn_string) {
+        Ok(c) => c,
+        Err(err) => {
+            println!("{:#?}", err);
+            panic!("Can't connect");
+        }
+    };
+
+    conn.execute_batch(
+        r#"
+        CREATE TABLE test_scaled (
+            s NUMERIC(4, 2),
+            l NUMERIC(9, 3),
+            b NUMERIC(18, 4)
+        )
+    "#,
+    )
+    .unwrap();
+
+    conn.execute(
+        "INSERT INTO test_scaled (s, l, b) VALUES (12.34, 123456.789, 12345678901234.5678)",
+        (),
+    )
+    .unwrap();
+
+    let mut stmt = conn.prepare("SELECT s, l, b FROM test_scaled").unwrap();
+    let mut rows = stmt.query(()).unwrap();
+    let row = rows.next().unwrap();
+    let s: Decimal = row.get(0).unwrap();
+    let l: Decimal = row.get(1).unwrap();
+    let b: Decimal = row.get(2).unwrap();
+    assert_eq!(s, dec!(12.34));
+    assert_eq!(l, dec!(123456.789));
+    assert_eq!(b, dec!(12345678901234.5678));
+}

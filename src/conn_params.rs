@@ -45,14 +45,18 @@ impl ConnParams {
             return Err(UrlError::BadUrl);
         }
 
-        let host = url.host().unwrap().to_string();
+        let host = match url.host() {
+            Some(h) => h.to_string(),
+            None => "".to_string(),
+        };
         let port = url.port().unwrap_or(3050);
         let username = percent_decode(url.username().as_ref())
             .decode_utf8_lossy()
             .into_owned();
-        let password = percent_decode(url.password().unwrap().as_ref())
-            .decode_utf8_lossy()
-            .into_owned();
+        let password = match url.password() {
+            Some(p) => percent_decode(p.as_ref()).decode_utf8_lossy().into_owned(),
+            None => "".to_string(),
+        };
         let mut db_name = percent_decode(url.path().as_ref())
             .decode_utf8_lossy()
             .into_owned();
@@ -117,4 +121,11 @@ fn test_conn_params() {
     let (_params, options) =
         ConnParams::from_url("firebird://user:pass@localhost/foo/bar.fdb?page_size=1234").unwrap();
     assert_eq!(&options["page_size"], "1234");
+
+    let (params, _options) =
+        ConnParams::from_url("firebird://sysdba@localhost/foo.fdb").unwrap();
+    assert_eq!(&params.host, "localhost");
+    assert_eq!(&params.username, "sysdba");
+    assert_eq!(&params.password, "");
+    assert_eq!(&params.db_name, "foo.fdb");
 }

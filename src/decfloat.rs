@@ -21,8 +21,6 @@
 // SOFTWARE.
 use rust_decimal;
 
-use super::*;
-
 use super::error::ValueError;
 
 fn dpd_bit_to_int(dpd: u16, mask: u16) -> u16 {
@@ -155,7 +153,10 @@ fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), Valu
     }
     exponent -= 6176;
 
-    let dpd_bits = utils::bytes_to_uint128(&b);
+    let mut tmp = [0u8; 16];
+    let len = b.len().min(16);
+    tmp[16 - len..].copy_from_slice(&b[..len]);
+    let dpd_bits = u128::from_be_bytes(tmp);
     let mask: u128 = 0x3fffffffffffffffffffffffffff;
     let digits = calc_significand(prefix, dpd_bits & mask, 110)?;
 
@@ -164,24 +165,44 @@ fn decimal128_to_sign_digits_exponent(b: &[u8]) -> Result<(i32, u128, i32), Valu
 
 pub fn decimal_fixed_to_decimal(
     b: &[u8],
-    _scale: i32,
+    scale: i32,
 ) -> Result<rust_decimal::Decimal, ValueError> {
     let (sign, digits, _) = decimal128_to_sign_digits_exponent(b)?;
-    let mut num = digits as i64;
+    let mut num = digits as i128;
     if sign != 0 {
         num *= -1;
     }
-    Ok(rust_decimal::Decimal::new(num, 0))
+    if scale < 0 {
+        rust_decimal::Decimal::try_from_i128_with_scale(num, (scale * -1) as u32)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    } else if scale > 0 {
+        let mul = 10i128
+            .checked_pow(scale as u32)
+            .ok_or_else(|| ValueError::new("sqlscale out of range"))?;
+        let val = num
+            .checked_mul(mul)
+            .ok_or_else(|| ValueError::new("numeric multiplication overflow"))?;
+        rust_decimal::Decimal::try_from_i128_with_scale(val, 0)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    } else {
+        rust_decimal::Decimal::try_from_i128_with_scale(num, 0)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    }
 }
 
 pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueError> {
     // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
+    if b.len() < 8 {
+        return Err(ValueError::new("decimal64 buffer too short"));
+    }
     let sign = if (b[0] & 0x80) == 0x80 { 1 } else { 0 };
 
     let cf = ((b[0] as u32) >> 2) & 0x1f;
 
-    let dpd_bits = utils::bytes_to_uint128(&b);
-    let mask: u128 = 0x3fffffffffffffffffffffffffff;
+    let mut tmp = [0u8; 8];
+    tmp.copy_from_slice(&b[..8]);
+    let dpd_bits = u64::from_be_bytes(tmp) as u128;
+    let mask: u128 = 0x3ffffffffffff;
 
     if cf == 0x1f {
         if sign == 1 {
@@ -225,19 +246,84 @@ pub fn decimal64_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueErro
     let digits = calc_significand(prefix, dpd_bits & mask, 50)?;
     exponent -= 398;
 
-    let mut num = digits as i64;
+    let mut num = digits as i128;
     if sign != 0 {
         num *= -1;
     }
-    Ok(rust_decimal::Decimal::new(num, exponent as u32))
+    if exponent < 0 {
+        rust_decimal::Decimal::try_from_i128_with_scale(num, (-exponent) as u32)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    } else if exponent > 0 {
+        let mul = 10i128
+            .checked_pow(exponent as u32)
+            .ok_or_else(|| ValueError::new("exponent out of range"))?;
+        let val = num
+            .checked_mul(mul)
+            .ok_or_else(|| ValueError::new("decimal overflow"))?;
+        rust_decimal::Decimal::try_from_i128_with_scale(val, 0)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    } else {
+        rust_decimal::Decimal::try_from_i128_with_scale(num, 0)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    }
 }
 
 pub fn decimal128_to_decimal(b: &[u8]) -> Result<rust_decimal::Decimal, ValueError> {
-    // https://en.wikipedia.org/wiki/Decimal64_floating-point_format
+    // https://en.wikipedia.org/wiki/Decimal128_floating-point_format
+    if b.len() < 16 {
+        return Err(ValueError::new("decimal128 buffer too short"));
+    }
     let (sign, digits, exponent) = decimal128_to_sign_digits_exponent(b)?;
-    let mut num = digits as i64;
+    let mut num = digits as i128;
     if sign != 0 {
         num *= -1;
     }
-    Ok(rust_decimal::Decimal::new(num, exponent as u32))
+    if exponent < 0 {
+        rust_decimal::Decimal::try_from_i128_with_scale(num, (-exponent) as u32)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    } else if exponent > 0 {
+        let mul = 10i128
+            .checked_pow(exponent as u32)
+            .ok_or_else(|| ValueError::new("exponent out of range"))?;
+        let val = num
+            .checked_mul(mul)
+            .ok_or_else(|| ValueError::new("decimal overflow"))?;
+        rust_decimal::Decimal::try_from_i128_with_scale(val, 0)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    } else {
+        rust_decimal::Decimal::try_from_i128_with_scale(num, 0)
+            .map_err(|e| ValueError::new(&e.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_decimal_macros::dec;
+
+    #[test]
+    fn test_decimal64_specials() {
+        assert_eq!(
+            decimal64_to_decimal(&[0x7C, 0, 0, 0, 0, 0, 0, 0]).unwrap_err().message,
+            "NaN"
+        );
+        assert_eq!(
+            decimal64_to_decimal(&[0xFC, 0, 0, 0, 0, 0, 0, 0]).unwrap_err().message,
+            "-NaN"
+        );
+        assert_eq!(
+            decimal64_to_decimal(&[0x78, 0, 0, 0, 0, 0, 0, 0]).unwrap_err().message,
+            "Inf"
+        );
+        assert_eq!(
+            decimal64_to_decimal(&[0xF8, 0, 0, 0, 0, 0, 0, 0]).unwrap_err().message,
+            "-Inf"
+        );
+    }
+
+    #[test]
+    fn test_decimal64_zero() {
+        let val = decimal64_to_decimal(&[0x22, 0x38, 0, 0, 0, 0, 0, 0]).unwrap();
+        assert_eq!(val, dec!(0));
+    }
 }

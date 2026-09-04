@@ -79,6 +79,7 @@ impl XSQLVar {
                 SQL_TYPE_DEC128=>       16,
                 SQL_TYPE_DEC_FIXED=>    16,
                 SQL_TYPE_BOOLEAN=>      1,
+                SQL_TYPE_NULL=>         0,
             };
             map[&self.sqltype]
         }
@@ -106,6 +107,7 @@ impl XSQLVar {
             SQL_TYPE_DEC128=>       "DEC128",
             SQL_TYPE_DEC_FIXED=>    "DEC_FIXED",
             SQL_TYPE_BOOLEAN=>      "BOOLEAN",
+            SQL_TYPE_NULL=>         "NULL",
         };
         map[&self.sqltype]
     }
@@ -114,34 +116,94 @@ impl XSQLVar {
         match self.sqltype {
             SQL_TYPE_TEXT => Ok(CellValue::Text(utils::bytes_to_rtrim_str(raw_value))),
             SQL_TYPE_VARYING => Ok(CellValue::Varying(utils::bytes_to_str(raw_value))),
-            SQL_TYPE_SHORT => Ok(CellValue::Short(utils::bytes_to_bint32(raw_value) as i16)),
-            SQL_TYPE_LONG => Ok(CellValue::Long(utils::bytes_to_bint32(raw_value))),
-            SQL_TYPE_INT64 => Ok(if self.sqlscale < 0 {
-                CellValue::Decimal(rust_decimal::Decimal::new(
-                    utils::bytes_to_bint64(raw_value),
-                    (self.sqlscale * -1) as u32,
-                ))
-            } else if self.sqlscale > 0 {
-                CellValue::Decimal(rust_decimal::Decimal::new(
-                    utils::bytes_to_bint64(raw_value) * (self.sqlscale as i64),
-                    0,
-                ))
-            } else {
-                CellValue::Int64(utils::bytes_to_bint64(raw_value))
-            }),
-            SQL_TYPE_INT128 => Ok(if self.sqlscale < 0 {
-                CellValue::Decimal(rust_decimal::Decimal::new(
-                    utils::bytes_to_bint64(raw_value),
-                    (self.sqlscale * -1) as u32,
-                ))
-            } else if self.sqlscale > 0 {
-                CellValue::Decimal(rust_decimal::Decimal::new(
-                    (utils::bytes_to_bint128(raw_value) as i64) * (self.sqlscale as i64),
-                    0,
-                ))
-            } else {
-                CellValue::Int128(utils::bytes_to_bint128(raw_value))
-            }),
+            SQL_TYPE_SHORT => {
+                let val = utils::bytes_to_bint32(raw_value) as i16;
+                if self.sqlscale < 0 {
+                    Ok(CellValue::Decimal(rust_decimal::Decimal::new(
+                        val as i64,
+                        (self.sqlscale * -1) as u32,
+                    )))
+                } else if self.sqlscale > 0 {
+                    let mul = 10i64
+                        .checked_pow(self.sqlscale as u32)
+                        .ok_or_else(|| ValueError::new("sqlscale out of range"))?;
+                    Ok(CellValue::Decimal(rust_decimal::Decimal::new(
+                        (val as i64)
+                            .checked_mul(mul)
+                            .ok_or_else(|| ValueError::new("numeric multiplication overflow"))?,
+                        0,
+                    )))
+                } else {
+                    Ok(CellValue::Short(val))
+                }
+            }
+            SQL_TYPE_LONG => {
+                let val = utils::bytes_to_bint32(raw_value);
+                if self.sqlscale < 0 {
+                    Ok(CellValue::Decimal(rust_decimal::Decimal::new(
+                        val as i64,
+                        (self.sqlscale * -1) as u32,
+                    )))
+                } else if self.sqlscale > 0 {
+                    let mul = 10i64
+                        .checked_pow(self.sqlscale as u32)
+                        .ok_or_else(|| ValueError::new("sqlscale out of range"))?;
+                    Ok(CellValue::Decimal(rust_decimal::Decimal::new(
+                        (val as i64)
+                            .checked_mul(mul)
+                            .ok_or_else(|| ValueError::new("numeric multiplication overflow"))?,
+                        0,
+                    )))
+                } else {
+                    Ok(CellValue::Long(val))
+                }
+            }
+            SQL_TYPE_INT64 => {
+                let val = utils::bytes_to_bint64(raw_value);
+                if self.sqlscale < 0 {
+                    Ok(CellValue::Decimal(rust_decimal::Decimal::new(
+                        val,
+                        (self.sqlscale * -1) as u32,
+                    )))
+                } else if self.sqlscale > 0 {
+                    let mul = 10i64
+                        .checked_pow(self.sqlscale as u32)
+                        .ok_or_else(|| ValueError::new("sqlscale out of range"))?;
+                    Ok(CellValue::Decimal(rust_decimal::Decimal::new(
+                        val.checked_mul(mul)
+                            .ok_or_else(|| ValueError::new("numeric multiplication overflow"))?,
+                        0,
+                    )))
+                } else {
+                    Ok(CellValue::Int64(val))
+                }
+            }
+            SQL_TYPE_INT128 => {
+                let val = utils::bytes_to_bint128(raw_value);
+                if self.sqlscale < 0 {
+                    Ok(CellValue::Decimal(
+                        rust_decimal::Decimal::try_from_i128_with_scale(
+                            val,
+                            (self.sqlscale * -1) as u32,
+                        )
+                        .map_err(|e| ValueError::new(&e.to_string()))?,
+                    ))
+                } else if self.sqlscale > 0 {
+                    let mul = 10i128
+                        .checked_pow(self.sqlscale as u32)
+                        .ok_or_else(|| ValueError::new("sqlscale out of range"))?;
+                    let scaled_val = val
+                        .checked_mul(mul)
+                        .ok_or_else(|| ValueError::new("numeric multiplication overflow"))?;
+                    Ok(CellValue::Decimal(
+                        rust_decimal::Decimal::try_from_i128_with_scale(scaled_val, 0)
+                            .map_err(|e| ValueError::new(&e.to_string()))?,
+                    ))
+                } else {
+                    Ok(CellValue::Int128(val))
+                }
+            }
+            SQL_TYPE_NULL => Ok(CellValue::Null),
             SQL_TYPE_DATE => Ok(CellValue::Date(utils::bytes_to_naive_date(raw_value))),
             SQL_TYPE_TIME => Ok(CellValue::Time(utils::bytes_to_naive_time(raw_value))),
             SQL_TYPE_TIMESTAMP => Ok(CellValue::TimeStamp(utils::bytes_to_naive_date_time(
@@ -174,5 +236,91 @@ impl XSQLVar {
                 self.sqltype
             ))),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_decimal_macros::dec;
+
+    #[test]
+    fn test_xsqlvar_null() {
+        let mut x = XSQLVar::new();
+        x.sqltype = SQL_TYPE_NULL;
+        assert_eq!(x.io_length(), 0);
+        assert_eq!(x.name(), "NULL");
+        assert_eq!(x.value(&[]).unwrap(), CellValue::Null);
+    }
+
+    #[test]
+    fn test_xsqlvar_short_scale() {
+        let mut x = XSQLVar::new();
+        x.sqltype = SQL_TYPE_SHORT;
+        x.sqlscale = 0;
+        let bytes = utils::bint32_to_bytes(1234);
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Short(1234));
+
+        x.sqlscale = -2;
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Decimal(dec!(12.34)));
+
+        x.sqlscale = 2;
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Decimal(dec!(123400)));
+    }
+
+    #[test]
+    fn test_xsqlvar_long_scale() {
+        let mut x = XSQLVar::new();
+        x.sqltype = SQL_TYPE_LONG;
+        x.sqlscale = 0;
+        let bytes = utils::bint32_to_bytes(123456);
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Long(123456));
+
+        x.sqlscale = -3;
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Decimal(dec!(123.456)));
+
+        x.sqlscale = 1;
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Decimal(dec!(1234560)));
+    }
+
+    #[test]
+    fn test_xsqlvar_int64_scale() {
+        let mut x = XSQLVar::new();
+        x.sqltype = SQL_TYPE_INT64;
+        x.sqlscale = 0;
+        let bytes = utils::bint64_to_bytes(9876543210);
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Int64(9876543210));
+
+        x.sqlscale = -4;
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Decimal(dec!(987654.3210)));
+
+        x.sqlscale = 2;
+        assert_eq!(x.value(&bytes).unwrap(), CellValue::Decimal(dec!(987654321000)));
+    }
+
+    #[test]
+    fn test_xsqlvar_int128_scale() {
+        let mut x = XSQLVar::new();
+        x.sqltype = SQL_TYPE_INT128;
+        x.sqlscale = 0;
+        let bytes = utils::bint128_to_bytes(12345678901234567890123456789i128);
+        assert_eq!(
+            x.value(&bytes).unwrap(),
+            CellValue::Int128(12345678901234567890123456789i128)
+        );
+
+        x.sqlscale = -5;
+        let bytes_scaled = utils::bint128_to_bytes(12345000i128);
+        assert_eq!(
+            x.value(&bytes_scaled).unwrap(),
+            CellValue::Decimal(dec!(123.45000))
+        );
+
+        x.sqlscale = 2;
+        let bytes_pos = utils::bint128_to_bytes(5i128);
+        assert_eq!(
+            x.value(&bytes_pos).unwrap(),
+            CellValue::Decimal(dec!(500))
+        );
     }
 }

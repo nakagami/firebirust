@@ -200,44 +200,92 @@ impl Statement<'_> {
     }
 
     fn calc_blr(&self) -> Vec<u8> {
-        let ln = self.xsqlda.len() * 2;
-        let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
-
-        for x in &self.xsqlda {
-            let map = hashmap! {
-                SQL_TYPE_VARYING => vec![37, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
-                SQL_TYPE_TEXT => vec![14, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
-                SQL_TYPE_LONG => vec![8, x.sqlscale as u8],
-                SQL_TYPE_SHORT => vec![7, x.sqlscale as u8],
-                SQL_TYPE_INT64 => vec![16, x.sqlscale as u8],
-                SQL_TYPE_INT128 => vec![26, x.sqlscale as u8],
-                SQL_TYPE_QUAD => vec![9, x.sqlscale as u8],
-                SQL_TYPE_DEC_FIXED => vec![26, x.sqlscale as u8],
-                SQL_TYPE_DOUBLE => vec![27],
-                SQL_TYPE_FLOAT => vec![10],
-                SQL_TYPE_D_FLOAT => vec![11],
-                SQL_TYPE_DATE => vec![12],
-                SQL_TYPE_TIME => vec![13],
-                SQL_TYPE_TIMESTAMP => vec![35],
-                SQL_TYPE_BLOB => vec![9, 0],
-                SQL_TYPE_ARRAY => vec![9, 0],
-                SQL_TYPE_BOOLEAN => vec![23],
-                SQL_TYPE_DEC64 => vec![24],
-                SQL_TYPE_DEC128 => vec![25],
-                SQL_TYPE_TIME_TZ => vec![28],
-                SQL_TYPE_TIMESTAMP_TZ => vec![29],
-            };
-            blr.extend(&map[&x.sqltype]);
-            blr.extend(vec![7, 0]);
-        }
-        blr.extend(vec![255, 76]);
-
-        blr
+        calc_blr(&self.xsqlda)
     }
+}
+
+pub(crate) fn calc_blr(xsqlda: &[XSQLVar]) -> Vec<u8> {
+    let ln = xsqlda.len() * 2;
+    let mut blr: Vec<u8> = vec![5, 2, 4, 0, (ln & 255) as u8, (ln >> 8) as u8];
+
+    for x in xsqlda {
+        let map = hashmap! {
+            SQL_TYPE_VARYING => vec![37, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
+            SQL_TYPE_TEXT => vec![14, (x.sqllen & 255) as u8, (x.sqllen >> 8) as u8],
+            SQL_TYPE_LONG => vec![8, x.sqlscale as u8],
+            SQL_TYPE_SHORT => vec![7, x.sqlscale as u8],
+            SQL_TYPE_INT64 => vec![16, x.sqlscale as u8],
+            SQL_TYPE_INT128 => vec![26, x.sqlscale as u8],
+            SQL_TYPE_QUAD => vec![9, x.sqlscale as u8],
+            SQL_TYPE_DEC_FIXED => vec![26, x.sqlscale as u8],
+            SQL_TYPE_DOUBLE => vec![27],
+            SQL_TYPE_FLOAT => vec![10],
+            SQL_TYPE_D_FLOAT => vec![11],
+            SQL_TYPE_DATE => vec![12],
+            SQL_TYPE_TIME => vec![13],
+            SQL_TYPE_TIMESTAMP => vec![35],
+            SQL_TYPE_BLOB => vec![9, 0],
+            SQL_TYPE_ARRAY => vec![9, 0],
+            SQL_TYPE_BOOLEAN => vec![23],
+            SQL_TYPE_DEC64 => vec![24],
+            SQL_TYPE_DEC128 => vec![25],
+            SQL_TYPE_TIME_TZ => vec![28],
+            SQL_TYPE_TIMESTAMP_TZ => vec![29],
+            SQL_TYPE_NULL => vec![14, 0, 0],
+        };
+        blr.extend(&map[&x.sqltype]);
+        blr.extend(vec![7, 0]);
+    }
+    blr.extend(vec![255, 76]);
+
+    blr
 }
 
 impl Drop for Statement<'_> {
     fn drop(&mut self) {
         self.conn._free_statement(self.stmt_handle, DSQL_DROP);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calc_blr_with_null() {
+        let xsqlda = vec![
+            XSQLVar {
+                sqltype: SQL_TYPE_NULL,
+                sqlscale: 0,
+                sqlsubtype: 0,
+                sqllen: 0,
+                null_ok: true,
+                fieldname: "NULL".to_string(),
+                relname: "".to_string(),
+                ownname: "".to_string(),
+                aliasname: "NULL".to_string(),
+            },
+            XSQLVar {
+                sqltype: SQL_TYPE_LONG,
+                sqlscale: 0,
+                sqlsubtype: 0,
+                sqllen: 4,
+                null_ok: false,
+                fieldname: "A".to_string(),
+                relname: "".to_string(),
+                ownname: "".to_string(),
+                aliasname: "A".to_string(),
+            },
+        ];
+        let blr = calc_blr(&xsqlda);
+
+        // Header: [5, 2, 4, 0, 4, 0]
+        // NULL: [14, 0, 0, 7, 0]
+        // LONG: [8, 0, 7, 0]
+        // End: [255, 76]
+        assert_eq!(
+            blr,
+            vec![5, 2, 4, 0, 4, 0, 14, 0, 0, 7, 0, 8, 0, 7, 0, 255, 76]
+        );
     }
 }
