@@ -30,7 +30,7 @@ use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use crypto::sha2::Sha256;
 use num_bigint::BigInt;
-use rand::prelude::*;
+use rand::random;
 
 use super::*;
 
