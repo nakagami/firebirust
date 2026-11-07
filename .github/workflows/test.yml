@@ -13,23 +13,47 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        firebird-version: ['3', '4', '5']
+        include:
+          - firebird-version: '3'
+            firebird-image: 'firebirdsql/firebird:3'
+          - firebird-version: '4'
+            firebird-image: 'firebirdsql/firebird:4'
+          - firebird-version: '5'
+            firebird-image: 'firebirdsql/firebird:5'
+
+    services:
+      firebird:
+        image: ${{ matrix.firebird-image }}
+        volumes:
+          - /tmp:/tmp
+        env:
+          ISC_PASSWORD: masterkey
+          FIREBIRD_ROOT_PASSWORD: masterkey
+          FIREBIRD_CONF_AuthServer: Srp256, Srp, Legacy_Auth
+          FIREBIRD_CONF_WireCrypt: Enabled
+          FIREBIRD_CONF_DefaultTimeZone: GMT
+        ports:
+          - 3050:3050
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/localhost/3050'"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Firebird
-      run: |
-        sudo apt install firebird3.0-server -y
-        sudo cp misc/firebird.conf /etc/firebird/3.0
-        sudo systemctl restart firebird3.0
-        sudo chmod 0664 /etc/firebird/3.0/SYSDBA.password
-        grep '=' /etc/firebird/3.0/SYSDBA.password |sed 's/^/export /' >test_user.env
+    - uses: actions/checkout@v4
 
     - name: Build
       run: cargo build --verbose
 
     - name: Run tests
+      env:
+        ISC_USER: SYSDBA
+        ISC_PASSWORD: masterkey
       run: |
-        source test_user.env
         cargo test
 #        cargo test -- --ignored
