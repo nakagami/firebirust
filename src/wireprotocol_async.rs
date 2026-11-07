@@ -544,6 +544,10 @@ impl WireProtocolAsync {
         array_id: &[u8],
         meta: &ArrayMeta,
     ) -> Result<CellValue, Error> {
+        if array_id.iter().all(|&b| b == 0) {
+            return Ok(CellValue::Array(Vec::new()));
+        }
+
         let buf = self.suspend_buffer();
 
         let sdl = generate_sdl(meta, &meta.dimensions, true);
@@ -556,18 +560,34 @@ impl WireProtocolAsync {
         self.pack_bytes(&sdl).await;
         self.pack_bytes(&[]).await;
         self.pack_bytes(&[]).await;
-        self.send_packets().await?;
+        if let Err(e) = self.send_packets().await {
+            self.resume_buffer(&buf).await;
+            return Err(e);
+        }
 
-        let mut b = self.recv_packets(4).await?;
+        let mut b = match self.recv_packets(4).await {
+            Ok(b) => b,
+            Err(e) => {
+                self.resume_buffer(&buf).await;
+                return Err(e);
+            }
+        };
         while utils::bytes_to_buint32(&b) == OP_DUMMY {
-            b = self.recv_packets(4).await?;
+            b = match self.recv_packets(4).await {
+                Ok(b) => b,
+                Err(e) => {
+                    self.resume_buffer(&buf).await;
+                    return Err(e);
+                }
+            };
         }
         let op = utils::bytes_to_buint32(&b);
         match op {
             OP_SLICE_RESPONSE => {}
             OP_RESPONSE => {
-                let (_, _, res_buf) = self.parse_op_response().await?;
+                let parse_res = self.parse_op_response().await;
                 self.resume_buffer(&buf).await;
+                let (_, _, res_buf) = parse_res?;
                 return Err(Error::ValueError(ValueError::new(&format!(
                     "array slice request failed: {:?}",
                     res_buf
@@ -582,7 +602,13 @@ impl WireProtocolAsync {
             }
         }
 
-        let len_buf = self.recv_packets(8).await?;
+        let len_buf = match self.recv_packets(8).await {
+            Ok(b) => b,
+            Err(e) => {
+                self.resume_buffer(&buf).await;
+                return Err(e);
+            }
+        };
         let _slr_len = utils::bytes_to_bint32(&len_buf[0..4]) as usize;
         let lstr_len = utils::bytes_to_bint32(&len_buf[4..8]) as usize;
         if lstr_len == 0 {
@@ -602,13 +628,31 @@ impl WireProtocolAsync {
         let mut data = Vec::with_capacity(count * elem_len);
         for _ in 0..count {
             if varying {
-                let len_bytes = self.recv_packets(4).await?;
+                let len_bytes = match self.recv_packets(4).await {
+                    Ok(b) => b,
+                    Err(e) => {
+                        self.resume_buffer(&buf).await;
+                        return Err(e);
+                    }
+                };
                 let l = utils::bytes_to_bint32(&len_bytes) as usize;
-                let elem_data = self.recv_packets_alignment(l).await?;
+                let elem_data = match self.recv_packets_alignment(l).await {
+                    Ok(b) => b,
+                    Err(e) => {
+                        self.resume_buffer(&buf).await;
+                        return Err(e);
+                    }
+                };
                 data.extend_from_slice(&len_bytes);
                 data.extend_from_slice(&elem_data);
             } else {
-                let chunk = self.recv_packets_alignment(elem_len).await?;
+                let chunk = match self.recv_packets_alignment(elem_len).await {
+                    Ok(b) => b,
+                    Err(e) => {
+                        self.resume_buffer(&buf).await;
+                        return Err(e);
+                    }
+                };
                 data.extend_from_slice(&chunk);
             }
         }

@@ -303,8 +303,16 @@ pub fn decode_slice_elements(meta: &ArrayMeta, data: &[u8]) -> Result<CellValue,
             pos += elem_len;
             if meta.type_id == SQL_TYPE_BOOLEAN {
                 raw = &raw[..1];
+            } else if meta.type_id == SQL_TYPE_TEXT {
+                let actual_len = std::cmp::min(meta.field_bytes as usize, raw.len());
+                raw = &raw[..actual_len];
             }
-            let v = elem_xsqlvar.value(raw)?;
+            let mut v = elem_xsqlvar.value(raw)?;
+            if meta.type_id == SQL_TYPE_TEXT {
+                if let CellValue::Text(s) = v {
+                    v = CellValue::Text(s.trim_end_matches('\0').trim_end().to_string());
+                }
+            }
             flat.push(v);
         }
     }

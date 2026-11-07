@@ -538,6 +538,10 @@ impl WireProtocol {
         array_id: &[u8],
         meta: &ArrayMeta,
     ) -> Result<CellValue, Error> {
+        if array_id.iter().all(|&b| b == 0) {
+            return Ok(CellValue::Array(Vec::new()));
+        }
+
         let buf = self.suspend_buffer();
 
         let sdl = generate_sdl(meta, &meta.dimensions, true);
@@ -550,18 +554,34 @@ impl WireProtocol {
         self.pack_bytes(&sdl);
         self.pack_bytes(&[]);
         self.pack_bytes(&[]);
-        self.send_packets()?;
+        if let Err(e) = self.send_packets() {
+            self.resume_buffer(&buf);
+            return Err(e);
+        }
 
-        let mut b = self.recv_packets(4)?;
+        let mut b = match self.recv_packets(4) {
+            Ok(b) => b,
+            Err(e) => {
+                self.resume_buffer(&buf);
+                return Err(e);
+            }
+        };
         while utils::bytes_to_buint32(&b) == OP_DUMMY {
-            b = self.recv_packets(4)?;
+            b = match self.recv_packets(4) {
+                Ok(b) => b,
+                Err(e) => {
+                    self.resume_buffer(&buf);
+                    return Err(e);
+                }
+            };
         }
         let op = utils::bytes_to_buint32(&b);
         match op {
             OP_SLICE_RESPONSE => {}
             OP_RESPONSE => {
-                let (_, _, res_buf) = self.parse_op_response()?;
+                let parse_res = self.parse_op_response();
                 self.resume_buffer(&buf);
+                let (_, _, res_buf) = parse_res?;
                 return Err(Error::ValueError(ValueError::new(&format!(
                     "array slice request failed: {:?}",
                     res_buf
@@ -576,38 +596,43 @@ impl WireProtocol {
             }
         }
 
-        let len_buf = self.recv_packets(8)?;
-        let _slr_len = utils::bytes_to_bint32(&len_buf[0..4]) as usize;
-        let lstr_len = utils::bytes_to_bint32(&len_buf[4..8]) as usize;
-        if lstr_len == 0 {
-            self.resume_buffer(&buf);
-            return Ok(CellValue::Array(Vec::new()));
-        }
-
-        let stride = array_get_element_stride(meta);
-        if stride < 1 {
-            self.resume_buffer(&buf);
-            return Err(Error::ValueError(ValueError::new(
-                "invalid array element stride",
-            )));
-        }
-        let count = lstr_len / stride;
-        let (elem_len, varying) = slice_wire_element_size(meta);
-        let mut data = Vec::with_capacity(count * elem_len);
-        for _ in 0..count {
-            if varying {
-                let len_bytes = self.recv_packets(4)?;
-                let l = utils::bytes_to_bint32(&len_bytes) as usize;
-                let elem_data = self.recv_packets_alignment(l)?;
-                data.extend_from_slice(&len_bytes);
-                data.extend_from_slice(&elem_data);
-            } else {
-                let chunk = self.recv_packets_alignment(elem_len)?;
-                data.extend_from_slice(&chunk);
+        let res = (|| -> Result<Vec<u8>, Error> {
+            let len_buf = self.recv_packets(8)?;
+            let _slr_len = utils::bytes_to_bint32(&len_buf[0..4]) as usize;
+            let lstr_len = utils::bytes_to_bint32(&len_buf[4..8]) as usize;
+            if lstr_len == 0 {
+                return Ok(Vec::new());
             }
-        }
+
+            let stride = array_get_element_stride(meta);
+            if stride < 1 {
+                return Err(Error::ValueError(ValueError::new(
+                    "invalid array element stride",
+                )));
+            }
+            let count = lstr_len / stride;
+            let (elem_len, varying) = slice_wire_element_size(meta);
+            let mut data = Vec::with_capacity(count * elem_len);
+            for _ in 0..count {
+                if varying {
+                    let len_bytes = self.recv_packets(4)?;
+                    let l = utils::bytes_to_bint32(&len_bytes) as usize;
+                    let elem_data = self.recv_packets_alignment(l)?;
+                    data.extend_from_slice(&len_bytes);
+                    data.extend_from_slice(&elem_data);
+                } else {
+                    let chunk = self.recv_packets_alignment(elem_len)?;
+                    data.extend_from_slice(&chunk);
+                }
+            }
+            Ok(data)
+        })();
 
         self.resume_buffer(&buf);
+        let data = res?;
+        if data.is_empty() {
+            return Ok(CellValue::Array(Vec::new()));
+        }
         decode_slice_elements(meta, &data)
     }
 

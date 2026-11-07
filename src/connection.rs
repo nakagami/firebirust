@@ -320,8 +320,8 @@ impl Connection {
             if x.sqltype != SQL_TYPE_ARRAY || x.relname.is_empty() || x.fieldname.is_empty() {
                 continue;
             }
-            let table_name = x.relname.trim().to_uppercase();
-            let field_name = x.fieldname.trim().to_uppercase();
+            let table_name = x.relname.trim().to_string();
+            let field_name = x.fieldname.trim().to_string();
 
             let query = format!(
                 "SELECT \

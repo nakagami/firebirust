@@ -691,3 +691,85 @@ fn test_array_select() {
     assert_eq!(arr_int_null, None);
     assert_eq!(arr_str_null, None);
 }
+
+#[test]
+fn test_array_char_and_quoted_ident() {
+    let user = match env::var("ISC_USER") {
+        Ok(val) => val,
+        Err(_) => "sysdba".to_string(),
+    };
+    let password = match env::var("ISC_PASSWORD") {
+        Ok(val) => val,
+        Err(_) => "masterkey".to_string(),
+    };
+
+    let conn_string = format!(
+        "firebird://{}:{}@localhost{}/rust-firebird-test-array-quoted.fdb",
+        &user,
+        urlencoding::encode(&password),
+        env::temp_dir().display(),
+    );
+
+    let mut conn = match Connection::create_database_url(&conn_string) {
+        Ok(c) => c,
+        Err(err) => {
+            println!("{:#?}", err);
+            panic!("Can't connect");
+        }
+    };
+
+    conn.execute_batch(
+        r#"
+        CREATE TABLE "test_case_arr" (
+            id INTEGER NOT NULL PRIMARY KEY,
+            "char_Col" CHAR(5) [1:2]
+        )
+    "#,
+    )
+    .unwrap();
+
+    let meta = conn
+        .resolve_array_meta("test_case_arr", "char_Col")
+        .unwrap()
+        .unwrap();
+
+    let mut data_char = Vec::new();
+    for s in ["abc", "xy"] {
+        let mut elem = format!("{:5}", s).into_bytes();
+        let pad = (4 - (elem.len() % 4)) % 4;
+        elem.extend(std::iter::repeat(0).take(pad));
+        data_char.extend_from_slice(&elem);
+    }
+    let oid = conn.put_array_slice(&meta, &data_char, 2).unwrap();
+    let oid_arr: [u8; 8] = oid.as_slice().try_into().unwrap();
+
+    conn.execute(
+        r#"INSERT INTO "test_case_arr" (id, "char_Col") VALUES (1, ?)"#,
+        (Param::Quad(oid_arr),),
+    )
+    .unwrap();
+
+    conn.execute(
+        r#"INSERT INTO "test_case_arr" (id, "char_Col") VALUES (2, ?)"#,
+        (Param::Quad([0u8; 8]),),
+    )
+    .unwrap();
+
+    let mut stmt = conn
+        .prepare(r#"SELECT id, "char_Col" FROM "test_case_arr" ORDER BY id"#)
+        .unwrap();
+    let mut rows = stmt.query(()).unwrap();
+
+    let row1 = rows.next().unwrap();
+    let id1: i32 = row1.get(0).unwrap();
+    let arr1: Vec<String> = row1.get(1).unwrap();
+    assert_eq!(id1, 1);
+    assert_eq!(arr1, vec!["abc".to_string(), "xy".to_string()]);
+
+    let row2 = rows.next().unwrap();
+    let id2: i32 = row2.get(0).unwrap();
+    let arr2: Vec<String> = row2.get(1).unwrap();
+    assert_eq!(id2, 2);
+    assert_eq!(arr2, Vec::<String>::new());
+}
+
