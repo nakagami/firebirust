@@ -22,9 +22,10 @@
 
 #![allow(dead_code)]
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
+use super::array::{array_type_from_blr, ArrayDimension, ArrayMeta};
 use super::cellvalue::CellValue;
 use super::conn_params::ConnParams;
 use super::error::Error;
@@ -38,6 +39,7 @@ use super::*;
 pub struct ConnectionAsync {
     wp: RefCell<WireProtocolAsync>,
     trans_handle: i32, // transaction for operating from connection methods
+    resolving_array_meta: Cell<bool>,
     pub host: String,
     pub port: u16,
     pub username: String,
@@ -79,6 +81,7 @@ impl ConnectionAsync {
         Ok(ConnectionAsync {
             wp: RefCell::new(wp),
             trans_handle,
+            resolving_array_meta: Cell::new(false),
             host: host.to_string(),
             port,
             username: username.to_string(),
@@ -147,6 +150,7 @@ impl ConnectionAsync {
         Ok(ConnectionAsync {
             wp: RefCell::new(wp),
             trans_handle,
+            resolving_array_meta: Cell::new(false),
             host: conn_params.host,
             port: conn_params.port,
             username: conn_params.username,
@@ -245,11 +249,11 @@ impl ConnectionAsync {
         self._rollback(self.trans_handle).await
     }
 
-    pub async fn _prepare(
+    async fn _prepare_raw(
         &mut self,
         query: &str,
         trans_handle: i32,
-    ) -> Result<StatementAsync<'_>, Error> {
+    ) -> Result<(i32, u32, Vec<XSQLVar>), Error> {
         let mut wp = self.wp.borrow_mut();
         wp.op_allocate_statement().await?;
 
@@ -270,6 +274,32 @@ impl ConnectionAsync {
         }
         let (_, _, buf) = wp.op_response().await?;
         let (stmt_type, xsqlda) = wp.parse_xsqlda(&buf, stmt_handle).await?;
+        Ok((stmt_handle, stmt_type, xsqlda))
+    }
+
+    async fn _prepare_simple(
+        &mut self,
+        query: &str,
+        trans_handle: i32,
+    ) -> Result<StatementAsync<'_>, Error> {
+        let (stmt_handle, stmt_type, xsqlda) = self._prepare_raw(query, trans_handle).await?;
+        Ok(StatementAsync::new(
+            self,
+            trans_handle,
+            stmt_handle,
+            stmt_type,
+            xsqlda,
+            true,
+        ))
+    }
+
+    pub async fn _prepare(
+        &mut self,
+        query: &str,
+        trans_handle: i32,
+    ) -> Result<StatementAsync<'_>, Error> {
+        let (stmt_handle, stmt_type, mut xsqlda) = self._prepare_raw(query, trans_handle).await?;
+        self._resolve_array_meta(trans_handle, &mut xsqlda).await?;
 
         Ok(StatementAsync::new(
             self,
@@ -279,6 +309,151 @@ impl ConnectionAsync {
             xsqlda,
             true, // autocommit is true
         ))
+    }
+
+    pub(crate) async fn _resolve_array_meta(
+        &mut self,
+        trans_handle: i32,
+        xsqlda: &mut [XSQLVar],
+    ) -> Result<(), Error> {
+        if self.resolving_array_meta.get() {
+            return Ok(());
+        }
+        let has_array = xsqlda.iter().any(|x| x.sqltype == SQL_TYPE_ARRAY);
+        if !has_array {
+            return Ok(());
+        }
+
+        self.resolving_array_meta.set(true);
+        let res = self._do_resolve_array_meta(trans_handle, xsqlda).await;
+        self.resolving_array_meta.set(false);
+        res
+    }
+
+    async fn _do_resolve_array_meta(
+        &mut self,
+        trans_handle: i32,
+        xsqlda: &mut [XSQLVar],
+    ) -> Result<(), Error> {
+        for x in xsqlda.iter_mut() {
+            if x.sqltype != SQL_TYPE_ARRAY || x.relname.is_empty() || x.fieldname.is_empty() {
+                continue;
+            }
+            let table_name = x.relname.trim().to_uppercase();
+            let field_name = x.fieldname.trim().to_uppercase();
+
+            let query = format!(
+                "SELECT \
+                 Y.RDB$FIELD_TYPE, \
+                 Y.RDB$FIELD_SCALE, \
+                 Y.RDB$FIELD_LENGTH, \
+                 CASE WHEN Y.RDB$FIELD_TYPE IN (14, 37) THEN Y.RDB$CHARACTER_SET_ID ELSE Y.RDB$FIELD_SUB_TYPE END, \
+                 CASE WHEN Y.RDB$FIELD_TYPE IN (14, 37) THEN Y.RDB$CHARACTER_LENGTH ELSE Y.RDB$FIELD_LENGTH END, \
+                 X.RDB$FIELD_SOURCE \
+                 FROM RDB$RELATION_FIELDS X, RDB$FIELDS Y \
+                 WHERE X.RDB$FIELD_SOURCE = Y.RDB$FIELD_NAME \
+                   AND X.RDB$RELATION_NAME = '{}' \
+                   AND X.RDB$FIELD_NAME = '{}'",
+                table_name.replace('\'', "''"),
+                field_name.replace('\'', "''")
+            );
+
+            let row_opt = {
+                let mut stmt = self._prepare_simple(&query, trans_handle).await?;
+                let mut qres = stmt.query(()).await?;
+                qres.next()
+            };
+
+            let row = match row_opt {
+                Some(r) => r,
+                None => continue,
+            };
+
+            let blr_type_id: i64 = row.get(0)?;
+            let scale: i64 = row.get(1)?;
+            let field_bytes: i64 = row.get(2)?;
+            let sub_type: i64 = row.get::<Option<i64>>(3)?.unwrap_or(0);
+            let length: i64 = row.get::<Option<i64>>(4)?.unwrap_or(field_bytes);
+            let field_source: String = row.get(5)?;
+            let field_source = field_source.trim().to_string();
+
+            let dim_query = format!(
+                "SELECT X.RDB$LOWER_BOUND, X.RDB$UPPER_BOUND \
+                 FROM RDB$FIELD_DIMENSIONS X \
+                 WHERE X.RDB$FIELD_NAME = '{}' \
+                 ORDER BY X.RDB$DIMENSION ASC",
+                field_source.replace('\'', "''")
+            );
+
+            let mut dims = Vec::new();
+            {
+                let mut dim_stmt = self._prepare_simple(&dim_query, trans_handle).await?;
+                let mut dim_qres = dim_stmt.query(()).await?;
+                while let Some(r) = dim_qres.next() {
+                    let lower: i64 = r.get(0)?;
+                    let upper: i64 = r.get(1)?;
+                    let length = if upper >= lower {
+                        (upper - lower + 1) as usize
+                    } else {
+                        0
+                    };
+                    dims.push(ArrayDimension {
+                        lower_bound: lower as i32,
+                        length,
+                    });
+                }
+            }
+
+            let type_id = array_type_from_blr(blr_type_id)?;
+            x.array_meta = Some(ArrayMeta {
+                table_name,
+                field_name,
+                type_id,
+                blr_type_id: blr_type_id as u8,
+                scale: scale as i32,
+                length: length as u32,
+                field_bytes: field_bytes as u32,
+                sub_type: sub_type as i32,
+                field_source,
+                dimensions: dims,
+            });
+        }
+        Ok(())
+    }
+
+    pub(crate) async fn _get_array_slice(
+        &self,
+        trans_handle: i32,
+        array_id: &[u8],
+        meta: &ArrayMeta,
+    ) -> Result<CellValue, Error> {
+        let mut wp = self.wp.borrow_mut();
+        wp.get_array_slice(trans_handle, array_id, meta).await
+    }
+
+    pub async fn put_array_slice(
+        &mut self,
+        meta: &ArrayMeta,
+        data: &[u8],
+        element_count: usize,
+    ) -> Result<Vec<u8>, Error> {
+        let mut wp = self.wp.borrow_mut();
+        wp.put_array_slice(self.trans_handle, meta, data, element_count).await
+    }
+
+    pub async fn resolve_array_meta(
+        &mut self,
+        table_name: &str,
+        field_name: &str,
+    ) -> Result<Option<ArrayMeta>, Error> {
+        let mut var = XSQLVar {
+            sqltype: SQL_TYPE_ARRAY,
+            relname: table_name.to_string(),
+            fieldname: field_name.to_string(),
+            ..Default::default()
+        };
+        self._resolve_array_meta(self.trans_handle, std::slice::from_mut(&mut var)).await?;
+        Ok(var.array_meta)
     }
 
     pub async fn prepare(&mut self, query: &str) -> Result<StatementAsync<'_>, Error> {

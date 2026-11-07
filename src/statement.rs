@@ -98,15 +98,25 @@ impl Statement<'_> {
         }
 
         for row in rows.iter_mut() {
-            for cell in row.iter_mut() {
+            for (i, cell) in row.iter_mut().enumerate() {
                 match cell {
                     CellValue::BlobBinary(blob_id) => {
-                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle);
-                        *cell = CellValue::BlobBinary(blob.unwrap());
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle)?;
+                        *cell = CellValue::BlobBinary(blob);
                     }
                     CellValue::BlobText(blob_id) => {
-                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle);
-                        *cell = CellValue::BlobText(blob.unwrap());
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle)?;
+                        *cell = CellValue::BlobText(blob);
+                    }
+                    CellValue::ArrayRaw(array_id) => {
+                        if let Some(ref meta) = self.xsqlda[i].array_meta {
+                            let arr = self.conn._get_array_slice(trans_handle, array_id, meta)?;
+                            *cell = arr;
+                        } else {
+                            return Err(Error::ValueError(super::error::ValueError::new(
+                                "array metadata unavailable",
+                            )));
+                        }
                     }
                     _ => {}
                 }
@@ -264,6 +274,7 @@ mod tests {
                 relname: "".to_string(),
                 ownname: "".to_string(),
                 aliasname: "NULL".to_string(),
+                array_meta: None,
             },
             XSQLVar {
                 sqltype: SQL_TYPE_LONG,
@@ -275,6 +286,7 @@ mod tests {
                 relname: "".to_string(),
                 ownname: "".to_string(),
                 aliasname: "A".to_string(),
+                array_meta: None,
             },
         ];
         let blr = calc_blr(&xsqlda);

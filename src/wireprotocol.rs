@@ -27,8 +27,9 @@ use num_bigint::BigInt;
 use std::collections::{HashMap, HashSet};
 use std::io::prelude::*;
 
+use super::array::*;
 use super::cellvalue::CellValue;
-use super::error::{Error, FirebirdError};
+use super::error::{Error, FirebirdError, ValueError};
 use super::wirechannel::WireChannel;
 use super::xsqlvar::XSQLVar;
 use super::*;
@@ -529,6 +530,115 @@ impl WireProtocol {
 
         self.resume_buffer(&buf);
         Ok(blob)
+    }
+
+    pub fn get_array_slice(
+        &mut self,
+        trans_handle: i32,
+        array_id: &[u8],
+        meta: &ArrayMeta,
+    ) -> Result<CellValue, Error> {
+        let buf = self.suspend_buffer();
+
+        let sdl = generate_sdl(meta, &meta.dimensions, true);
+        let app_len = array_slice_get_length(meta, &meta.dimensions);
+
+        self.pack_u32(OP_GET_SLICE);
+        self.pack_u32(trans_handle as u32);
+        self.append_bytes(array_id);
+        self.pack_u32(app_len as u32);
+        self.pack_bytes(&sdl);
+        self.pack_bytes(&[]);
+        self.pack_bytes(&[]);
+        self.send_packets()?;
+
+        let mut b = self.recv_packets(4)?;
+        while utils::bytes_to_buint32(&b) == OP_DUMMY {
+            b = self.recv_packets(4)?;
+        }
+        let op = utils::bytes_to_buint32(&b);
+        match op {
+            OP_SLICE_RESPONSE => {}
+            OP_RESPONSE => {
+                let (_, _, res_buf) = self.parse_op_response()?;
+                self.resume_buffer(&buf);
+                return Err(Error::ValueError(ValueError::new(&format!(
+                    "array slice request failed: {:?}",
+                    res_buf
+                ))));
+            }
+            _ => {
+                self.resume_buffer(&buf);
+                return Err(Error::ValueError(ValueError::new(&format!(
+                    "unexpected slice response opcode: {}",
+                    op
+                ))));
+            }
+        }
+
+        let len_buf = self.recv_packets(8)?;
+        let _slr_len = utils::bytes_to_bint32(&len_buf[0..4]) as usize;
+        let lstr_len = utils::bytes_to_bint32(&len_buf[4..8]) as usize;
+        if lstr_len == 0 {
+            self.resume_buffer(&buf);
+            return Ok(CellValue::Array(Vec::new()));
+        }
+
+        let stride = array_get_element_stride(meta);
+        if stride < 1 {
+            self.resume_buffer(&buf);
+            return Err(Error::ValueError(ValueError::new(
+                "invalid array element stride",
+            )));
+        }
+        let count = lstr_len / stride;
+        let (elem_len, varying) = slice_wire_element_size(meta);
+        let mut data = Vec::with_capacity(count * elem_len);
+        for _ in 0..count {
+            if varying {
+                let len_bytes = self.recv_packets(4)?;
+                let l = utils::bytes_to_bint32(&len_bytes) as usize;
+                let elem_data = self.recv_packets_alignment(l)?;
+                data.extend_from_slice(&len_bytes);
+                data.extend_from_slice(&elem_data);
+            } else {
+                let chunk = self.recv_packets_alignment(elem_len)?;
+                data.extend_from_slice(&chunk);
+            }
+        }
+
+        self.resume_buffer(&buf);
+        decode_slice_elements(meta, &data)
+    }
+
+    pub fn put_array_slice(
+        &mut self,
+        trans_handle: i32,
+        meta: &ArrayMeta,
+        data: &[u8],
+        element_count: usize,
+    ) -> Result<Vec<u8>, Error> {
+        let app_len = array_slice_app_length(meta, &meta.dimensions);
+        let wire = pad_slice_wire(meta, data, element_count);
+        let sdl = generate_sdl(meta, &meta.dimensions, false);
+
+        let buf = self.suspend_buffer();
+        self.pack_u32(OP_PUT_SLICE);
+        self.pack_u32(trans_handle as u32);
+        self.append_bytes(&utils::bint64_to_bytes(0));
+        self.pack_u32(app_len as u32);
+        self.pack_bytes(&sdl);
+        self.pack_bytes(&[]);
+        self.pack_u32(app_len as u32);
+        self.append_bytes(&wire);
+        if let Err(e) = self.send_packets() {
+            self.resume_buffer(&buf);
+            return Err(e);
+        }
+        let res = self.op_response();
+        self.resume_buffer(&buf);
+        let (_h, oid, _data) = res?;
+        Ok(oid)
     }
 
     pub fn op_connect(

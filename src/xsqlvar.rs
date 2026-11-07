@@ -20,6 +20,7 @@
 // SOFTWARE.
 
 #![allow(dead_code)]
+use super::array::ArrayMeta;
 use super::cellvalue::CellValue;
 use super::decfloat;
 use super::error::ValueError;
@@ -27,6 +28,7 @@ use super::*;
 use maplit::hashmap;
 use rust_decimal;
 
+#[derive(Default)]
 pub(crate) struct XSQLVar {
     pub sqltype: u32,
     pub sqlscale: i32,
@@ -37,6 +39,7 @@ pub(crate) struct XSQLVar {
     pub relname: String,
     pub ownname: String,
     pub aliasname: String,
+    pub array_meta: Option<ArrayMeta>,
 }
 
 impl XSQLVar {
@@ -51,6 +54,7 @@ impl XSQLVar {
             relname: "".to_string(),
             ownname: "".to_string(),
             aliasname: "".to_string(),
+            array_meta: None,
         }
     }
 
@@ -221,6 +225,7 @@ impl XSQLVar {
             } else {
                 CellValue::BlobBinary(raw_value.to_vec())
             }),
+            SQL_TYPE_ARRAY => Ok(CellValue::ArrayRaw(raw_value.to_vec())),
             SQL_TYPE_DEC_FIXED => Ok(CellValue::Decimal(decfloat::decimal_fixed_to_decimal(
                 raw_value,
                 self.sqlscale,

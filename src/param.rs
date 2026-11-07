@@ -45,6 +45,7 @@ pub enum Param {
     // TimeTz(??),
     Decimal(Decimal),
     Boolean(bool),
+    Quad([u8; 8]),
 }
 
 impl From<&str> for Param {
@@ -128,6 +129,12 @@ impl From<Decimal> for Param {
 impl From<bool> for Param {
     fn from(v: bool) -> Param {
         Param::Boolean(v)
+    }
+}
+
+impl From<[u8; 8]> for Param {
+    fn from(v: [u8; 8]) -> Param {
+        Param::Quad(v)
     }
 }
 
@@ -246,6 +253,10 @@ impl ToSqlParam for Param {
                     value.write(&[0, 0, 0, 0]).unwrap();
                 }
                 blr.write(&[23]).unwrap();
+            }
+            Param::Quad(b) => {
+                value.write(b).unwrap();
+                blr.write(&[9, 0]).unwrap();
             }
         }
         (value, blr, isnull)

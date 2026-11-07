@@ -21,6 +21,7 @@
 // SOFTWARE.
 #![allow(dead_code)]
 
+mod array;
 mod cellvalue;
 mod conn_params;
 mod connection;
@@ -46,6 +47,8 @@ mod transaction_async;
 mod wirechannel_async;
 mod wireprotocol_async;
 
+pub use crate::array::{ArrayDimension, ArrayMeta};
+pub use crate::cellvalue::CellValue;
 pub use crate::connection::Connection;
 pub use crate::connection_async::ConnectionAsync;
 pub use crate::error::Error;

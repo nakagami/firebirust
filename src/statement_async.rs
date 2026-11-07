@@ -99,15 +99,28 @@ impl StatementAsync<'_> {
         }
 
         for row in rows.iter_mut() {
-            for cell in row.iter_mut() {
+            for (i, cell) in row.iter_mut().enumerate() {
                 match cell {
                     CellValue::BlobBinary(blob_id) => {
-                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle).await;
-                        *cell = CellValue::BlobBinary(blob.unwrap());
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle).await?;
+                        *cell = CellValue::BlobBinary(blob);
                     }
                     CellValue::BlobText(blob_id) => {
-                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle).await;
-                        *cell = CellValue::BlobText(blob.unwrap());
+                        let blob = self.conn._get_blob_segments(&blob_id, trans_handle).await?;
+                        *cell = CellValue::BlobText(blob);
+                    }
+                    CellValue::ArrayRaw(array_id) => {
+                        if let Some(ref meta) = self.xsqlda[i].array_meta {
+                            let arr = self
+                                .conn
+                                ._get_array_slice(trans_handle, array_id, meta)
+                                .await?;
+                            *cell = arr;
+                        } else {
+                            return Err(Error::ValueError(super::error::ValueError::new(
+                                "array metadata unavailable",
+                            )));
+                        }
                     }
                     _ => {}
                 }

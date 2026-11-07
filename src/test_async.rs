@@ -413,3 +413,152 @@ async fn test_numeric_scaled_async() {
 fn test_numeric_scaled() {
     smol::block_on(test_numeric_scaled_async())
 }
+
+async fn test_array_select_async() {
+    let user = match env::var("ISC_USER") {
+        Ok(val) => val,
+        Err(_) => "sysdba".to_string(),
+    };
+    let password = match env::var("ISC_PASSWORD") {
+        Ok(val) => val,
+        Err(_) => "masterkey".to_string(),
+    };
+
+    let conn_string = format!(
+        "firebird://{}:{}@localhost{}/rust-firebird-test-array-async.fdb",
+        &user,
+        urlencoding::encode(&password),
+        env::temp_dir().display(),
+    );
+
+    let mut conn = match ConnectionAsync::create_database_url(&conn_string).await {
+        Ok(c) => c,
+        Err(err) => {
+            println!("{:#?}", err);
+            panic!("Can't connect");
+        }
+    };
+
+    conn.execute_batch(
+        r#"
+        CREATE TABLE test_arr_async (
+            id INTEGER NOT NULL PRIMARY KEY,
+            arr_int INTEGER [1:3],
+            arr_str VARCHAR(10) [1:2],
+            arr_dbl DOUBLE PRECISION [1:2],
+            arr_2d INTEGER [1:2, 1:3]
+        )
+    "#,
+    )
+    .await
+    .unwrap();
+
+    let meta_int = conn.resolve_array_meta("TEST_ARR_ASYNC", "ARR_INT").await.unwrap().unwrap();
+    let meta_str = conn.resolve_array_meta("TEST_ARR_ASYNC", "ARR_STR").await.unwrap().unwrap();
+    let meta_dbl = conn.resolve_array_meta("TEST_ARR_ASYNC", "ARR_DBL").await.unwrap().unwrap();
+    let meta_2d = conn.resolve_array_meta("TEST_ARR_ASYNC", "ARR_2D").await.unwrap().unwrap();
+
+    let mut data_int = Vec::new();
+    for v in [100i32, 200, 300] {
+        data_int.extend_from_slice(&v.to_be_bytes());
+    }
+    let oid_int = conn.put_array_slice(&meta_int, &data_int, 3).await.unwrap();
+
+    let mut data_str = Vec::new();
+    for s in ["async", "firebird"] {
+        data_str.extend_from_slice(&(s.len() as u32).to_be_bytes());
+        data_str.extend_from_slice(s.as_bytes());
+        let pad = (4 - (s.len() % 4)) % 4;
+        data_str.extend(std::iter::repeat(0).take(pad));
+    }
+    let oid_str = conn.put_array_slice(&meta_str, &data_str, 2).await.unwrap();
+
+    let mut data_dbl = Vec::new();
+    for v in [2.5f64, 4.75f64] {
+        data_dbl.extend_from_slice(&v.to_be_bytes());
+    }
+    let oid_dbl = conn.put_array_slice(&meta_dbl, &data_dbl, 2).await.unwrap();
+
+    let mut data_2d = Vec::new();
+    for v in [10i32, 20, 30, 40, 50, 60] {
+        data_2d.extend_from_slice(&v.to_be_bytes());
+    }
+    let oid_2d = conn.put_array_slice(&meta_2d, &data_2d, 6).await.unwrap();
+
+    let oid_int_arr: [u8; 8] = oid_int.as_slice().try_into().unwrap();
+    let oid_str_arr: [u8; 8] = oid_str.as_slice().try_into().unwrap();
+    let oid_dbl_arr: [u8; 8] = oid_dbl.as_slice().try_into().unwrap();
+    let oid_2d_arr: [u8; 8] = oid_2d.as_slice().try_into().unwrap();
+
+    conn.execute(
+        "INSERT INTO test_arr_async (id, arr_int, arr_str, arr_dbl, arr_2d) VALUES (1, ?, ?, ?, ?)",
+        (
+            Param::Quad(oid_int_arr),
+            Param::Quad(oid_str_arr),
+            Param::Quad(oid_dbl_arr),
+            Param::Quad(oid_2d_arr),
+        ),
+    )
+    .await
+    .unwrap();
+
+    conn.execute(
+        "INSERT INTO test_arr_async (id, arr_int, arr_str, arr_dbl, arr_2d) VALUES (2, NULL, NULL, NULL, NULL)",
+        (),
+    )
+    .await
+    .unwrap();
+
+    let mut stmt = conn
+        .prepare("SELECT id, arr_int, arr_str, arr_dbl, arr_2d FROM test_arr_async ORDER BY id")
+        .await
+        .unwrap();
+    let mut rows = stmt.query(()).await.unwrap();
+
+    // Row 1
+    let row1 = rows.next().unwrap();
+    let id1: i32 = row1.get(0).unwrap();
+    let arr_int: Vec<i32> = row1.get(1).unwrap();
+    let arr_str: Vec<String> = row1.get(2).unwrap();
+    let arr_dbl: Vec<f64> = row1.get(3).unwrap();
+    let arr_2d: CellValue = row1.get(4).unwrap();
+
+    assert_eq!(id1, 1);
+    assert_eq!(arr_int, vec![100, 200, 300]);
+    assert_eq!(
+        arr_str,
+        vec!["async".to_string(), "firebird".to_string()]
+    );
+    assert_eq!(arr_dbl, vec![2.5, 4.75]);
+    assert_eq!(
+        arr_2d,
+        CellValue::Array(vec![
+            CellValue::Array(vec![
+                CellValue::Long(10),
+                CellValue::Long(20),
+                CellValue::Long(30)
+            ]),
+            CellValue::Array(vec![
+                CellValue::Long(40),
+                CellValue::Long(50),
+                CellValue::Long(60)
+            ]),
+        ])
+    );
+
+    // Row 2 (NULLs)
+    let row2 = rows.next().unwrap();
+    let id2: i32 = row2.get(0).unwrap();
+    let arr_int_null: Option<Vec<i32>> = row2.get(1).unwrap();
+    let arr_str_null: Option<Vec<String>> = row2.get(2).unwrap();
+
+    assert_eq!(id2, 2);
+    assert_eq!(arr_int_null, None);
+    assert_eq!(arr_str_null, None);
+}
+
+#[test]
+fn test_array_select_async_run() {
+    smol::block_on(test_array_select_async())
+}
+

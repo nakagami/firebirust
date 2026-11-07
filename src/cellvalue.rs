@@ -46,6 +46,8 @@ pub enum CellValue {
     TimeTz((chrono::NaiveTime, chrono_tz::Tz)),
     Decimal(rust_decimal::Decimal),
     Boolean(bool),
+    Array(Vec<CellValue>),
+    ArrayRaw(Vec<u8>),
 }
 
 pub trait CellValueToVal<T> {
@@ -197,3 +199,46 @@ impl CellValueToVal<chrono::DateTime<chrono_tz::Tz>> for CellValue {
         }
     }
 }
+
+impl CellValueToVal<CellValue> for CellValue {
+    fn to_val(self) -> Result<CellValue, Error> {
+        Ok(self)
+    }
+}
+
+impl CellValueToVal<Vec<CellValue>> for CellValue {
+    fn to_val(self) -> Result<Vec<CellValue>, Error> {
+        match self {
+            CellValue::Array(v) => Ok(v),
+            _ => Err(Error::ValueError(ValueError::new("Can't convert array"))),
+        }
+    }
+}
+
+macro_rules! impl_cell_value_to_val_vec {
+    ($t:ty) => {
+        impl CellValueToVal<Vec<$t>> for CellValue {
+            fn to_val(self) -> Result<Vec<$t>, Error> {
+                match self {
+                    CellValue::Array(v) => {
+                        v.into_iter().map(|item| item.to_val()).collect()
+                    }
+                    _ => Err(Error::ValueError(ValueError::new("Can't convert array"))),
+                }
+            }
+        }
+    };
+}
+
+impl_cell_value_to_val_vec!(i16);
+impl_cell_value_to_val_vec!(i32);
+impl_cell_value_to_val_vec!(i64);
+impl_cell_value_to_val_vec!(f32);
+impl_cell_value_to_val_vec!(f64);
+impl_cell_value_to_val_vec!(String);
+impl_cell_value_to_val_vec!(bool);
+impl_cell_value_to_val_vec!(chrono::NaiveDate);
+impl_cell_value_to_val_vec!(chrono::NaiveTime);
+impl_cell_value_to_val_vec!(chrono::NaiveDateTime);
+impl_cell_value_to_val_vec!(rust_decimal::Decimal);
+
